@@ -1,0 +1,73 @@
+{
+  "name": "Case1_Refactor",
+  "start_time": "2026-04-08T22:03:33.074278",
+  "run_output": "[harness-pro] session=d37aa1922717 model=deepseek-chat\n[harness-pro] budget=total=128,000 available=70,400 used=1,878 (2.7%)\n  [PHASE] 规划阶段结束，解锁全部工具\n  [Turn 5] msgs=12 tokens~15,333 tools=5 cost=$0.0065\n  [Turn 10] msgs=22 tokens~25,978 tools=10 cost=$0.0315\n  [Turn 15] msgs=32 tokens~35,004 tools=15 cost=$0.0680\n  [Turn 20] msgs=42 tokens~37,107 tools=20 cost=$0.1088\n  [GUARD] 连续使用 edit_file 已达 8 次。请考虑是否需要换一种工具或方法。\n  [Turn 25] msgs=53 tokens~39,137 tools=25 cost=$0.1517\n  [Turn 30] msgs=63 tokens~43,299 tools=30 cost=$0.1979\n  [Turn 35] msgs=73 tokens~44,742 tools=35 cost=$0.2484\n  [COMPRESS] tokens=49,482 > 49,280 (70%)\n  [GUARD] 检测到死循环：bash 使用相同参数已调用 3 次，每次返回相同结果。请改变策略或停止。\n  [Turn 40] msgs=84 tokens~30,011 tools=40 cost=$0.2907\n[harness-pro] 完成: turns=40 tools=40 tokens=1,026,000 cost=$0.2907 stop=max_iterations (40)\n运行指标:\n  时长: 723.9s\n  API: 40 calls, in=1,009,556 out=16,444 avg=17828ms\n  工具: 40 calls (3 errors) avg=268ms\n    Top: edit_file=18, bash=9, read_file=8, write_file=3, glob_search=2\n  压缩: 1次 节省24,646 tokens\n  Guard介入: 2次\n",
+  "run_error": "",
+  "verify_output": "==================================================\nCase 1: 遗留系统重构 — 验收检查\n==================================================\n\n✓ PASS  God Class拆分\n  已拆分: 发现 0 个服务文件, 6 个新类\n\n✗ FAIL  SQL注入修复\n  仍有 3 处SQL拼接: ['app.py:114', 'app.py:131', 'database.py:172']\n\n✓ PASS  硬编码清除\n  硬编码路径已清除\n\n✗ FAIL  测试通过\n  测试失败: 33 个测试\nno_results\nFAILED tests/test_app.py::TestInventoryApp::test_ship_order_not_confirmed - s...\nFAILED tests/test_app.py::TestInventoryApp::test_ship_order_valid - sqlite3.O...\nFAILED tests/test_app.py::TestInventoryApp::test_update_product_stock_insufficient\nFAILED tests/test_app.py::TestInventoryApp::test_update_product_stock_low_stock_warning\nFAILED tests/test_app.py::TestInventoryApp::test_update_product_stock_valid\n======================== 36 failed, 32 passed in 0.48s ========================\n\n\n✗ FAIL  重构报告\n  refactor_report.md 不存在\n\n==================================================\n结果: 2/5 通过\n==================================================\n",
+  "verify_error": "",
+  "run_result": {
+    "output": "",
+    "turns": 40,
+    "tool_calls": 40,
+    "total_tokens": 1026000,
+    "stop_reason": "max_iterations (40)",
+    "session_id": "d37aa1922717474f9bd510a08a7be78b",
+    "input_tokens": 1009556,
+    "output_tokens": 16444,
+    "cost_usd": 0.29066852000000004,
+    "guard_stats": {
+      "total_calls": 40,
+      "interventions": 2,
+      "consecutive_errors": 0
+    },
+    "hook_warnings": [],
+    "metrics": {
+      "duration_seconds": 723.9,
+      "api": {
+        "calls": 40,
+        "input_tokens": 1009556,
+        "output_tokens": 16444,
+        "errors": 0,
+        "avg_latency_ms": 17827.7
+      },
+      "tools": {
+        "calls": 40,
+        "errors": 3,
+        "avg_latency_ms": 267.9,
+        "by_name": {
+          "edit_file": 18,
+          "bash": 9,
+          "read_file": 8,
+          "write_file": 3,
+          "glob_search": 2
+        }
+      },
+      "compression": {
+        "count": 1,
+        "tokens_saved": 24646
+      },
+      "guard_interventions": 2,
+      "hook_blocks": 0
+    },
+    "cost_summary": {
+      "total_calls": 40,
+      "total_input_tokens": 1009556,
+      "total_output_tokens": 16444,
+      "total_cost_usd": 0.290669,
+      "budget_usd": 0.0,
+      "budget_remaining": null,
+      "by_model": {
+        "deepseek-chat": {
+          "calls": 40,
+          "input_tokens": 1009556,
+          "output_tokens": 16444,
+          "cost_usd": 0.29066852000000004
+        }
+      }
+    }
+  },
+  "verify_passed": false,
+  "duration_seconds": 724.1,
+  "exception": null,
+  "end_time": "2026-04-08T22:15:37.162082"
+}

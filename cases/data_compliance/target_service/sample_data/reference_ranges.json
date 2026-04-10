@@ -1,0 +1,782 @@
+{
+  "WBC": {
+    "test_code": "WBC",
+    "test_name": "白细胞计数",
+    "unit": "10^9/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.5,
+        "upper_limit": 9.5
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.5,
+        "upper_limit": 9.5
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.5,
+        "upper_limit": 9.5
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 3.15,
+        "upper_limit": 9.03
+      }
+    ]
+  },
+  "RBC": {
+    "test_code": "RBC",
+    "test_name": "红细胞计数",
+    "unit": "10^12/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.8,
+        "upper_limit": 5.8
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.99,
+        "upper_limit": 6.09
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.61,
+        "upper_limit": 5.51
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 3.42,
+        "upper_limit": 5.51
+      }
+    ]
+  },
+  "HGB": {
+    "test_code": "HGB",
+    "test_name": "血红蛋白",
+    "unit": "g/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 115,
+        "upper_limit": 175
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 120.75,
+        "upper_limit": 183.75
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 109.25,
+        "upper_limit": 166.25
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 103.5,
+        "upper_limit": 166.25
+      }
+    ]
+  },
+  "PLT": {
+    "test_code": "PLT",
+    "test_name": "血小板计数",
+    "unit": "10^9/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 125,
+        "upper_limit": 350
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 125.0,
+        "upper_limit": 350.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 125.0,
+        "upper_limit": 350.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 112.5,
+        "upper_limit": 332.5
+      }
+    ]
+  },
+  "ALT": {
+    "test_code": "ALT",
+    "test_name": "丙氨酸氨基转移酶",
+    "unit": "U/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 7,
+        "upper_limit": 56
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 7.0,
+        "upper_limit": 56.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 7.0,
+        "upper_limit": 56.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 6.3,
+        "upper_limit": 53.2
+      }
+    ]
+  },
+  "AST": {
+    "test_code": "AST",
+    "test_name": "天冬氨酸氨基转移酶",
+    "unit": "U/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 10,
+        "upper_limit": 40
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 10.0,
+        "upper_limit": 40.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 10.0,
+        "upper_limit": 40.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 9.0,
+        "upper_limit": 38.0
+      }
+    ]
+  },
+  "TBIL": {
+    "test_code": "TBIL",
+    "test_name": "总胆红素",
+    "unit": "umol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.4,
+        "upper_limit": 20.5
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.4,
+        "upper_limit": 20.5
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.4,
+        "upper_limit": 20.5
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 3.06,
+        "upper_limit": 19.47
+      }
+    ]
+  },
+  "DBIL": {
+    "test_code": "DBIL",
+    "test_name": "直接胆红素",
+    "unit": "umol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 0,
+        "upper_limit": 6.8
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 0.0,
+        "upper_limit": 6.8
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 0.0,
+        "upper_limit": 6.8
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 0.0,
+        "upper_limit": 6.46
+      }
+    ]
+  },
+  "TP": {
+    "test_code": "TP",
+    "test_name": "总蛋白",
+    "unit": "g/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 65,
+        "upper_limit": 85
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 65.0,
+        "upper_limit": 85.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 65.0,
+        "upper_limit": 85.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 58.5,
+        "upper_limit": 80.75
+      }
+    ]
+  },
+  "ALB": {
+    "test_code": "ALB",
+    "test_name": "白蛋白",
+    "unit": "g/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 40,
+        "upper_limit": 55
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 40.0,
+        "upper_limit": 55.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 40.0,
+        "upper_limit": 55.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 36.0,
+        "upper_limit": 52.25
+      }
+    ]
+  },
+  "BUN": {
+    "test_code": "BUN",
+    "test_name": "尿素氮",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.6,
+        "upper_limit": 7.5
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.6,
+        "upper_limit": 7.5
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.6,
+        "upper_limit": 7.5
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 2.34,
+        "upper_limit": 7.12
+      }
+    ]
+  },
+  "CR": {
+    "test_code": "CR",
+    "test_name": "肌酐",
+    "unit": "umol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 44,
+        "upper_limit": 133
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 46.2,
+        "upper_limit": 139.65
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 41.8,
+        "upper_limit": 126.35
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 39.6,
+        "upper_limit": 126.35
+      }
+    ]
+  },
+  "UA": {
+    "test_code": "UA",
+    "test_name": "尿酸",
+    "unit": "umol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 150,
+        "upper_limit": 416
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 150.0,
+        "upper_limit": 416.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 150.0,
+        "upper_limit": 416.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 135.0,
+        "upper_limit": 395.2
+      }
+    ]
+  },
+  "GLU": {
+    "test_code": "GLU",
+    "test_name": "葡萄糖",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.9,
+        "upper_limit": 6.1
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.9,
+        "upper_limit": 6.1
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.9,
+        "upper_limit": 6.1
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 3.51,
+        "upper_limit": 5.79
+      }
+    ]
+  },
+  "TC": {
+    "test_code": "TC",
+    "test_name": "总胆固醇",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.8,
+        "upper_limit": 5.2
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.8,
+        "upper_limit": 5.2
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.8,
+        "upper_limit": 5.2
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 2.52,
+        "upper_limit": 4.94
+      }
+    ]
+  },
+  "TG": {
+    "test_code": "TG",
+    "test_name": "甘油三酯",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 0.56,
+        "upper_limit": 1.7
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 0.56,
+        "upper_limit": 1.7
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 0.56,
+        "upper_limit": 1.7
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 0.5,
+        "upper_limit": 1.61
+      }
+    ]
+  },
+  "K": {
+    "test_code": "K",
+    "test_name": "钾",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.5,
+        "upper_limit": 5.3
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.5,
+        "upper_limit": 5.3
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 3.5,
+        "upper_limit": 5.3
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 3.15,
+        "upper_limit": 5.03
+      }
+    ]
+  },
+  "Na": {
+    "test_code": "Na",
+    "test_name": "钠",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 137,
+        "upper_limit": 147
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 137.0,
+        "upper_limit": 147.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 137.0,
+        "upper_limit": 147.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 123.3,
+        "upper_limit": 139.65
+      }
+    ]
+  },
+  "Cl": {
+    "test_code": "Cl",
+    "test_name": "氯",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 99,
+        "upper_limit": 110
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 99.0,
+        "upper_limit": 110.0
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 99.0,
+        "upper_limit": 110.0
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 89.1,
+        "upper_limit": 104.5
+      }
+    ]
+  },
+  "Ca": {
+    "test_code": "Ca",
+    "test_name": "钙",
+    "unit": "mmol/L",
+    "ranges": [
+      {
+        "population": "成人（通用）",
+        "gender": null,
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.11,
+        "upper_limit": 2.52
+      },
+      {
+        "population": "成年男性",
+        "gender": "male",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.11,
+        "upper_limit": 2.52
+      },
+      {
+        "population": "成年女性",
+        "gender": "female",
+        "age_min": 18,
+        "age_max": 120,
+        "lower_limit": 2.11,
+        "upper_limit": 2.52
+      },
+      {
+        "population": "儿童",
+        "gender": null,
+        "age_min": 0,
+        "age_max": 17,
+        "lower_limit": 1.9,
+        "upper_limit": 2.39
+      }
+    ]
+  }
+}

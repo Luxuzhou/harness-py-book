@@ -1,0 +1,38 @@
+=== Case1_Refactor ===
+时间: 2026-04-08T21:59:49.987667 - 2026-04-08T21:59:52.781751
+耗时: 2.8s
+
+--- 运行输出 ---
+[harness-pro] session=025ed8356896 model=deepseek-chat
+[harness-pro] budget=total=128,000 available=70,400 used=1,878 (2.7%)
+  [REACTIVE] API报错，紧急压缩
+[harness-pro] 完成: turns=0 tools=0 tokens=0 cost=$0.0000 stop=API error after reactive: API 400: {"error":{"message":"Invalid max_tokens value, the valid range of max_tokens is [1, 8192]",
+运行指标:
+  时长: 2.6s
+  API: 0 calls, in=0 out=0 avg=0ms
+  工具: 0 calls (0 errors) avg=0ms
+  压缩: 1次 节省0 tokens
+
+--- 验证输出 ---
+==================================================
+Case 1: 遗留系统重构 — 验收检查
+==================================================
+
+✗ FAIL  God Class拆分
+  拆分不足: 仅发现 0 个服务文件
+
+✗ FAIL  SQL注入修复
+  仍有 15 处SQL拼接: ['app.py:110', 'app.py:127', 'database.py:62', 'database.py:74', 'database.py:87']
+
+✗ FAIL  硬编码清除
+  仍有 4 处硬编码路径: ['app.py:45', 'app.py:46', 'database.py:8', 'database.py:9']
+
+✗ FAIL  测试通过
+  测试文件不足: 仅有 1 个
+
+✗ FAIL  重构报告
+  refactor_report.md 不存在
+
+==================================================
+结果: 0/5 通过
+==================================================

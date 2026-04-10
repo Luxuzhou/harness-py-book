@@ -1,0 +1,60 @@
+{
+  "name": "Case1_Refactor",
+  "start_time": "2026-04-08T21:59:49.987667",
+  "run_output": "[harness-pro] session=025ed8356896 model=deepseek-chat\n[harness-pro] budget=total=128,000 available=70,400 used=1,878 (2.7%)\n  [REACTIVE] API报错，紧急压缩\n[harness-pro] 完成: turns=0 tools=0 tokens=0 cost=$0.0000 stop=API error after reactive: API 400: {\"error\":{\"message\":\"Invalid max_tokens value, the valid range of max_tokens is [1, 8192]\",\n运行指标:\n  时长: 2.6s\n  API: 0 calls, in=0 out=0 avg=0ms\n  工具: 0 calls (0 errors) avg=0ms\n  压缩: 1次 节省0 tokens\n",
+  "run_error": "",
+  "verify_output": "==================================================\nCase 1: 遗留系统重构 — 验收检查\n==================================================\n\n✗ FAIL  God Class拆分\n  拆分不足: 仅发现 0 个服务文件\n\n✗ FAIL  SQL注入修复\n  仍有 15 处SQL拼接: ['app.py:110', 'app.py:127', 'database.py:62', 'database.py:74', 'database.py:87']\n\n✗ FAIL  硬编码清除\n  仍有 4 处硬编码路径: ['app.py:45', 'app.py:46', 'database.py:8', 'database.py:9']\n\n✗ FAIL  测试通过\n  测试文件不足: 仅有 1 个\n\n✗ FAIL  重构报告\n  refactor_report.md 不存在\n\n==================================================\n结果: 0/5 通过\n==================================================\n",
+  "verify_error": "",
+  "run_result": {
+    "output": "",
+    "turns": 0,
+    "tool_calls": 0,
+    "total_tokens": 0,
+    "stop_reason": "API error after reactive: API 400: {\"error\":{\"message\":\"Invalid max_tokens value, the valid range of max_tokens is [1, 8192]\",",
+    "session_id": "025ed83568964c5f9aeb65ba68e9172c",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0,
+    "guard_stats": {
+      "total_calls": 0,
+      "interventions": 0,
+      "consecutive_errors": 0
+    },
+    "hook_warnings": [],
+    "metrics": {
+      "duration_seconds": 2.6,
+      "api": {
+        "calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "errors": 1,
+        "avg_latency_ms": 0.0
+      },
+      "tools": {
+        "calls": 0,
+        "errors": 0,
+        "avg_latency_ms": 0.0,
+        "by_name": {}
+      },
+      "compression": {
+        "count": 1,
+        "tokens_saved": 0
+      },
+      "guard_interventions": 0,
+      "hook_blocks": 0
+    },
+    "cost_summary": {
+      "total_calls": 0,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "total_cost_usd": 0,
+      "budget_usd": 0.0,
+      "budget_remaining": null,
+      "by_model": {}
+    }
+  },
+  "verify_passed": false,
+  "duration_seconds": 2.8,
+  "exception": null,
+  "end_time": "2026-04-08T21:59:52.781751"
+}

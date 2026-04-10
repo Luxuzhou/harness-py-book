@@ -1,0 +1,59 @@
+{
+  "name": "Case3_Fullstack",
+  "start_time": "2026-04-08T23:13:12.579839",
+  "duration_seconds": 725.8,
+  "rounds": 2,
+  "total_tokens": 937139,
+  "total_tool_calls": 81,
+  "final_status": "max_rounds (2)",
+  "agents_run": [
+    {
+      "round": 1,
+      "agent": "Planner",
+      "turns": 8,
+      "tool_calls": 7,
+      "tokens": 35895,
+      "stop_reason": "stop"
+    },
+    {
+      "round": 1,
+      "agent": "Generator",
+      "turns": 20,
+      "tool_calls": 20,
+      "tokens": 240062,
+      "stop_reason": "max_iterations (20)"
+    },
+    {
+      "round": 1,
+      "agent": "Evaluator",
+      "turns": 12,
+      "tool_calls": 12,
+      "tokens": 135990,
+      "stop_reason": "max_iterations (12)"
+    },
+    {
+      "round": 2,
+      "agent": "Planner",
+      "turns": 10,
+      "tool_calls": 10,
+      "tokens": 107236,
+      "stop_reason": "max_iterations (10)"
+    },
+    {
+      "round": 2,
+      "agent": "Generator",
+      "turns": 20,
+      "tool_calls": 20,
+      "tokens": 284813,
+      "stop_reason": "max_iterations (20)"
+    },
+    {
+      "round": 2,
+      "agent": "Evaluator",
+      "turns": 12,
+      "tool_calls": 12,
+      "tokens": 133143,
+      "stop_reason": "max_iterations (12)"
+    }
+  ]
+}
