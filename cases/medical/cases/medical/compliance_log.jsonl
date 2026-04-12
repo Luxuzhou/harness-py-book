@@ -1,8 +1,0 @@
-{"time": "2025-01-15T10:00:00Z", "action": "read", "file": "sample_data/lab_reports.csv", "tool": "read_file"}
-{"time": "2025-01-15T10:00:01Z", "action": "read", "file": "sample_data/reference_ranges.json", "tool": "read_file"}{"time": "2026-04-08T22:18:06.507594", "action": "read", "file": "sample_data/lab_reports.csv", "tool": "python_script"}
-{"time": "2026-04-08T22:18:24.947346", "action": "read", "file": "sample_data/lab_reports.csv", "tool": "python_script"}
-{"time": "2026-04-08T22:18:51.957838", "action": "read", "file": "sample_data/lab_reports.csv", "tool": "python_script"}
-{"time": "2026-04-08T22:20:28.768167", "action": "read", "file": "sample_data/lab_reports.csv", "tool": "python_script"}
-{"time": "2026-04-08T22:20:28.769540", "action": "read", "file": "sample_data/reference_ranges.json", "tool": "python_script"}
-{"time": "2026-04-08T22:23:17.010619", "action": "read", "file": "sample_data/lab_reports.csv", "tool": "python_script"}
-{"time": "2026-04-08T22:23:17.011225", "action": "read", "file": "sample_data/reference_ranges.json", "tool": "python_script"}

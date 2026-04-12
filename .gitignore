@@ -70,3 +70,22 @@ node_modules/
 
 # === 代码审计报告（本地产物） ===
 reports/
+
+# === 旧standalone（已被examples/替代） ===
+standalone/
+
+# === 运行时数据库和日志 ===
+*.db
+*.coverage
+inventory.log
+
+# === Agent运行产出（读者自己跑产生） ===
+cases/*/output/
+cases/medical/cases/
+cases/medical/analysis_report.md
+cases/medical/complete_analysis*
+
+# === 旧的顶层文件 ===
+TASK.md
+test_e2e.py
+src/
