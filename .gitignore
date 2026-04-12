@@ -1,9 +1,72 @@
+# ========================================
+# 《驾驭AI：Harness Engineering实战》
+# 配套代码仓库 .gitignore
+# ========================================
+
+# === Python ===
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.whl
+
+# === 虚拟环境 ===
+.venv/
+venv/
+env/
+
+# === API密钥（绝对不能提交） ===
 .env
+.env.local
+.env.production
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# === 测试中间产物 ===
+.pytest_cache/
 tmp_test/
 tests_runtime_tmp/
-*.egg-info/
+htmlcov/
+.coverage
+
+# === Agent运行产生的session数据 ===
 .harness_sessions/
+*.log.jsonl
+
+# === 实验运行结果（读者应自己跑产生） ===
+experiments/results/
+
+# === 旧案例归档（不需要提交给读者） ===
+cases/_archive/
+
+# === 合规日志（运行时产生） ===
+compliance_log.jsonl
+
+# === 临时和大文件 ===
+*.duckdb
+*.duckdb.wal
+*.tar.gz
+*.log
+
+# === Agent工具临时文件 ===
 node_modules/
 .omx/
+
+# === Codex/Claude工具配置 ===
+.codex/
+.claude/
+
+# === Word文档（出版社交付物，不入仓库） ===
+*.docx
+
+# === 代码审计报告（本地产物） ===
+reports/
