@@ -33,9 +33,9 @@ harness-py-book/
 │                        调用harness_py模块，一行命令验证章节概念
 │
 ├── cases/               三个企业级实战项目
-│   ├── refactor/        第8章：7,929行Java Spring Boot质控系统
-│   ├── medical/         第9章：6,759行Python数据服务 + 10K条数据
-│   └── fullstack/       第10章：跨Java+Python的四Agent协作
+│   ├── refactor_enterprise/  第8章：7,929行Java Spring Boot临床路径系统
+│   ├── data_compliance/     第9章：6,759行Python诊疗数据服务 + 10K条数据
+│   └── multiagent_enterprise/ 第10章：跨Java+Python的四Agent协作
 │
 ├── tests/               单元测试（39个，全通过）
 ├── experiments/          实验脚本
@@ -85,9 +85,9 @@ python -m pytest tests/ -v
 | 第5章 上下文层 | `python examples/ch05_context.py` | 否 |
 | 第6章 记忆层 | `python examples/ch06_memory.py` | 否 |
 | 第7章 验证层 | `python examples/ch07_verify.py` | 否 |
-| 第8章 Java重构 | `python cases/refactor/run.py` | 是 |
-| 第9章 数据合规 | `python cases/medical/run.py` | 是 |
-| 第10章 多Agent | `python cases/fullstack/run.py` | 是 |
+| 第8章 Java重构 | `python cases/refactor_enterprise/run.py` | 是 |
+| 第9章 数据合规 | `python cases/data_compliance/run.py` | 是 |
+| 第10章 多Agent | `python cases/multiagent_enterprise/run.py` | 是 |
 | 第11章 观测部署 | `python examples/ch11_observe.py` | 否 |
 
 ## API配置
@@ -116,7 +116,7 @@ python -m pytest tests/ -v
 
 ### 第8章：企业级Java系统重构
 
-7,929行Java Spring Boot医疗检验质控系统，包含God Service（1,266行）、SQL注入、混合注入风格等10个代码坏味道。Agent任务：理解架构→补测试→逐步重构。
+7,929行Java Spring Boot临床路径管理系统，包含God Service（1,266行）、SQL注入、混合注入风格等10个代码坏味道。Agent任务：理解架构→补测试→逐步重构。
 
 ### 第9章：医疗数据服务合规加固
 
@@ -124,7 +124,7 @@ python -m pytest tests/ -v
 
 ### 第10章：跨语言多Agent系统集成
 
-给Java H34 + Python S37联合系统新增智能报警模块。四Agent角色（Architect/Java Dev/Python Dev/QA）并行开发，接口契约治理，收敛验证。
+给Java临床路径系统 + Python诊疗分析服务新增路径变异智能预警模块。四Agent角色（Architect/Java Dev/Python Dev/QA）并行开发，接口契约治理，收敛验证。
 
 ## 技术选型
 
