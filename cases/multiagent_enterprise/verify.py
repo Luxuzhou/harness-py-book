@@ -44,15 +44,15 @@ def check_files_exist():
         CASE_DIR / 'run.py',
         # Java 骨架
         JAVA_DIR / 'pom.xml',
-        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'sqc' / 'alarm' / 'controller' / 'AlarmController.java',
-        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'sqc' / 'alarm' / 'service' / 'AlarmService.java',
-        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'sqc' / 'alarm' / 'dao' / 'model' / 'AlarmRule.java',
-        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'sqc' / 'alarm' / 'dto' / 'AlarmRuleDto.java',
+        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'cp' / 'anomaly' / 'controller' / 'AnomalyController.java',
+        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'cp' / 'anomaly' / 'service' / 'AnomalyService.java',
+        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'cp' / 'anomaly' / 'dao' / 'model' / 'AnomalyRule.java',
+        JAVA_DIR / 'src' / 'main' / 'java' / 'com' / 'example' / 'cp' / 'anomaly' / 'dto' / 'AnomalyRuleDto.java',
         # Python 骨架
         PYTHON_DIR / 'requirements.txt',
         PYTHON_DIR / 'app' / '__init__.py',
         PYTHON_DIR / 'app' / 'api' / 'endpoints.py',
-        PYTHON_DIR / 'app' / 'services' / 'alarm_analyzer.py',
+        PYTHON_DIR / 'app' / 'services' / 'anomaly_analyzer.py',
         PYTHON_DIR / 'app' / 'models' / 'schemas.py',
     ]
 
@@ -76,7 +76,7 @@ def check_java_structure():
         name = jf.name
 
         # 检查 package 声明
-        if 'package com.example.sqc.alarm' not in content:
+        if 'package com.example.cp.anomaly' not in content:
             issues.append(f'{name}: 缺少正确的 package 声明')
 
         # Controller 检查
@@ -92,7 +92,7 @@ def check_java_structure():
                 issues.append(f'{name}: 缺少 @Service 注解')
 
         # Entity 检查
-        if name in ('AlarmRule.java', 'AlarmEvent.java'):
+        if name in ('AnomalyRule.java', 'AnomalyEvent.java'):
             if '@Entity' not in content:
                 issues.append(f'{name}: 缺少 @Entity 注解')
 
@@ -153,10 +153,10 @@ def check_contract_consistency():
 
     # 检查契约中的关键 schema 在 Python 端是否有对应
     key_schemas = {
-        'AlarmRuleResponse',
-        'AlarmEventCreateRequest',
-        'AlarmEventResponse',
-        'BreachPoint',
+        'AnomalyRuleResponse',
+        'AnomalyEventCreateRequest',
+        'AnomalyEventResponse',
+        'DeviationPoint',
         'ErrorResponse',
     }
 

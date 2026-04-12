@@ -1,39 +1,39 @@
 openapi: "3.0.3"
 info:
-  title: SQC Intelligent Alarm API
+  title: CP Intelligent Anomaly API
   description: |
-    检验质控智能报警模块 — Java端(H34)暴露给Python端(S37)的REST API契约。
+    诊疗临床路径智能异常预警模块 — Java端(临床路径管理系统)暴露给Python端(诊疗数据分析服务)的REST API契约。
     此契约由 Architect Agent 审定，任何修改需经 Architect 审批。
   version: "1.0.0"
   contact:
-    name: SQC Team
-    email: sqc-team@example.com
+    name: CP Team
+    email: cp-team@example.com
 
 servers:
   - url: http://localhost:8080
-    description: H34 Java 服务（开发环境）
+    description: 临床路径管理系统 Java 服务（开发环境）
 
 paths:
-  /api/v1/alarm/rules:
+  /api/v1/anomaly/rules:
     post:
-      operationId: createAlarmRule
-      summary: 创建报警规则
-      description: 为指定检验项目创建移动均值报警规则
+      operationId: createAnomalyRule
+      summary: 创建预警规则
+      description: 为指定诊疗项目创建路径依从率预警规则
       tags:
-        - alarm-rules
+        - anomaly-rules
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AlarmRuleCreateRequest"
+              $ref: "#/components/schemas/AnomalyRuleCreateRequest"
       responses:
         "201":
           description: 规则创建成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AlarmRuleResponse"
+                $ref: "#/components/schemas/AnomalyRuleResponse"
         "400":
           description: 参数校验失败
           content:
@@ -41,24 +41,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
-          description: 该检验项目已存在报警规则
+          description: 该诊疗项目已存在预警规则
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/alarm/rules/{test_item_id}:
+  /api/v1/anomaly/rules/{test_item_id}:
     get:
-      operationId: getAlarmRule
-      summary: 查询报警规则
-      description: 根据检验项目ID查询其报警规则配置
+      operationId: getAnomalyRule
+      summary: 查询预警规则
+      description: 根据诊疗项目ID查询其预警规则配置
       tags:
-        - alarm-rules
+        - anomaly-rules
       parameters:
         - name: test_item_id
           in: path
           required: true
-          description: 检验项目ID
+          description: 诊疗项目ID
           schema:
             type: string
             maxLength: 64
@@ -68,23 +68,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AlarmRuleResponse"
+                $ref: "#/components/schemas/AnomalyRuleResponse"
         "404":
-          description: 未找到该检验项目的报警规则
+          description: 未找到该诊疗项目的预警规则
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/v1/alarm/events:
+  /api/v1/anomaly/events:
     post:
-      operationId: createAlarmEvent
-      summary: 记录报警事件
+      operationId: createAnomalyEvent
+      summary: 记录异常事件
       description: |
-        由 Python 分析引擎调用，当检测到报警条件时记录报警事件。
+        由 Python 分析引擎调用，当检测到异常预警条件时记录异常事件。
         此接口要求 X-Service-Token 头部认证。
       tags:
-        - alarm-events
+        - anomaly-events
       parameters:
         - name: X-Service-Token
           in: header
@@ -103,14 +103,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AlarmEventCreateRequest"
+              $ref: "#/components/schemas/AnomalyEventCreateRequest"
       responses:
         "201":
-          description: 报警事件记录成功
+          description: 异常事件记录成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AlarmEventResponse"
+                $ref: "#/components/schemas/AnomalyEventResponse"
         "400":
           description: 参数校验失败
           content:
@@ -126,7 +126,7 @@ paths:
 
 components:
   schemas:
-    AlarmRuleCreateRequest:
+    AnomalyRuleCreateRequest:
       type: object
       required:
         - test_item_id
@@ -137,19 +137,19 @@ components:
         test_item_id:
           type: string
           maxLength: 64
-          description: 检验项目ID
+          description: 诊疗项目ID
           example: "GLU-001"
         test_item_name:
           type: string
           maxLength: 128
-          description: 检验项目名称
+          description: 诊疗项目名称
           example: "血糖 GLU"
         window_size:
           type: integer
           minimum: 3
           maximum: 20
           default: 5
-          description: 移动均值窗口大小
+          description: 路径依从率窗口大小
         consecutive_count:
           type: integer
           minimum: 2
@@ -178,7 +178,7 @@ components:
           default: true
           description: 是否启用
 
-    AlarmRuleResponse:
+    AnomalyRuleResponse:
       type: object
       properties:
         id:
@@ -211,7 +211,7 @@ components:
           type: string
           format: date-time
 
-    AlarmEventCreateRequest:
+    AnomalyEventCreateRequest:
       type: object
       required:
         - rule_id
@@ -222,15 +222,15 @@ components:
         rule_id:
           type: integer
           format: int64
-          description: 关联的报警规则ID
+          description: 关联的预警规则ID
         test_item_id:
           type: string
           maxLength: 64
-          description: 检验项目ID
+          description: 诊疗项目ID
         triggered_at:
           type: string
           format: date-time
-          description: 报警触发时间
+          description: 异常预警触发时间
         severity:
           type: string
           enum:
@@ -242,18 +242,18 @@ components:
           items:
             type: number
             format: double
-          description: 触发时的移动均值序列
-        breach_points:
+          description: 触发时的路径依从率序列
+        deviation_points:
           type: array
           items:
-            $ref: "#/components/schemas/BreachPoint"
+            $ref: "#/components/schemas/DeviationPoint"
           description: 超限点位信息
         message:
           type: string
           maxLength: 512
-          description: 报警描述信息
+          description: 异常预警描述信息
 
-    AlarmEventResponse:
+    AnomalyEventResponse:
       type: object
       properties:
         id:
@@ -275,7 +275,7 @@ components:
           type: string
           format: date-time
 
-    BreachPoint:
+    DeviationPoint:
       type: object
       properties:
         index:
@@ -284,7 +284,7 @@ components:
         moving_average:
           type: number
           format: double
-          description: 该点的移动均值
+          description: 该点的路径依从率
         upper_limit:
           type: number
           format: double

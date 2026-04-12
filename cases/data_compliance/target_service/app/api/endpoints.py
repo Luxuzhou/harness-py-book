@@ -42,7 +42,7 @@ from app.services.data_processor import DataProcessor
 from app.services.export_service import ExportService
 from app.services.filter_service import FilterService
 from app.services.normalization_service import NormalizationService
-from app.services.pbrtqc_analyzer import PBRTQCAnalyzer, AnalysisConfig
+from app.services.pathway_analyzer import PathwayAnalyzer, AnalysisConfig
 from app.services.query_service import QueryService
 
 logger = logging.getLogger(__name__)
@@ -55,12 +55,12 @@ _query_service = QueryService()
 _filter_service = FilterService()
 _export_service = ExportService()
 _normalization_service = NormalizationService()
-_analyzer = PBRTQCAnalyzer()
+_analyzer = PathwayAnalyzer()
 
 # 内存存储（模拟数据库）
 _patients_store: List[Dict[str, Any]] = []
 _results_store: List[Dict[str, Any]] = []
-_instruments_store: List[Dict[str, Any]] = []
+_departments_store: List[Dict[str, Any]] = []
 _tasks_store: Dict[str, TaskConfig] = {}
 
 
@@ -118,24 +118,24 @@ async def get_patient(patient_id: str):
 
 
 # ──────────────────────────────────────────────────────────────
-# 检验结果端点
+# 诊疗记录端点
 # ──────────────────────────────────────────────────────────────
 @router.get("/lab-results", response_model=LabResultListResponse)
-async def list_lab_results(
+async def list_treatment_records(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=1000),
-    test_code: Optional[str] = None,
-    instrument_id: Optional[str] = None,
+    step_code: Optional[str] = None,
+    department_id: Optional[str] = None,
     patient_id: Optional[str] = None,
 ):
-    """获取检验结果列表"""
+    """获取诊疗记录列表"""
     filtered = _results_store
 
-    if test_code:
-        filtered = [r for r in filtered if r.get("test_code") == test_code]
-    if instrument_id:
+    if step_code:
+        filtered = [r for r in filtered if r.get("step_code") == step_code]
+    if department_id:
         filtered = [r for r in filtered
-                    if r.get("instrument_id") == instrument_id]
+                    if r.get("department_id") == department_id]
     if patient_id:
         filtered = [r for r in filtered
                     if r.get("patient_id") == patient_id]
@@ -154,7 +154,7 @@ async def list_lab_results(
 
 @router.post("/lab-results/batch")
 async def batch_create_results(batch: LabResultBatchCreate):
-    """批量创建检验结果"""
+    """批量创建诊疗记录"""
     created = 0
     for result in batch.results:
         record = result.model_dump()
@@ -164,27 +164,27 @@ async def batch_create_results(batch: LabResultBatchCreate):
 
     print(f"[DEBUG] Batch created {created} results")
     return BaseResponse(
-        message=f"成功创建{created}条检验结果",
+        message=f"成功创建{created}条诊疗记录",
     )
 
 
 # ──────────────────────────────────────────────────────────────
-# 仪器端点
+# 科室端点
 # ──────────────────────────────────────────────────────────────
-@router.get("/instruments", response_model=InstrumentListResponse)
-async def list_instruments():
-    """获取仪器列表"""
-    return InstrumentListResponse(data=_instruments_store)
+@router.get("/departments", response_model=InstrumentListResponse)
+async def list_departments():
+    """获取科室列表"""
+    return InstrumentListResponse(data=_departments_store)
 
 
-@router.get("/instruments/{instrument_id}")
-async def get_instrument(instrument_id: str):
-    """获取仪器详情"""
-    for inst in _instruments_store:
-        if inst.get("instrument_id") == instrument_id:
+@router.get("/departments/{department_id}")
+async def get_department(department_id: str):
+    """获取科室详情"""
+    for inst in _departments_store:
+        if inst.get("department_id") == department_id:
             return {"success": True, "data": inst}
     raise HTTPException(status_code=404,
-                        detail=f"仪器不存在: {instrument_id}")
+                        detail=f"科室不存在: {department_id}")
 
 
 # ──────────────────────────────────────────────────────────────
@@ -198,9 +198,9 @@ async def query_data(request: QueryRequest):
     """
     start_time = datetime.now()
 
-    result = _query_service.query_lab_results(
-        test_codes=request.test_codes,
-        instrument_ids=request.instrument_ids,
+    result = _query_service.query_treatment_records(
+        step_codes=request.step_codes,
+        department_ids=request.department_ids,
         start_date=(request.time_range.start_date
                     if request.time_range else None),
         end_date=(request.time_range.end_date
@@ -221,10 +221,10 @@ async def query_data(request: QueryRequest):
 # ──────────────────────────────────────────────────────────────
 @router.post("/analysis/run")
 async def run_analysis(config: TaskConfigCreate):
-    """执行PBRTQC分析"""
+    """执行PathwayAnalytics分析"""
     analysis_config = AnalysisConfig(
-        test_code=config.test_code,
-        instrument_id=config.instrument_id or "",
+        step_code=config.step_code,
+        department_id=config.department_id or "",
         window_size=(config.ma_config.window_size
                      if config.ma_config else 20),
         ma_method=(config.ma_config.method.value
@@ -235,13 +235,13 @@ async def run_analysis(config: TaskConfigCreate):
     # 从内存存储获取数据
     relevant_results = [
         r for r in _results_store
-        if r.get("test_code") == config.test_code
+        if r.get("step_code") == config.step_code
     ]
 
     if not relevant_results:
         return BaseResponse(
             success=False,
-            message=f"无数据: test_code={config.test_code}",
+            message=f"无数据: step_code={config.step_code}",
             code=404,
         )
 
@@ -255,14 +255,14 @@ async def run_analysis(config: TaskConfigCreate):
 
 @router.post("/analysis/batch")
 async def run_batch_analysis(
-    test_codes: List[str],
-    instrument_id: Optional[str] = None,
+    step_codes: List[str],
+    department_id: Optional[str] = None,
 ):
-    """批量分析多个检验项目"""
+    """批量分析多个诊疗环节"""
     data_by_test: Dict[str, List[Dict[str, Any]]] = {}
-    for tc in test_codes:
+    for tc in step_codes:
         data_by_test[tc] = [
-            r for r in _results_store if r.get("test_code") == tc
+            r for r in _results_store if r.get("step_code") == tc
         ]
 
     results = _analyzer.batch_analyze(data_by_test)
@@ -274,7 +274,7 @@ async def run_batch_analysis(
 
     return BatchAnalysisResponse(
         data=results,
-        total_tests=len(test_codes),
+        total_tests=len(step_codes),
         completed=completed,
         failed=failed,
     )
@@ -285,7 +285,7 @@ async def analyze_trend(request: TrendAnalysisRequest):
     """趋势分析"""
     relevant = [
         r for r in _results_store
-        if r.get("test_code") == request.test_code
+        if r.get("step_code") == request.step_code
     ]
 
     if len(relevant) < 10:
@@ -308,11 +308,11 @@ async def analyze_trend(request: TrendAnalysisRequest):
 
 
 @router.post("/analysis/quality")
-async def data_quality(test_code: str):
+async def data_quality(step_code: str):
     """数据质量评估"""
     relevant = [
         r for r in _results_store
-        if r.get("test_code") == test_code
+        if r.get("step_code") == step_code
     ]
 
     values = [float(r["value"]) for r in relevant
@@ -338,12 +338,12 @@ async def export_data(request: ExportRequest):
     """
     # 过滤数据
     filtered = _results_store
-    if request.test_codes:
+    if request.step_codes:
         filtered = [r for r in filtered
-                    if r.get("test_code") in request.test_codes]
-    if request.instrument_ids:
+                    if r.get("step_code") in request.step_codes]
+    if request.department_ids:
         filtered = [r for r in filtered
-                    if r.get("instrument_id") in request.instrument_ids]
+                    if r.get("department_id") in request.department_ids]
 
     # 限制行数
     filtered = filtered[:request.max_rows]
@@ -390,17 +390,17 @@ async def export_data(request: ExportRequest):
 # ──────────────────────────────────────────────────────────────
 @router.post("/normalization", response_model=NormalizationResponse)
 async def normalize_data(request: NormalizationRequest):
-    """仪器间结果归一化"""
+    """科室间结果归一化"""
     source_data = [
         float(r["value"]) for r in _results_store
-        if (r.get("test_code") == request.test_code and
-            r.get("instrument_id") == request.source_instrument_id and
+        if (r.get("step_code") == request.step_code and
+            r.get("department_id") == request.source_department_id and
             r.get("value") is not None)
     ]
     ref_data = [
         float(r["value"]) for r in _results_store
-        if (r.get("test_code") == request.test_code and
-            r.get("instrument_id") == request.target_instrument_id and
+        if (r.get("step_code") == request.step_code and
+            r.get("department_id") == request.target_department_id and
             r.get("value") is not None)
     ]
 
@@ -421,20 +421,20 @@ async def normalize_data(request: NormalizationRequest):
     return NormalizationResponse(data=result)
 
 
-@router.post("/instruments/compare",
+@router.post("/departments/compare",
              response_model=InstrumentComparisonResponse)
-async def compare_instruments(request: InstrumentComparisonRequest):
-    """仪器比较"""
+async def compare_departments(request: InstrumentComparisonRequest):
+    """科室比较"""
     data1 = [
         float(r["value"]) for r in _results_store
-        if (r.get("test_code") == request.test_code and
-            r.get("instrument_id") == request.instrument_id_1 and
+        if (r.get("step_code") == request.step_code and
+            r.get("department_id") == request.department_id_1 and
             r.get("value") is not None)
     ]
     data2 = [
         float(r["value"]) for r in _results_store
-        if (r.get("test_code") == request.test_code and
-            r.get("instrument_id") == request.instrument_id_2 and
+        if (r.get("step_code") == request.step_code and
+            r.get("department_id") == request.department_id_2 and
             r.get("value") is not None)
     ]
 
@@ -444,9 +444,9 @@ async def compare_instruments(request: InstrumentComparisonRequest):
             success=False, message="数据不足"
         )
 
-    result = _normalization_service.compare_instruments(
+    result = _normalization_service.compare_departments(
         data1[:min_len], data2[:min_len],
-        test_code=request.test_code,
+        step_code=request.step_code,
         method=request.regression_method.value,
     )
 
@@ -463,9 +463,9 @@ async def create_task(config: TaskConfigCreate):
     task_id = str(uuid.uuid4())
     task = TaskConfig(
         task_id=task_id,
-        test_code=config.test_code,
-        test_name=config.test_name,
-        instrument_id=config.instrument_id,
+        step_code=config.step_code,
+        step_name=config.step_name,
+        department_id=config.department_id,
         min_data_points=config.min_data_points,
         created_at=datetime.now(),
     )
@@ -505,23 +505,23 @@ async def load_sample_data(data_dir: str = "sample_data"):
     加载示例数据
     坏味道: 路径未验证
     """
-    global _patients_store, _results_store, _instruments_store
+    global _patients_store, _results_store, _departments_store
 
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     data_path = os.path.join(base_dir, data_dir)
 
     patients_path = os.path.join(data_path, "patients.csv")
-    results_path = os.path.join(data_path, "lab_results.csv")
-    instruments_path = os.path.join(data_path, "instruments.csv")
+    results_path = os.path.join(data_path, "treatment_records.csv")
+    departments_path = os.path.join(data_path, "departments.csv")
 
     _patients_store = _data_processor.load_patients_csv(patients_path)
-    _results_store = _data_processor.load_lab_results_csv(results_path)
-    _instruments_store = _data_processor.load_instruments_csv(instruments_path)
+    _results_store = _data_processor.load_treatment_records_csv(results_path)
+    _departments_store = _data_processor.load_departments_csv(departments_path)
 
     return BaseResponse(
         message=(f"数据加载完成: {len(_patients_store)}名患者, "
                 f"{len(_results_store)}条结果, "
-                f"{len(_instruments_store)}台仪器"),
+                f"{len(_departments_store)}台科室"),
     )
 
 
@@ -532,8 +532,8 @@ async def data_summary():
         "success": True,
         "data": {
             "patients": len(_patients_store),
-            "lab_results": len(_results_store),
-            "instruments": len(_instruments_store),
+            "treatment_records": len(_results_store),
+            "departments": len(_departments_store),
             "tasks": len(_tasks_store),
         },
     }

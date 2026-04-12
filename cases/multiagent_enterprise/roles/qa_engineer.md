@@ -42,15 +42,15 @@
 ```
 
 关键检查项：
-- AlarmRuleCreateRequest 的字段名和类型是否与契约一致
-- AlarmRuleResponse 的字段名和类型是否与契约一致
-- AlarmEventCreateRequest 的字段名和类型是否与契约一致
+- AnomalyRuleCreateRequest 的字段名和类型是否与契约一致
+- AnomalyRuleResponse 的字段名和类型是否与契约一致
+- AnomalyEventCreateRequest 的字段名和类型是否与契约一致
 - severity 枚举值是否与契约一致（WARNING/CRITICAL）
 - 数值字段的 min/max 约束是否一致
 
 ### 第二步：Python 端单元测试
 
-编写 `python_module/tests/test_alarm_analyzer.py`：
+编写 `python_module/tests/test_anomaly_analyzer.py`：
 
 **测试 compute_moving_averages:**
 ```python
@@ -64,48 +64,48 @@ def test_moving_averages_single_value():
     """单个值的情况"""
 ```
 
-**测试 detect_breaches:**
+**测试 detect_deviationes:**
 ```python
-def test_detect_breaches_no_breach():
+def test_detect_deviationes_no_deviation():
     """所有值在控制限内"""
 
-def test_detect_breaches_high():
+def test_detect_deviationes_high():
     """值超过上控制限"""
 
-def test_detect_breaches_low():
+def test_detect_deviationes_low():
     """值低于下控制限"""
 ```
 
-**测试 analyze_realtime 的报警判定逻辑:**
+**测试 analyze_realtime 的异常预警判定逻辑:**
 ```python
-def test_alarm_triggered_consecutive():
-    """连续 N 次超限，应触发报警"""
+def test_anomaly_triggered_consecutive():
+    """连续 N 次超限，应触发异常预警"""
 
-def test_alarm_not_triggered_insufficient():
+def test_anomaly_not_triggered_insufficient():
     """超限次数不足 N 次，不应触发"""
 
-def test_alarm_not_triggered_non_consecutive():
+def test_anomaly_not_triggered_non_consecutive():
     """超限次数够但不连续，不应触发"""
 ```
 
 **Golden test cases（回归测试）:**
 ```python
 def test_golden_normal_sequence():
-    """正常波动序列，不报警"""
+    """正常波动序列，不异常预警"""
 
 def test_golden_gradual_drift():
-    """渐变漂移序列，应报警"""
+    """渐变漂移序列，应异常预警"""
 
 def test_golden_spike_and_recover():
-    """突变后恢复，不报警"""
+    """突变后恢复，不异常预警"""
 
 def test_golden_boundary_n_minus_1():
-    """恰好 N-1 次超限，不报警"""
+    """恰好 N-1 次超限，不异常预警"""
 ```
 
 ### 第三步：Java 端单元测试
 
-编写 `java_module/src/test/java/com/example/sqc/alarm/AlarmServiceTest.java`：
+编写 `java_module/src/test/java/com/example/cp/anomaly/AnomalyServiceTest.java`：
 
 ```java
 // 测试 Service 层逻辑（Mock Repository）
@@ -116,7 +116,7 @@ def test_golden_boundary_n_minus_1():
 // - testCreateEvent_Success
 ```
 
-编写 `java_module/src/test/java/com/example/sqc/alarm/AlarmControllerTest.java`：
+编写 `java_module/src/test/java/com/example/cp/anomaly/AnomalyControllerTest.java`：
 
 ```java
 // 测试 Controller 层（MockMvc）

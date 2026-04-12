@@ -3,8 +3,8 @@
 骨架代码 -- Agent 需要补充：
 - 所有字段的类型注解和 Field 约束
 - 与 OpenAPI 契约中 schema 的字段一一对应
-- 枚举类型（Severity, BreachDirection）
-- 分析专用模型（AlarmResult, HistoryAnalysis）
+- 枚举类型（Severity, DeviationDirection）
+- 分析专用模型（AnomalyResult, HistoryAnalysis）
 
 字段命名统一使用 snake_case（与契约一致）。
 """
@@ -17,45 +17,45 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Severity(str, Enum):
-    """报警严重程度。"""
+    """异常预警严重程度。"""
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
 
 
-class BreachDirection(str, Enum):
+class DeviationDirection(str, Enum):
     """超限方向。"""
     HIGH = "HIGH"
     LOW = "LOW"
 
 
-class BreachPoint(BaseModel):
+class DeviationPoint(BaseModel):
     """超限点位信息。"""
     # TODO: Agent 补充字段
     # index: int
     # moving_average: float
     # upper_limit: float
     # lower_limit: float
-    # direction: BreachDirection
+    # direction: DeviationDirection
     pass
 
 
-class AlarmRuleResponse(BaseModel):
-    """报警规则响应（对应 Java 端返回）。"""
+class AnomalyRuleResponse(BaseModel):
+    """预警规则响应（对应 Java 端返回）。"""
     model_config = ConfigDict(from_attributes=True)
-    # TODO: Agent 补充字段 -- 与 api_contract.yaml AlarmRuleResponse 一致
+    # TODO: Agent 补充字段 -- 与 api_contract.yaml AnomalyRuleResponse 一致
     pass
 
 
-class AlarmEventCreateRequest(BaseModel):
-    """报警事件创建请求（Python 端发往 Java 端）。"""
-    # TODO: Agent 补充字段 -- 与 api_contract.yaml AlarmEventCreateRequest 一致
+class AnomalyEventCreateRequest(BaseModel):
+    """异常事件创建请求（Python 端发往 Java 端）。"""
+    # TODO: Agent 补充字段 -- 与 api_contract.yaml AnomalyEventCreateRequest 一致
     pass
 
 
-class AlarmEventResponse(BaseModel):
-    """报警事件响应（Java 端返回）。"""
+class AnomalyEventResponse(BaseModel):
+    """异常事件响应（Java 端返回）。"""
     model_config = ConfigDict(from_attributes=True)
-    # TODO: Agent 补充字段 -- 与 api_contract.yaml AlarmEventResponse 一致
+    # TODO: Agent 补充字段 -- 与 api_contract.yaml AnomalyEventResponse 一致
     pass
 
 
@@ -70,12 +70,12 @@ class ErrorResponse(BaseModel):
 
 # ----- 分析专用模型（非契约模型，Python端内部使用） -----
 
-class AlarmResult(BaseModel):
+class AnomalyResult(BaseModel):
     """实时分析结果。"""
     # TODO: Agent 补充字段
     # triggered: bool
     # moving_averages: list[float]
-    # breach_points: list[BreachPoint]
+    # deviation_points: list[DeviationPoint]
     # message: Optional[str]
     pass
 
@@ -84,7 +84,7 @@ class HistoryAnalysis(BaseModel):
     """历史分析结果。"""
     # TODO: Agent 补充字段
     # moving_averages: list[float]
-    # breach_points: list[BreachPoint]
-    # alarm_segments: list[dict]   # 连续超限区段
+    # deviation_points: list[DeviationPoint]
+    # anomaly_segments: list[dict]   # 连续超限区段
     # summary: dict                # 统计摘要
     pass

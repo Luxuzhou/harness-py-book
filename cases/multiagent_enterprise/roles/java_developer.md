@@ -3,7 +3,7 @@
 ## 身份
 
 你是一位 Java 后端开发工程师，精通 Spring Boot、Spring Data JPA、RESTful API 开发。
-你负责在 H34 质控管理平台上实现智能报警规则管理和报警事件存储功能。
+你负责在 临床路径管理系统 临床路径管理平台上实现智能预警规则管理和异常事件存储功能。
 
 ## 可用工具
 
@@ -28,32 +28,32 @@
 
 ### 按照实施计划，完成以下开发工作：
 
-#### 1. 完善 AlarmRule 实体类 (`dao/model/AlarmRule.java`)
+#### 1. 完善 AnomalyRule 实体类 (`dao/model/AnomalyRule.java`)
 - 添加所有字段的 JPA 注解
-- 配置 `@Table`、`@Column` 映射到 alarm_rule 表
+- 配置 `@Table`、`@Column` 映射到 anomaly_rule 表
 - 添加参数校验注解（`@NotNull`、`@Size` 等）
 
-#### 2. 完善 AlarmEvent 实体类（新建 `dao/model/AlarmEvent.java`）
-- 映射到 alarm_event 表
-- JSON 类型字段（moving_averages、breach_points）使用 `@Convert` 或 `@Column(columnDefinition="TEXT")`
+#### 2. 完善 AnomalyEvent 实体类（新建 `dao/model/AnomalyEvent.java`）
+- 映射到 anomaly_event 表
+- JSON 类型字段（moving_averages、deviation_points）使用 `@Convert` 或 `@Column(columnDefinition="TEXT")`
 
 #### 3. 创建 Repository 接口
-- `AlarmRuleRepository extends JpaRepository<AlarmRule, Long>`
-- `AlarmEventRepository extends JpaRepository<AlarmEvent, Long>`
+- `AnomalyRuleRepository extends JpaRepository<AnomalyRule, Long>`
+- `AnomalyEventRepository extends JpaRepository<AnomalyEvent, Long>`
 - 添加必要的自定义查询方法
 
-#### 4. 完善 DTO 类 (`dto/AlarmRuleDto.java`)
+#### 4. 完善 DTO 类 (`dto/AnomalyRuleDto.java`)
 - 创建请求 DTO 和响应 DTO
 - 添加 Bean Validation 注解
-- 新建 `AlarmEventDto.java`
+- 新建 `AnomalyEventDto.java`
 
-#### 5. 完善 Service 层 (`service/AlarmService.java`)
+#### 5. 完善 Service 层 (`service/AnomalyService.java`)
 - 实现 createRule、getRule、createEvent 三个业务方法
 - 添加事务管理（`@Transactional`）
 - 实现 Entity <-> DTO 转换
 - 异常处理（规则已存在 -> 409，规则不存在 -> 404）
 
-#### 6. 完善 Controller 层 (`controller/AlarmController.java`)
+#### 6. 完善 Controller 层 (`controller/AnomalyController.java`)
 - 实现 3 个 REST 端点，与 api_contract.yaml 严格一致
 - 添加参数校验（`@Valid`）
 - 添加 Service Token 校验逻辑（从 Header 读取）

@@ -1,7 +1,7 @@
 {
-  "WBC": {
-    "test_code": "WBC",
-    "test_name": "白细胞计数",
+  "ADMISSION": {
+    "step_code": "ADMISSION",
+    "step_name": "入院评估计数",
     "unit": "10^9/L",
     "ranges": [
       {
@@ -38,9 +38,9 @@
       }
     ]
   },
-  "RBC": {
-    "test_code": "RBC",
-    "test_name": "红细胞计数",
+  "TREATMENT": {
+    "step_code": "TREATMENT",
+    "step_name": "治疗执行计数",
     "unit": "10^12/L",
     "ranges": [
       {
@@ -77,9 +77,9 @@
       }
     ]
   },
-  "HGB": {
-    "test_code": "HGB",
-    "test_name": "血红蛋白",
+  "NURSING": {
+    "step_code": "NURSING",
+    "step_name": "护理评估",
     "unit": "g/L",
     "ranges": [
       {
@@ -116,9 +116,9 @@
       }
     ]
   },
-  "PLT": {
-    "test_code": "PLT",
-    "test_name": "血小板计数",
+  "DISCHARGE": {
+    "step_code": "DISCHARGE",
+    "step_name": "出院评估计数",
     "unit": "10^9/L",
     "ranges": [
       {
@@ -156,8 +156,8 @@
     ]
   },
   "ALT": {
-    "test_code": "ALT",
-    "test_name": "丙氨酸氨基转移酶",
+    "step_code": "ALT",
+    "step_name": "丙氨酸氨基转移酶",
     "unit": "U/L",
     "ranges": [
       {
@@ -195,8 +195,8 @@
     ]
   },
   "AST": {
-    "test_code": "AST",
-    "test_name": "天冬氨酸氨基转移酶",
+    "step_code": "AST",
+    "step_name": "天冬氨酸氨基转移酶",
     "unit": "U/L",
     "ranges": [
       {
@@ -234,8 +234,8 @@
     ]
   },
   "TBIL": {
-    "test_code": "TBIL",
-    "test_name": "总胆红素",
+    "step_code": "TBIL",
+    "step_name": "总胆红素",
     "unit": "umol/L",
     "ranges": [
       {
@@ -273,8 +273,8 @@
     ]
   },
   "DBIL": {
-    "test_code": "DBIL",
-    "test_name": "直接胆红素",
+    "step_code": "DBIL",
+    "step_name": "直接胆红素",
     "unit": "umol/L",
     "ranges": [
       {
@@ -312,8 +312,8 @@
     ]
   },
   "TP": {
-    "test_code": "TP",
-    "test_name": "总蛋白",
+    "step_code": "TP",
+    "step_name": "总蛋白",
     "unit": "g/L",
     "ranges": [
       {
@@ -351,8 +351,8 @@
     ]
   },
   "ALB": {
-    "test_code": "ALB",
-    "test_name": "白蛋白",
+    "step_code": "ALB",
+    "step_name": "白蛋白",
     "unit": "g/L",
     "ranges": [
       {
@@ -390,8 +390,8 @@
     ]
   },
   "BUN": {
-    "test_code": "BUN",
-    "test_name": "尿素氮",
+    "step_code": "BUN",
+    "step_name": "尿素氮",
     "unit": "mmol/L",
     "ranges": [
       {
@@ -429,8 +429,8 @@
     ]
   },
   "CR": {
-    "test_code": "CR",
-    "test_name": "肌酐",
+    "step_code": "CR",
+    "step_name": "肌酐",
     "unit": "umol/L",
     "ranges": [
       {
@@ -468,8 +468,8 @@
     ]
   },
   "UA": {
-    "test_code": "UA",
-    "test_name": "尿酸",
+    "step_code": "UA",
+    "step_name": "尿酸",
     "unit": "umol/L",
     "ranges": [
       {
@@ -507,8 +507,8 @@
     ]
   },
   "GLU": {
-    "test_code": "GLU",
-    "test_name": "葡萄糖",
+    "step_code": "GLU",
+    "step_name": "葡萄糖",
     "unit": "mmol/L",
     "ranges": [
       {
@@ -546,8 +546,8 @@
     ]
   },
   "TC": {
-    "test_code": "TC",
-    "test_name": "总胆固醇",
+    "step_code": "TC",
+    "step_name": "总胆固醇",
     "unit": "mmol/L",
     "ranges": [
       {
@@ -585,8 +585,8 @@
     ]
   },
   "TG": {
-    "test_code": "TG",
-    "test_name": "甘油三酯",
+    "step_code": "TG",
+    "step_name": "甘油三酯",
     "unit": "mmol/L",
     "ranges": [
       {
@@ -624,8 +624,8 @@
     ]
   },
   "K": {
-    "test_code": "K",
-    "test_name": "钾",
+    "step_code": "K",
+    "step_name": "钾",
     "unit": "mmol/L",
     "ranges": [
       {
@@ -663,8 +663,8 @@
     ]
   },
   "Na": {
-    "test_code": "Na",
-    "test_name": "钠",
+    "step_code": "Na",
+    "step_name": "钠",
     "unit": "mmol/L",
     "ranges": [
       {
@@ -702,8 +702,8 @@
     ]
   },
   "Cl": {
-    "test_code": "Cl",
-    "test_name": "氯",
+    "step_code": "Cl",
+    "step_name": "氯",
     "unit": "mmol/L",
     "ranges": [
       {
@@ -741,8 +741,8 @@
     ]
   },
   "Ca": {
-    "test_code": "Ca",
-    "test_name": "钙",
+    "step_code": "Ca",
+    "step_name": "钙",
     "unit": "mmol/L",
     "ranges": [
       {

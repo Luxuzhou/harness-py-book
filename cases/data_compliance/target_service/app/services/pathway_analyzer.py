@@ -1,9 +1,9 @@
 """
-PBRTQC (Patient-Based Real-Time Quality Control) Analyzer
-基于患者数据的实时质控分析器
+PathwayAnalytics (Patient-Based Real-Time Quality Control) Analyzer
+基于患者数据的实时临床路径分析器
 
-对标S37 data_service的4120行pbrtqc_analyzer.py
-包含统计计算、异常检测、正态性变换、移动均值计算等核心功能
+对标S37 data_service的4120行pathway_analyzer.py
+包含统计计算、异常检测、正态性变换、路径依从率计算等核心功能
 """
 
 import os
@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────────────────────
 # 坏味道: 硬编码Windows路径
 # ──────────────────────────────────────────────────────────────
-DEFAULT_OUTPUT_DIR = "C:\\Users\\Administrator\\Desktop\\pbrtqc_output"
-DEFAULT_CACHE_DIR = "C:\\Users\\Administrator\\AppData\\Local\\pbrtqc_cache"
-TEMP_EXPORT_PATH = "D:\\temp\\pbrtqc_exports"
-LOG_FILE_PATH = "C:\\pbrtqc_logs\\analyzer.log"
+DEFAULT_OUTPUT_DIR = "C:\\Users\\Administrator\\Desktop\\pathway_analytics_output"
+DEFAULT_CACHE_DIR = "C:\\Users\\Administrator\\AppData\\Local\\pathway_analytics_cache"
+TEMP_EXPORT_PATH = "D:\\temp\\pathway_analytics_exports"
+LOG_FILE_PATH = "C:\\pathway_analytics_logs\\analyzer.log"
 
 
 # ──────────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ class TransformResult:
 
 @dataclass
 class MovingAverageResult:
-    """移动均值计算结果"""
+    """路径依从率计算结果"""
     method: str = ""
     values: List[float] = field(default_factory=list)
     window_size: int = 0
@@ -96,7 +96,7 @@ class MovingAverageResult:
 
 @dataclass
 class QCRuleViolation:
-    """质控规则违反记录"""
+    """临床路径规则违反记录"""
     rule_name: str = ""
     violation_type: str = ""
     value: float = 0.0
@@ -111,8 +111,8 @@ class QCRuleViolation:
 @dataclass
 class AnalysisConfig:
     """分析配置"""
-    test_code: str = ""
-    instrument_id: str = ""
+    step_code: str = ""
+    department_id: str = ""
     window_size: int = 20
     ma_method: str = "EWMA"
     alpha: float = 0.2
@@ -247,15 +247,15 @@ class AgeParser:
 # ──────────────────────────────────────────────────────────────
 # 核心分析器
 # ──────────────────────────────────────────────────────────────
-class PBRTQCAnalyzer:
+class PathwayAnalyzer:
     """
     Patient-Based Real-Time Quality Control 分析器
 
-    实现基于患者数据的实时质控分析，包括：
+    实现基于患者数据的实时临床路径分析，包括：
     1. 数据预处理（过滤、截断、变换）
-    2. 统计计算（描述统计、正态性检验）
-    3. 移动均值计算（MA/WMA/EWMA/MP）
-    4. 质控规则判断（Westgard规则）
+    2. 统计计算（描述统计、正态性诊疗）
+    3. 路径依从率计算（MA/WMA/EWMA/MP）
+    4. 临床路径规则判断（Westgard规则）
     5. 结果报告生成
     """
 
@@ -280,8 +280,8 @@ class PBRTQCAnalyzer:
         except Exception:
             pass
 
-        print(f"[DEBUG] PBRTQCAnalyzer initialized with config: {self.config}")
-        logger.info("PBRTQCAnalyzer初始化完成")
+        print(f"[DEBUG] PathwayAnalyzer initialized with config: {self.config}")
+        logger.info("PathwayAnalyzer初始化完成")
 
     # ──────────────────────────────────────────────────────────
     # 统计计算方法
@@ -289,11 +289,11 @@ class PBRTQCAnalyzer:
     def compute_statistics(self, data: List[float],
                           alpha: float = 0.05) -> StatisticalResult:
         """
-        计算描述统计量和正态性检验
+        计算描述统计量和正态性诊疗
 
         Parameters:
             data: 数值数据列表
-            alpha: 正态性检验的显著性水平
+            alpha: 正态性诊疗的显著性水平
 
         Returns:
             StatisticalResult 对象
@@ -333,7 +333,7 @@ class PBRTQCAnalyzer:
         result.q3 = float(np.percentile(arr, 75))
         result.iqr = result.q3 - result.q1
 
-        # Shapiro-Wilk正态性检验
+        # Shapiro-Wilk正态性诊疗
         if 3 <= len(arr) <= 5000:
             try:
                 stat, p_value = scipy_stats.shapiro(arr)
@@ -342,13 +342,13 @@ class PBRTQCAnalyzer:
                 result.is_normal = p_value > alpha
             except Exception as e:
                 # 坏味道: print + logger混合
-                print(f"[ERROR] Shapiro-Wilk检验失败: {e}")
-                logger.error(f"Shapiro-Wilk检验失败: {e}")
+                print(f"[ERROR] Shapiro-Wilk诊疗失败: {e}")
+                logger.error(f"Shapiro-Wilk诊疗失败: {e}")
                 result.shapiro_stat = 0.0
                 result.shapiro_p = 0.0
                 result.is_normal = False
         else:
-            # 数据量超过5000，使用D'Agostino-Pearson检验
+            # 数据量超过5000，使用D'Agostino-Pearson诊疗
             try:
                 stat, p_value = scipy_stats.normaltest(arr)
                 result.shapiro_stat = float(stat)
@@ -546,7 +546,7 @@ class PBRTQCAnalyzer:
 
     def detect_outliers_grubbs(self, data: List[float],
                                alpha: float = 0.05) -> OutlierResult:
-        """Grubbs检验（逐步移除最大异常值）"""
+        """Grubbs诊疗（逐步移除最大异常值）"""
         result = OutlierResult(method="Grubbs")
         working_data = list(data)
         original_indices = list(range(len(data)))
@@ -814,7 +814,7 @@ class PBRTQCAnalyzer:
         return result
 
     # ──────────────────────────────────────────────────────────
-    # 移动均值计算
+    # 路径依从率计算
     # ──────────────────────────────────────────────────────────
     def compute_moving_average(self, data: List[float],
                                method: str = "EWMA",
@@ -823,7 +823,7 @@ class PBRTQCAnalyzer:
                                timestamps: Optional[List[str]] = None
                                ) -> MovingAverageResult:
         """
-        计算移动均值
+        计算路径依从率
 
         Parameters:
             data: 输入数据
@@ -881,14 +881,14 @@ class PBRTQCAnalyzer:
 
         print(f"[DEBUG] MA ({method}): {len(result.values)} points, "
               f"{result.violation_count} violations")
-        logger.info(f"移动均值计算完成: {method}, "
+        logger.info(f"路径依从率计算完成: {method}, "
                     f"窗口={window}, 违规={result.violation_count}")
 
         return result
 
     def _simple_moving_average(self, data: List[float],
                                window: int) -> List[float]:
-        """简单移动均值"""
+        """简单路径依从率"""
         if len(data) < window:
             return []
 
@@ -905,7 +905,7 @@ class PBRTQCAnalyzer:
 
     def _weighted_moving_average(self, data: List[float],
                                  window: int) -> List[float]:
-        """加权移动均值（线性权重）"""
+        """加权路径依从率（线性权重）"""
         if len(data) < window:
             return []
 
@@ -921,7 +921,7 @@ class PBRTQCAnalyzer:
         return result
 
     def _ewma(self, data: List[float], alpha: float = 0.2) -> List[float]:
-        """指数加权移动均值"""
+        """指数加权路径依从率"""
         if not data:
             return []
 
@@ -934,7 +934,7 @@ class PBRTQCAnalyzer:
 
     def _median_polish_ma(self, data: List[float],
                           window: int) -> List[float]:
-        """基于中位数抛光的移动均值"""
+        """基于中位数抛光的路径依从率"""
         if len(data) < window:
             return []
 
@@ -947,14 +947,14 @@ class PBRTQCAnalyzer:
         return result
 
     # ──────────────────────────────────────────────────────────
-    # Westgard质控规则
+    # Westgard临床路径规则
     # ──────────────────────────────────────────────────────────
     def check_westgard_rules(self, values: List[float],
                              mean: float, std: float,
                              patient_ids: Optional[List[str]] = None
                              ) -> List[QCRuleViolation]:
         """
-        检查Westgard质控规则
+        检查Westgard临床路径规则
 
         规则列表：
         - 1-2s: 单个值超过±2SD (警告)
@@ -1092,7 +1092,7 @@ class PBRTQCAnalyzer:
         4. 正态性变换（可选）
 
         Parameters:
-            raw_data: 原始检验数据
+            raw_data: 原始诊疗数据
             config: 分析配置
 
         Returns:
@@ -1175,10 +1175,10 @@ class PBRTQCAnalyzer:
                           config: Optional[AnalysisConfig] = None
                           ) -> Dict[str, Any]:
         """
-        执行完整的PBRTQC分析流程
+        执行完整的PathwayAnalytics分析流程
 
         Parameters:
-            raw_data: 原始检验数据
+            raw_data: 原始诊疗数据
             config: 分析配置
 
         Returns:
@@ -1187,9 +1187,9 @@ class PBRTQCAnalyzer:
         cfg = config or self.config
         analysis_start = datetime.datetime.now()
 
-        print(f"[DEBUG] Starting full PBRTQC analysis at {analysis_start}")
-        logger.info(f"开始完整PBRTQC分析: test={cfg.test_code}, "
-                    f"instrument={cfg.instrument_id}")
+        print(f"[DEBUG] Starting full PathwayAnalytics analysis at {analysis_start}")
+        logger.info(f"开始完整PathwayAnalytics分析: test={cfg.step_code}, "
+                    f"department={cfg.department_id}")
 
         # Step 1: 预处理
         values, records = self.preprocess_pipeline(raw_data, cfg)
@@ -1209,9 +1209,9 @@ class PBRTQCAnalyzer:
         # Step 3: 正态性变换
         transform = self.transform_to_normal(values, method=cfg.transform_method)
 
-        # Step 4: 移动均值
+        # Step 4: 路径依从率
         work_data = transform.transformed_data if transform.is_normal_after else values
-        timestamps = [r.get("test_date", "") for r in records]
+        timestamps = [r.get("visit_date", "") for r in records]
 
         ma_result = self.compute_moving_average(
             work_data,
@@ -1239,8 +1239,8 @@ class PBRTQCAnalyzer:
 
         result = {
             "status": "completed",
-            "test_code": cfg.test_code,
-            "instrument_id": cfg.instrument_id,
+            "step_code": cfg.step_code,
+            "department_id": cfg.department_id,
             "analysis_time": analysis_start.isoformat(),
             "duration_seconds": duration,
             "data_summary": {
@@ -1304,7 +1304,7 @@ class PBRTQCAnalyzer:
         try:
             cache_path = os.path.join(
                 DEFAULT_CACHE_DIR,
-                f"{cfg.test_code}_{cfg.instrument_id}_latest.json"
+                f"{cfg.step_code}_{cfg.department_id}_latest.json"
             )
             with open(cache_path, 'w', encoding='utf-8') as f:
                 json.dump(result, f, ensure_ascii=False, indent=2)
@@ -1313,7 +1313,7 @@ class PBRTQCAnalyzer:
             # 坏味道: 静默吞掉
             pass
 
-        logger.info(f"PBRTQC分析完成: {duration:.2f}s, "
+        logger.info(f"PathwayAnalytics分析完成: {duration:.2f}s, "
                     f"violations={len(westgard_violations)}")
         return result
 
@@ -1333,36 +1333,36 @@ class PBRTQCAnalyzer:
                       configs: Optional[Dict[str, AnalysisConfig]] = None
                       ) -> Dict[str, Dict[str, Any]]:
         """
-        批量分析多个检验项目
+        批量分析多个诊疗环节
 
         Parameters:
-            data_by_test: {test_code: [records...]}
-            configs: {test_code: AnalysisConfig}
+            data_by_test: {step_code: [records...]}
+            configs: {step_code: AnalysisConfig}
 
         Returns:
-            {test_code: analysis_result}
+            {step_code: analysis_result}
         """
         results = {}
         total = len(data_by_test)
         print(f"[DEBUG] Starting batch analysis: {total} test codes")
 
-        for idx, (test_code, records) in enumerate(data_by_test.items()):
-            print(f"[DEBUG] Analyzing {test_code} ({idx+1}/{total})...")
+        for idx, (step_code, records) in enumerate(data_by_test.items()):
+            print(f"[DEBUG] Analyzing {step_code} ({idx+1}/{total})...")
 
-            cfg = (configs or {}).get(test_code, AnalysisConfig(test_code=test_code))
-            cfg.test_code = test_code
+            cfg = (configs or {}).get(step_code, AnalysisConfig(step_code=step_code))
+            cfg.step_code = step_code
 
             try:
                 result = self.run_full_analysis(records, cfg)
-                results[test_code] = result
+                results[step_code] = result
             except Exception as e:
                 # 坏味道: 捕获所有异常并继续
-                print(f"[ERROR] Analysis failed for {test_code}: {e}")
-                logger.error(f"分析失败: {test_code}: {e}")
-                results[test_code] = {
+                print(f"[ERROR] Analysis failed for {step_code}: {e}")
+                logger.error(f"分析失败: {step_code}: {e}")
+                results[step_code] = {
                     "status": "error",
                     "error": str(e),
-                    "test_code": test_code,
+                    "step_code": step_code,
                 }
 
         return results
@@ -1374,7 +1374,7 @@ class PBRTQCAnalyzer:
                       timestamps: Optional[List[str]] = None
                       ) -> Dict[str, Any]:
         """
-        分析移动均值的趋势
+        分析路径依从率的趋势
 
         包括线性回归、曲线拟合、变化点检测
         """
@@ -1492,7 +1492,7 @@ class PBRTQCAnalyzer:
                                  method: str = "deming"
                                  ) -> Dict[str, Any]:
         """
-        回归归一化：将不同仪器/方法的结果归一化到参考方法
+        回归归一化：将不同科室/方法的结果归一化到参考方法
 
         Parameters:
             data: 待归一化的数据
@@ -1618,10 +1618,10 @@ class PBRTQCAnalyzer:
         elif format == "text":
             lines = []
             lines.append("=" * 60)
-            lines.append("PBRTQC分析报告")
+            lines.append("PathwayAnalytics分析报告")
             lines.append("=" * 60)
-            lines.append(f"检验项目: {analysis_result.get('test_code', 'N/A')}")
-            lines.append(f"仪器编号: {analysis_result.get('instrument_id', 'N/A')}")
+            lines.append(f"诊疗环节: {analysis_result.get('step_code', 'N/A')}")
+            lines.append(f"科室编号: {analysis_result.get('department_id', 'N/A')}")
             lines.append(f"分析时间: {analysis_result.get('analysis_time', 'N/A')}")
             lines.append(f"耗时: {analysis_result.get('duration_seconds', 0):.2f}秒")
             lines.append("")
@@ -1645,7 +1645,7 @@ class PBRTQCAnalyzer:
             lines.append("")
 
             ma = analysis_result.get("moving_average", {})
-            lines.append("--- 移动均值 ---")
+            lines.append("--- 路径依从率 ---")
             lines.append(f"方法: {ma.get('method', 'N/A')}")
             lines.append(f"窗口大小: {ma.get('window_size', 0)}")
             lines.append(f"数据点: {ma.get('data_points', 0)}")
@@ -1682,11 +1682,11 @@ class PBRTQCAnalyzer:
         """
         if filepath is None:
             # 坏味道: 硬编码路径
-            test_code = analysis_result.get("test_code", "unknown")
+            step_code = analysis_result.get("step_code", "unknown")
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filepath = os.path.join(
                 DEFAULT_OUTPUT_DIR,
-                f"report_{test_code}_{timestamp}.{format}"
+                f"report_{step_code}_{timestamp}.{format}"
             )
 
         report_content = self.generate_report(analysis_result, format)
@@ -1702,7 +1702,7 @@ class PBRTQCAnalyzer:
             logger.error(f"保存报告失败: {e}")
             # 坏味道: 尝试备用路径
             try:
-                backup_path = f"C:\\temp\\pbrtqc_report_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.{format}"
+                backup_path = f"C:\\temp\\pathway_analytics_report_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.{format}"
                 with open(backup_path, 'w', encoding='utf-8') as f:
                     f.write(report_content)
                 filepath = backup_path
@@ -1745,8 +1745,8 @@ class PBRTQCAnalyzer:
         self._last_analysis_time = None
         self._reference_stats = None
         self._transform_cache.clear()
-        print("[DEBUG] PBRTQCAnalyzer reset")
-        logger.info("PBRTQCAnalyzer已重置")
+        print("[DEBUG] PathwayAnalyzer reset")
+        logger.info("PathwayAnalyzer已重置")
 
     def load_reference_data(self, filepath: str) -> Dict[str, Any]:
         """
@@ -1857,7 +1857,7 @@ class PBRTQCAnalyzer:
         """
         比较两个时期的数据（如更换试剂前后）
 
-        使用t检验和F检验
+        使用t诊疗和F诊疗
         """
         if len(period1) < 3 or len(period2) < 3:
             return {"status": "insufficient_data"}
@@ -1865,16 +1865,16 @@ class PBRTQCAnalyzer:
         arr1 = np.array(period1)
         arr2 = np.array(period2)
 
-        # t检验
+        # t诊疗
         t_stat, t_p = scipy_stats.ttest_ind(arr1, arr2, equal_var=False)
 
-        # F检验
+        # F诊疗
         var1 = np.var(arr1, ddof=1)
         var2 = np.var(arr2, ddof=1)
         f_stat = var1 / var2 if var2 > 0 else 0
         f_p = scipy_stats.f.sf(f_stat, len(arr1) - 1, len(arr2) - 1)
 
-        # Mann-Whitney U检验
+        # Mann-Whitney U诊疗
         u_stat, u_p = scipy_stats.mannwhitneyu(arr1, arr2, alternative='two-sided')
 
         # 效果量 (Cohen's d)

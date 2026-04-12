@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 # 坏味道: 硬编码配置
 # ──────────────────────────────────────────────────────────────
 DEFAULT_DATABASE = "lab_data"
-DEFAULT_TABLE = "lab_results"
+DEFAULT_TABLE = "treatment_records"
 PATIENT_TABLE = "patients"
-INSTRUMENT_TABLE = "instruments"
+INSTRUMENT_TABLE = "departments"
 MAX_QUERY_ROWS = 1000000
 QUERY_TIMEOUT_SECONDS = 30
 
@@ -37,10 +37,10 @@ class QueryBuilder:
         self._cache_ttl = 60  # seconds
         print(f"[DEBUG] QueryBuilder initialized: database={database}")
 
-    def build_lab_results_query(
+    def build_treatment_records_query(
         self,
-        test_codes: List[str],
-        instrument_ids: Optional[List[str]] = None,
+        step_codes: List[str],
+        department_ids: Optional[List[str]] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         departments: Optional[List[str]] = None,
@@ -54,11 +54,11 @@ class QueryBuilder:
         patient_ids: Optional[List[str]] = None,
         limit: int = MAX_QUERY_ROWS,
         offset: int = 0,
-        order_by: str = "test_date",
+        order_by: str = "visit_date",
         order_dir: str = "ASC",
     ) -> str:
         """
-        构建检验结果查询SQL
+        构建诊疗记录查询SQL
 
         坏味道: SQL字符串拼接，有注入风险
         """
@@ -68,12 +68,12 @@ class QueryBuilder:
 SELECT
     lr.result_id,
     lr.patient_id,
-    lr.test_code,
-    lr.test_name,
+    lr.step_code,
+    lr.step_name,
     lr.value,
     lr.unit,
-    lr.instrument_id,
-    lr.test_date,
+    lr.department_id,
+    lr.visit_date,
     lr.specimen_type,
     lr.flag,
     p.name AS patient_name,
@@ -90,19 +90,19 @@ LEFT JOIN {self.database}.{PATIENT_TABLE} AS p
         # PREWHERE子句（ClickHouse优化：在数据解压前过滤）
         prewhere_conditions = []
 
-        if test_codes:
+        if step_codes:
             # 坏味道: 直接拼接用户输入
-            codes_str = ", ".join(f"'{code}'" for code in test_codes)
-            prewhere_conditions.append(f"lr.test_code IN ({codes_str})")
+            codes_str = ", ".join(f"'{code}'" for code in step_codes)
+            prewhere_conditions.append(f"lr.step_code IN ({codes_str})")
 
         if start_date:
             prewhere_conditions.append(
-                f"lr.test_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
 
         if end_date:
             prewhere_conditions.append(
-                f"lr.test_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
 
         if prewhere_conditions:
@@ -111,10 +111,10 @@ LEFT JOIN {self.database}.{PATIENT_TABLE} AS p
         # WHERE子句
         where_conditions = []
 
-        if instrument_ids:
+        if department_ids:
             # 坏味道: 未过滤特殊字符
-            ids_str = ", ".join(f"'{iid}'" for iid in instrument_ids)
-            where_conditions.append(f"lr.instrument_id IN ({ids_str})")
+            ids_str = ", ".join(f"'{iid}'" for iid in department_ids)
+            where_conditions.append(f"lr.department_id IN ({ids_str})")
 
         if departments:
             dept_str = ", ".join(f"'{d}'" for d in departments)
@@ -170,14 +170,14 @@ LEFT JOIN {self.database}.{PATIENT_TABLE} AS p
             sql += f"OFFSET {offset}\n"
 
         print(f"[DEBUG] Generated query ({len(sql)} chars)")
-        logger.info(f"SQL查询已生成: test_codes={test_codes}, limit={limit}")
+        logger.info(f"SQL查询已生成: step_codes={step_codes}, limit={limit}")
 
         return sql
 
     def build_count_query(
         self,
-        test_codes: List[str],
-        instrument_ids: Optional[List[str]] = None,
+        step_codes: List[str],
+        department_ids: Optional[List[str]] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         **kwargs,
@@ -191,21 +191,21 @@ LEFT JOIN {self.database}.{PATIENT_TABLE} AS p
 """
         conditions = []
 
-        if test_codes:
-            codes_str = ", ".join(f"'{code}'" for code in test_codes)
-            conditions.append(f"lr.test_code IN ({codes_str})")
+        if step_codes:
+            codes_str = ", ".join(f"'{code}'" for code in step_codes)
+            conditions.append(f"lr.step_code IN ({codes_str})")
 
-        if instrument_ids:
-            ids_str = ", ".join(f"'{iid}'" for iid in instrument_ids)
-            conditions.append(f"lr.instrument_id IN ({ids_str})")
+        if department_ids:
+            ids_str = ", ".join(f"'{iid}'" for iid in department_ids)
+            conditions.append(f"lr.department_id IN ({ids_str})")
 
         if start_date:
             conditions.append(
-                f"lr.test_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
         if end_date:
             conditions.append(
-                f"lr.test_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
 
         conditions.append("lr.value IS NOT NULL")
@@ -217,14 +217,14 @@ LEFT JOIN {self.database}.{PATIENT_TABLE} AS p
 
     def build_aggregation_query(
         self,
-        test_code: str,
-        instrument_id: Optional[str] = None,
+        step_code: str,
+        department_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        group_by: str = "toDate(test_date)",
+        group_by: str = "toDate(visit_date)",
     ) -> str:
         """
-        构建聚合查询（按日期/仪器/科室分组统计）
+        构建聚合查询（按日期/科室/科室分组统计）
         """
         sql = f"""
 SELECT
@@ -239,17 +239,17 @@ SELECT
     quantile(0.75)(lr.value) AS q3
 FROM {self.database}.{DEFAULT_TABLE} AS lr
 """
-        conditions = [f"lr.test_code = '{test_code}'"]
+        conditions = [f"lr.step_code = '{step_code}'"]
 
-        if instrument_id:
-            conditions.append(f"lr.instrument_id = '{instrument_id}'")
+        if department_id:
+            conditions.append(f"lr.department_id = '{department_id}'")
         if start_date:
             conditions.append(
-                f"lr.test_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
         if end_date:
             conditions.append(
-                f"lr.test_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
 
         conditions.append("lr.value IS NOT NULL")
@@ -265,7 +265,7 @@ FROM {self.database}.{DEFAULT_TABLE} AS lr
     def build_patient_history_query(
         self,
         patient_id: str,
-        test_codes: Optional[List[str]] = None,
+        step_codes: Optional[List[str]] = None,
         limit: int = 1000,
     ) -> str:
         """
@@ -275,22 +275,22 @@ FROM {self.database}.{DEFAULT_TABLE} AS lr
         sql = f"""
 SELECT
     lr.result_id,
-    lr.test_code,
-    lr.test_name,
+    lr.step_code,
+    lr.step_name,
     lr.value,
     lr.unit,
-    lr.test_date,
-    lr.instrument_id,
+    lr.visit_date,
+    lr.department_id,
     lr.flag,
     lr.specimen_type
 FROM {self.database}.{DEFAULT_TABLE} AS lr
 PREWHERE lr.patient_id = '{patient_id}'
 """
-        if test_codes:
-            codes_str = ", ".join(f"'{c}'" for c in test_codes)
-            sql += f"WHERE lr.test_code IN ({codes_str})\n"
+        if step_codes:
+            codes_str = ", ".join(f"'{c}'" for c in step_codes)
+            sql += f"WHERE lr.step_code IN ({codes_str})\n"
 
-        sql += f"ORDER BY lr.test_date DESC\nLIMIT {limit}\n"
+        sql += f"ORDER BY lr.visit_date DESC\nLIMIT {limit}\n"
 
         # 坏味道: 日志中明文记录patient_id
         print(f"[DEBUG] Patient history query for: {patient_id}")
@@ -298,73 +298,73 @@ PREWHERE lr.patient_id = '{patient_id}'
 
         return sql
 
-    def build_instrument_summary_query(
+    def build_department_summary_query(
         self,
-        instrument_id: str,
+        department_id: str,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> str:
-        """构建仪器汇总查询"""
+        """构建科室汇总查询"""
         sql = f"""
 SELECT
-    lr.test_code,
-    lr.test_name,
+    lr.step_code,
+    lr.step_name,
     count() AS sample_count,
     avg(lr.value) AS mean_value,
     stddevPop(lr.value) AS std_value,
-    min(lr.test_date) AS first_date,
-    max(lr.test_date) AS last_date
+    min(lr.visit_date) AS first_date,
+    max(lr.visit_date) AS last_date
 FROM {self.database}.{DEFAULT_TABLE} AS lr
-PREWHERE lr.instrument_id = '{instrument_id}'
+PREWHERE lr.department_id = '{department_id}'
 """
         conditions = ["lr.value IS NOT NULL"]
         if start_date:
             conditions.append(
-                f"lr.test_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
         if end_date:
             conditions.append(
-                f"lr.test_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
+                f"lr.visit_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
             )
 
         sql += "WHERE " + " AND ".join(conditions) + "\n"
-        sql += "GROUP BY lr.test_code, lr.test_name\n"
+        sql += "GROUP BY lr.step_code, lr.step_name\n"
         sql += "ORDER BY sample_count DESC\n"
 
         return sql
 
-    def build_cross_instrument_query(
+    def build_cross_department_query(
         self,
-        test_code: str,
-        instrument_ids: List[str],
+        step_code: str,
+        department_ids: List[str],
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         limit: int = 50000,
     ) -> str:
-        """构建跨仪器比对查询"""
-        ids_str = ", ".join(f"'{iid}'" for iid in instrument_ids)
+        """构建跨科室比对查询"""
+        ids_str = ", ".join(f"'{iid}'" for iid in department_ids)
         sql = f"""
 SELECT
     lr.patient_id,
-    lr.instrument_id,
+    lr.department_id,
     lr.value,
-    lr.test_date,
+    lr.visit_date,
     p.gender,
     p.age
 FROM {self.database}.{DEFAULT_TABLE} AS lr
 LEFT JOIN {self.database}.{PATIENT_TABLE} AS p
     ON lr.patient_id = p.patient_id
-PREWHERE lr.test_code = '{test_code}'
-WHERE lr.instrument_id IN ({ids_str})
+PREWHERE lr.step_code = '{step_code}'
+WHERE lr.department_id IN ({ids_str})
     AND lr.value IS NOT NULL
     AND isFinite(lr.value)
 """
         if start_date:
-            sql += f"    AND lr.test_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'\n"
+            sql += f"    AND lr.visit_date >= '{start_date.strftime('%Y-%m-%d %H:%M:%S')}'\n"
         if end_date:
-            sql += f"    AND lr.test_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'\n"
+            sql += f"    AND lr.visit_date <= '{end_date.strftime('%Y-%m-%d %H:%M:%S')}'\n"
 
-        sql += f"ORDER BY lr.patient_id, lr.test_date\nLIMIT {limit}\n"
+        sql += f"ORDER BY lr.patient_id, lr.visit_date\nLIMIT {limit}\n"
         return sql
 
 
@@ -469,10 +469,10 @@ class QueryService:
         print(f"[DEBUG] QueryService initialized: database={database}")
         logger.info(f"QueryService初始化: database={database}")
 
-    def query_lab_results(
+    def query_treatment_records(
         self,
-        test_codes: List[str],
-        instrument_ids: Optional[List[str]] = None,
+        step_codes: List[str],
+        department_ids: Optional[List[str]] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         departments: Optional[List[str]] = None,
@@ -486,16 +486,16 @@ class QueryService:
         offset: int = 0,
     ) -> Dict[str, Any]:
         """
-        执行检验结果查询
+        执行诊疗记录查询
 
         Returns:
             包含SQL和模拟结果的字典
         """
         start_time = time.time()
 
-        sql = self.builder.build_lab_results_query(
-            test_codes=test_codes,
-            instrument_ids=instrument_ids,
+        sql = self.builder.build_treatment_records_query(
+            step_codes=step_codes,
+            department_ids=department_ids,
             start_date=start_date,
             end_date=end_date,
             departments=departments,
@@ -528,16 +528,16 @@ class QueryService:
         return result
 
     def query_patient_history(self, patient_id: str,
-                              test_codes: Optional[List[str]] = None
+                              step_codes: Optional[List[str]] = None
                               ) -> Dict[str, Any]:
-        """查询患者检验历史"""
+        """查询患者诊疗历史"""
         # 坏味道: 日志中暴露patient_id
         print(f"[DEBUG] Querying patient history: {patient_id}")
         logger.info(f"查询患者历史: patient_id={patient_id}")
 
         sql = self.builder.build_patient_history_query(
             patient_id=patient_id,
-            test_codes=test_codes,
+            step_codes=step_codes,
         )
 
         return {
@@ -546,20 +546,20 @@ class QueryService:
             "status": "simulated",
         }
 
-    def query_instrument_summary(self, instrument_id: str,
+    def query_department_summary(self, department_id: str,
                                   start_date: Optional[datetime] = None,
                                   end_date: Optional[datetime] = None,
                                   ) -> Dict[str, Any]:
-        """查询仪器汇总"""
-        sql = self.builder.build_instrument_summary_query(
-            instrument_id=instrument_id,
+        """查询科室汇总"""
+        sql = self.builder.build_department_summary_query(
+            department_id=department_id,
             start_date=start_date,
             end_date=end_date,
         )
 
         return {
             "sql": sql,
-            "instrument_id": instrument_id,
+            "department_id": department_id,
             "status": "simulated",
         }
 

@@ -89,3 +89,11 @@ cases/medical/complete_analysis*
 TASK.md
 test_e2e.py
 src/
+
+# === 旧案例目录（已被企业级案例替代）===
+cases/refactor/
+cases/medical/
+cases/fullstack/spec.md
+cases/fullstack/roles/evaluator.md
+cases/fullstack/roles/generator.md
+cases/fullstack/roles/planner.md

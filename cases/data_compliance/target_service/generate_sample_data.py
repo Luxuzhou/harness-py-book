@@ -1,6 +1,6 @@
 """
 合成数据生成器
-生成模拟的医疗检验数据（患者、检验结果、仪器、参考范围）
+生成模拟的医疗诊疗数据（患者、诊疗记录、科室、参考范围）
 """
 
 import csv
@@ -61,12 +61,12 @@ DIAGNOSES = [
     "健康体检", "术前检查", "产检", "复查",
 ]
 
-# 检验项目及其合理范围
+# 诊疗环节及其合理范围
 TEST_ITEMS = {
-    "WBC":  {"name": "白细胞计数",   "unit": "10^9/L", "low": 3.5,  "high": 9.5,  "mean": 6.5,   "std": 1.8},
-    "RBC":  {"name": "红细胞计数",   "unit": "10^12/L","low": 3.8,  "high": 5.8,  "mean": 4.5,   "std": 0.5},
-    "HGB":  {"name": "血红蛋白",     "unit": "g/L",    "low": 115,  "high": 175,  "mean": 140,   "std": 15},
-    "PLT":  {"name": "血小板计数",   "unit": "10^9/L", "low": 125,  "high": 350,  "mean": 220,   "std": 50},
+    "ADMISSION":  {"name": "入院评估计数",   "unit": "10^9/L", "low": 3.5,  "high": 9.5,  "mean": 6.5,   "std": 1.8},
+    "TREATMENT":  {"name": "治疗执行计数",   "unit": "10^12/L","low": 3.8,  "high": 5.8,  "mean": 4.5,   "std": 0.5},
+    "NURSING":  {"name": "护理评估",     "unit": "g/L",    "low": 115,  "high": 175,  "mean": 140,   "std": 15},
+    "DISCHARGE":  {"name": "出院评估计数",   "unit": "10^9/L", "low": 125,  "high": 350,  "mean": 220,   "std": 50},
     "ALT":  {"name": "丙氨酸氨基转移酶","unit": "U/L", "low": 7,    "high": 56,   "mean": 25,    "std": 12},
     "AST":  {"name": "天冬氨酸氨基转移酶","unit":"U/L","low": 10,   "high": 40,   "mean": 22,    "std": 8},
     "TBIL": {"name": "总胆红素",     "unit": "umol/L", "low": 3.4,  "high": 20.5, "mean": 10,    "std": 4},
@@ -184,17 +184,17 @@ def generate_patients(count: int = 2000) -> list:
     return patients
 
 
-def generate_lab_results(patients: list, count: int = 8000) -> list:
-    """生成检验结果"""
+def generate_treatment_records(patients: list, count: int = 8000) -> list:
+    """生成诊疗记录"""
     results = []
-    test_codes = list(TEST_ITEMS.keys())
-    instrument_ids = [f"INS-{i+1:03d}" for i in range(50)]
+    step_codes = list(TEST_ITEMS.keys())
+    department_ids = [f"INS-{i+1:03d}" for i in range(50)]
 
-    # 每个仪器对应的检验项目类型
-    hematology_instruments = instrument_ids[:20]
-    biochemistry_instruments = instrument_ids[20:]
-    hematology_tests = ["WBC", "RBC", "HGB", "PLT"]
-    biochemistry_tests = [t for t in test_codes if t not in hematology_tests]
+    # 每个科室对应的诊疗环节类型
+    hematology_departments = department_ids[:20]
+    biochemistry_departments = department_ids[20:]
+    hematology_tests = ["ADMISSION", "TREATMENT", "NURSING", "DISCHARGE"]
+    biochemistry_tests = [t for t in step_codes if t not in hematology_tests]
 
     base_date = datetime(2024, 1, 1)
 
@@ -202,17 +202,17 @@ def generate_lab_results(patients: list, count: int = 8000) -> list:
         patient = random.choice(patients)
         result_id = f"R{1000000 + i}"
 
-        # 选择检验项目
-        test_code = random.choice(test_codes)
-        test_info = TEST_ITEMS[test_code]
+        # 选择诊疗环节
+        step_code = random.choice(step_codes)
+        test_info = TEST_ITEMS[step_code]
 
-        # 匹配仪器
-        if test_code in hematology_tests:
-            instrument_id = random.choice(hematology_instruments)
+        # 匹配科室
+        if step_code in hematology_tests:
+            department_id = random.choice(hematology_departments)
         else:
-            instrument_id = random.choice(biochemistry_instruments)
+            department_id = random.choice(biochemistry_departments)
 
-        # 生成合理的检验值（正态分布 + 少量异常值）
+        # 生成合理的诊疗值（正态分布 + 少量异常值）
         if random.random() < 0.05:
             # 5%的异常值
             value = random.uniform(
@@ -222,8 +222,8 @@ def generate_lab_results(patients: list, count: int = 8000) -> list:
         else:
             value = random.gauss(test_info["mean"], test_info["std"])
 
-        # 确保值在合理范围内（不小于0，对于大多数检验项目）
-        if test_code not in []:
+        # 确保值在合理范围内（不小于0，对于大多数诊疗环节）
+        if step_code not in []:
             value = max(0.01, value)
 
         value = round(value, 2)
@@ -240,54 +240,54 @@ def generate_lab_results(patients: list, count: int = 8000) -> list:
         days_offset = random.randint(0, 364)
         hours_offset = random.randint(6, 22)
         minutes_offset = random.randint(0, 59)
-        test_date = base_date + timedelta(
+        visit_date = base_date + timedelta(
             days=days_offset, hours=hours_offset, minutes=minutes_offset
         )
 
         results.append({
             "result_id": result_id,
             "patient_id": patient["patient_id"],
-            "test_code": test_code,
-            "test_name": test_info["name"],
+            "step_code": step_code,
+            "step_name": test_info["name"],
             "value": value,
             "unit": test_info["unit"],
-            "instrument_id": instrument_id,
-            "test_date": test_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "department_id": department_id,
+            "visit_date": visit_date.strftime("%Y-%m-%d %H:%M:%S"),
             "flag": flag,
         })
 
     # 按日期排序
-    results.sort(key=lambda r: r["test_date"])
+    results.sort(key=lambda r: r["visit_date"])
     return results
 
 
-def generate_instruments(count: int = 50) -> list:
-    """生成仪器数据"""
-    instruments = []
-    locations = ["检验科A区", "检验科B区", "检验科C区",
-                 "急诊检验", "门诊检验"]
+def generate_departments(count: int = 50) -> list:
+    """生成科室数据"""
+    departments = []
+    locations = ["诊疗科A区", "诊疗科B区", "诊疗科C区",
+                 "急诊诊疗", "门诊诊疗"]
     base_date = datetime(2024, 1, 1)
 
     for i in range(count):
-        instrument_id = f"INS-{i+1:03d}"
+        department_id = f"INS-{i+1:03d}"
         model_info = INSTRUMENT_MODELS[i % len(INSTRUMENT_MODELS)]
 
         # 前20台是血液分析仪，后30台是生化分析仪
         if i < 20:
-            supported_tests = "WBC,RBC,HGB,PLT"
+            supported_tests = "ADMISSION,TREATMENT,NURSING,DISCHARGE"
         else:
             supported_tests = "ALT,AST,TBIL,DBIL,TP,ALB,BUN,CR,UA,GLU,TC,TG,K,Na,Cl,Ca"
 
         last_cal = base_date + timedelta(days=random.randint(0, 300))
         next_cal = last_cal + timedelta(days=random.randint(30, 90))
 
-        instruments.append({
-            "instrument_id": instrument_id,
+        departments.append({
+            "department_id": department_id,
             "name": f"{model_info[0]}-{i+1:02d}",
             "manufacturer": model_info[1],
             "model": model_info[0],
             "serial_number": f"SN{random.randint(100000, 999999)}",
-            "department": "检验科",
+            "department": "诊疗科",
             "location": random.choice(locations),
             "status": random.choices(
                 ["online", "offline", "maintenance"],
@@ -299,7 +299,7 @@ def generate_instruments(count: int = 50) -> list:
             "daily_capacity": random.randint(100, 1000),
         })
 
-    return instruments
+    return departments
 
 
 def generate_reference_ranges() -> dict:
@@ -307,8 +307,8 @@ def generate_reference_ranges() -> dict:
     ranges = {}
     for code, info in TEST_ITEMS.items():
         ranges[code] = {
-            "test_code": code,
-            "test_name": info["name"],
+            "step_code": code,
+            "step_name": info["name"],
             "unit": info["unit"],
             "ranges": [
                 {
@@ -324,16 +324,16 @@ def generate_reference_ranges() -> dict:
                     "gender": "male",
                     "age_min": 18,
                     "age_max": 120,
-                    "lower_limit": round(info["low"] * (1.05 if code in ["RBC", "HGB", "CR"] else 1.0), 2),
-                    "upper_limit": round(info["high"] * (1.05 if code in ["RBC", "HGB", "CR"] else 1.0), 2),
+                    "lower_limit": round(info["low"] * (1.05 if code in ["TREATMENT", "NURSING", "CR"] else 1.0), 2),
+                    "upper_limit": round(info["high"] * (1.05 if code in ["TREATMENT", "NURSING", "CR"] else 1.0), 2),
                 },
                 {
                     "population": "成年女性",
                     "gender": "female",
                     "age_min": 18,
                     "age_max": 120,
-                    "lower_limit": round(info["low"] * (0.95 if code in ["RBC", "HGB", "CR"] else 1.0), 2),
-                    "upper_limit": round(info["high"] * (0.95 if code in ["RBC", "HGB", "CR"] else 1.0), 2),
+                    "lower_limit": round(info["low"] * (0.95 if code in ["TREATMENT", "NURSING", "CR"] else 1.0), 2),
+                    "upper_limit": round(info["high"] * (0.95 if code in ["TREATMENT", "NURSING", "CR"] else 1.0), 2),
                 },
                 {
                     "population": "儿童",
@@ -364,33 +364,33 @@ def main():
         writer.writerows(patients)
     print(f"    -> {patients_path} ({len(patients)}条)")
 
-    # 2. 检验结果
-    print("  生成检验结果 (8000条)...")
-    results = generate_lab_results(patients, 8000)
-    results_path = os.path.join(OUTPUT_DIR, "lab_results.csv")
+    # 2. 诊疗记录
+    print("  生成诊疗记录 (8000条)...")
+    results = generate_treatment_records(patients, 8000)
+    results_path = os.path.join(OUTPUT_DIR, "treatment_records.csv")
     with open(results_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=[
-            "result_id", "patient_id", "test_code", "test_name",
-            "value", "unit", "instrument_id", "test_date", "flag",
+            "result_id", "patient_id", "step_code", "step_name",
+            "value", "unit", "department_id", "visit_date", "flag",
         ])
         writer.writeheader()
         writer.writerows(results)
     print(f"    -> {results_path} ({len(results)}条)")
 
-    # 3. 仪器数据
-    print("  生成仪器数据 (50条)...")
-    instruments = generate_instruments(50)
-    instruments_path = os.path.join(OUTPUT_DIR, "instruments.csv")
-    with open(instruments_path, "w", newline="", encoding="utf-8") as f:
+    # 3. 科室数据
+    print("  生成科室数据 (50条)...")
+    departments = generate_departments(50)
+    departments_path = os.path.join(OUTPUT_DIR, "departments.csv")
+    with open(departments_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=[
-            "instrument_id", "name", "manufacturer", "model",
+            "department_id", "name", "manufacturer", "model",
             "serial_number", "department", "location", "status",
             "last_calibration", "next_calibration",
             "supported_tests", "daily_capacity",
         ])
         writer.writeheader()
-        writer.writerows(instruments)
-    print(f"    -> {instruments_path} ({len(instruments)}条)")
+        writer.writerows(departments)
+    print(f"    -> {departments_path} ({len(departments)}条)")
 
     # 4. 参考范围
     print("  生成参考范围...")
@@ -402,8 +402,8 @@ def main():
 
     print("\n数据生成完成!")
     print(f"  患者: {len(patients)}条")
-    print(f"  检验结果: {len(results)}条")
-    print(f"  仪器: {len(instruments)}条")
+    print(f"  诊疗记录: {len(results)}条")
+    print(f"  科室: {len(departments)}条")
     print(f"  参考范围: {len(ref_ranges)}项")
 
 

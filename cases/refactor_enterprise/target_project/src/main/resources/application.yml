@@ -1,19 +1,19 @@
 server:
   port: 8080
   servlet:
-    context-path: /sqc
+    context-path: /cp
 
 spring:
   application:
-    name: sqc-system
+    name: cp-system
   profiles:
     active: dev
 
   # MySQL主数据源
   datasource:
-    url: jdbc:mysql://192.168.1.100:3306/sqc_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: sqc_user
-    password: sqc_pass_2024
+    url: jdbc:mysql://192.168.1.100:3306/cp_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: cp_user
+    password: cp_pass_2024
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -21,7 +21,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-      pool-name: sqc-mysql-pool
+      pool-name: cp-mysql-pool
 
     # ClickHouse数据源
     clickhouse:
@@ -58,8 +58,8 @@ mybatis-flex:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
     map-underscore-to-camel-case: true
 
-# SQC业务配置
-sqc:
+# CP业务配置
+cp:
   plan:
     max-items: 500
     cache-ttl: 3600
@@ -69,7 +69,7 @@ sqc:
   queue:
     max-retry: 3
     timeout: 5000
-    consumer-group: sqc-default
+    consumer-group: cp-default
 
 # SpringDoc配置
 springdoc:
@@ -83,7 +83,7 @@ springdoc:
 # 日志配置
 logging:
   level:
-    com.example.sqc: DEBUG
+    com.example.cp: DEBUG
     com.mybatisflex: DEBUG
     org.springframework.data.redis: INFO
   pattern:

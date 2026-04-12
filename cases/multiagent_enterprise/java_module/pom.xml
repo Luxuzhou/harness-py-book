@@ -13,10 +13,10 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>sqc-alarm</artifactId>
+    <artifactId>cp-anomaly</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>SQC Intelligent Alarm Module</name>
-    <description>检验质控智能报警模块 — H34子模块</description>
+    <name>CP Intelligent Anomaly Module</name>
+    <description>诊疗临床路径智能异常预警模块 — 临床路径管理系统子模块</description>
 
     <properties>
         <java.version>17</java.version>

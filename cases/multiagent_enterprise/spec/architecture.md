@@ -4,9 +4,9 @@
 
 ```
 +------------------+          REST API          +--------------------+
-|   H34 (Java)     | <----------------------->  |   S37 (Python)     |
+|   临床路径管理系统 (Java)     | <----------------------->  |   诊疗数据分析服务 (Python)     |
 |   Spring Boot    |                            |   FastAPI          |
-|   质控规则管理   |                            |   质控数据分析     |
+|   临床路径规则管理   |                            |   临床路径数据分析     |
 |   数据持久化     |                            |   算法引擎         |
 +--------+---------+                            +---------+----------+
          |                                                |
@@ -16,7 +16,7 @@
     +---------+                                    +-------------+
 ```
 
-## 2. H34 — Java 质控管理平台
+## 2. 临床路径管理系统 — Java 临床路径管理平台
 
 ### 2.1 技术栈
 - Java 17 + Spring Boot 3.x
@@ -27,7 +27,7 @@
 
 ### 2.2 项目结构
 ```
-com.example.sqc/
+com.example.cp/
 ├── controller/     # REST API 控制器（@RestController）
 ├── service/        # 业务逻辑层（@Service）
 ├── dao/
@@ -47,17 +47,17 @@ com.example.sqc/
 - 异常处理：统一通过 `@RestControllerAdvice` 返回 ErrorResponse
 
 ### 2.4 现有模块
-- 质控品管理（CRUD）
+- 临床路径品管理（CRUD）
 - Westgard 规则管理
-- 质控数据录入
-- （新增）智能报警规则管理 <-- 本次开发
+- 临床路径数据录入
+- （新增）智能预警规则管理 <-- 本次开发
 
-## 3. S37 — Python 质控分析引擎
+## 3. 诊疗数据分析服务 — Python 临床路径分析引擎
 
 ### 3.1 技术栈
 - Python 3.11 + FastAPI
 - NumPy（数值计算）
-- httpx（HTTP 客户端，调用 H34 API）
+- httpx（HTTP 客户端，调用 临床路径管理系统 API）
 - Pydantic v2（数据校验）
 - pytest（测试框架）
 
@@ -71,7 +71,7 @@ app/
 ├── models/
 │   └── schemas.py      # Pydantic 数据模型
 ├── clients/
-│   └── h34_client.py   # 调用 H34 Java 端的 HTTP 客户端
+│   └── h34_client.py   # 调用 临床路径管理系统 Java 端的 HTTP 客户端
 └── core/
     └── config.py       # 配置管理
 ```
@@ -87,7 +87,7 @@ app/
 - Levey-Jennings 图表数据生成
 - Westgard 规则判定
 - 统计分析（均值、SD、CV%）
-- （新增）智能报警分析 <-- 本次开发
+- （新增）路径变异智能预警 <-- 本次开发
 
 ## 4. 系统间通信
 
@@ -107,9 +107,9 @@ app/
 ## 5. 开发环境
 
 ### 5.1 本地运行
-- H34: `mvn spring-boot:run`（端口 8080）
-- S37: `uvicorn app.main:app --port 8000`
+- 临床路径管理系统: `mvn spring-boot:run`（端口 8080）
+- 诊疗数据分析服务: `uvicorn app.main:app --port 8000`
 
 ### 5.2 测试
-- H34: `mvn test`
-- S37: `pytest`
+- 临床路径管理系统: `mvn test`
+- 诊疗数据分析服务: `pytest`

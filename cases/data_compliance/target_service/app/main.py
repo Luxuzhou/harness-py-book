@@ -1,6 +1,6 @@
 """
 FastAPI应用入口
-医疗检验数据处理系统 - PBRTQC Data Service
+医疗诊疗数据处理系统 - PathwayAnalytics Data Service
 """
 
 import logging
@@ -30,16 +30,16 @@ _start_time = time.time()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    logger.info("PBRTQC Data Service启动中...")
+    logger.info("PathwayAnalytics Data Service启动中...")
     print("[DEBUG] Application starting...")
     yield
-    logger.info("PBRTQC Data Service关闭")
+    logger.info("PathwayAnalytics Data Service关闭")
     print("[DEBUG] Application shutdown")
 
 
 app = FastAPI(
-    title="PBRTQC Data Service",
-    description="医疗检验数据处理系统 - 基于患者数据的实时质控分析",
+    title="PathwayAnalytics Data Service",
+    description="医疗诊疗数据处理系统 - 基于患者数据的实时临床路径分析",
     version="1.0.0",
     lifespan=lifespan,
 )

@@ -19,14 +19,14 @@ BACKUP_DATA_DIR = "D:\\backup\\lab_data"
 
 class DataProcessor:
     """
-    数据处理器：加载和清洗检验数据
+    数据处理器：加载和清洗诊疗数据
     """
 
     def __init__(self, data_dir: Optional[str] = None):
         self.data_dir = data_dir or DEFAULT_DATA_DIR
         self._loaded_patients: List[Dict[str, Any]] = []
         self._loaded_results: List[Dict[str, Any]] = []
-        self._loaded_instruments: List[Dict[str, Any]] = []
+        self._loaded_departments: List[Dict[str, Any]] = []
         self._reference_ranges: Dict[str, Any] = {}
         print(f"[DEBUG] DataProcessor initialized: data_dir={self.data_dir}")
         logger.info(f"DataProcessor初始化: data_dir={self.data_dir}")
@@ -70,12 +70,12 @@ class DataProcessor:
             print(f"[ERROR] Failed to load patients: {e}")
             return []
 
-    def load_lab_results_csv(self, filepath: str) -> List[Dict[str, Any]]:
+    def load_treatment_records_csv(self, filepath: str) -> List[Dict[str, Any]]:
         """
-        加载检验结果CSV
+        加载诊疗记录CSV
 
         Returns:
-            检验结果记录列表
+            诊疗记录记录列表
         """
         records = []
         try:
@@ -91,15 +91,15 @@ class DataProcessor:
                             record["value"] = None
 
                     # 日期转换
-                    if record.get("test_date"):
+                    if record.get("visit_date"):
                         try:
-                            record["test_date"] = datetime.strptime(
-                                record["test_date"], "%Y-%m-%d %H:%M:%S"
+                            record["visit_date"] = datetime.strptime(
+                                record["visit_date"], "%Y-%m-%d %H:%M:%S"
                             )
                         except (ValueError, TypeError):
                             try:
-                                record["test_date"] = datetime.strptime(
-                                    record["test_date"], "%Y-%m-%d"
+                                record["visit_date"] = datetime.strptime(
+                                    record["visit_date"], "%Y-%m-%d"
                                 )
                             except (ValueError, TypeError):
                                 pass
@@ -108,7 +108,7 @@ class DataProcessor:
 
             self._loaded_results = records
             print(f"[DEBUG] Loaded {len(records)} lab results from {filepath}")
-            logger.info(f"检验结果加载完成: {len(records)}条")
+            logger.info(f"诊疗记录加载完成: {len(records)}条")
             return records
 
         except FileNotFoundError:
@@ -119,8 +119,8 @@ class DataProcessor:
             print(f"[ERROR] Failed to load results: {e}")
             return []
 
-    def load_instruments_csv(self, filepath: str) -> List[Dict[str, Any]]:
-        """加载仪器数据CSV"""
+    def load_departments_csv(self, filepath: str) -> List[Dict[str, Any]]:
+        """加载科室数据CSV"""
         records = []
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
@@ -136,12 +136,12 @@ class DataProcessor:
                             pass
                     records.append(record)
 
-            self._loaded_instruments = records
-            print(f"[DEBUG] Loaded {len(records)} instruments from {filepath}")
+            self._loaded_departments = records
+            print(f"[DEBUG] Loaded {len(records)} departments from {filepath}")
             return records
 
         except Exception as e:
-            print(f"[ERROR] Failed to load instruments: {e}")
+            print(f"[ERROR] Failed to load departments: {e}")
             return []
 
     def load_reference_ranges(self, filepath: str) -> Dict[str, Any]:
@@ -162,10 +162,10 @@ class DataProcessor:
         results: Optional[List[Dict[str, Any]]] = None,
     ) -> List[Dict[str, Any]]:
         """
-        将患者信息和检验结果合并
+        将患者信息和诊疗记录合并
 
         Returns:
-            合并后的记录列表（每条检验结果附带患者信息）
+            合并后的记录列表（每条诊疗记录附带患者信息）
         """
         patients = patients or self._loaded_patients
         results = results or self._loaded_results
@@ -234,7 +234,7 @@ class DataProcessor:
                 removed["inf"] += 1
                 continue
 
-            # 注意：不在此处移除负值，因为某些检验值可能为负
+            # 注意：不在此处移除负值，因为某些诊疗值可能为负
             cleaned.append(r)
 
         total_removed = sum(removed.values())
@@ -243,30 +243,30 @@ class DataProcessor:
         logger.info(f"数据清洗: 移除{total_removed}条无效记录")
         return cleaned
 
-    def group_by_test_code(self, records: List[Dict[str, Any]]
+    def group_by_step_code(self, records: List[Dict[str, Any]]
                            ) -> Dict[str, List[Dict[str, Any]]]:
-        """按检验项目分组"""
+        """按诊疗环节分组"""
         groups: Dict[str, List[Dict[str, Any]]] = {}
         for r in records:
-            test_code = r.get("test_code", "unknown")
-            if test_code not in groups:
-                groups[test_code] = []
-            groups[test_code].append(r)
+            step_code = r.get("step_code", "unknown")
+            if step_code not in groups:
+                groups[step_code] = []
+            groups[step_code].append(r)
 
         print(f"[DEBUG] Grouped into {len(groups)} test codes")
         return groups
 
-    def group_by_instrument(self, records: List[Dict[str, Any]]
+    def group_by_department(self, records: List[Dict[str, Any]]
                             ) -> Dict[str, List[Dict[str, Any]]]:
-        """按仪器分组"""
+        """按科室分组"""
         groups: Dict[str, List[Dict[str, Any]]] = {}
         for r in records:
-            inst_id = r.get("instrument_id", "unknown")
+            inst_id = r.get("department_id", "unknown")
             if inst_id not in groups:
                 groups[inst_id] = []
             groups[inst_id].append(r)
 
-        print(f"[DEBUG] Grouped into {len(groups)} instruments")
+        print(f"[DEBUG] Grouped into {len(groups)} departments")
         return groups
 
     def compute_summary(self, records: List[Dict[str, Any]]
@@ -275,23 +275,23 @@ class DataProcessor:
         if not records:
             return {"total": 0}
 
-        test_codes = set()
-        instruments = set()
+        step_codes = set()
+        departments = set()
         patients = set()
         departments = set()
         date_range = {"min": None, "max": None}
 
         for r in records:
-            if r.get("test_code"):
-                test_codes.add(r["test_code"])
-            if r.get("instrument_id"):
-                instruments.add(r["instrument_id"])
+            if r.get("step_code"):
+                step_codes.add(r["step_code"])
+            if r.get("department_id"):
+                departments.add(r["department_id"])
             if r.get("patient_id"):
                 patients.add(r["patient_id"])
             if r.get("department"):
                 departments.add(r["department"])
-            if r.get("test_date"):
-                td = r["test_date"]
+            if r.get("visit_date"):
+                td = r["visit_date"]
                 if isinstance(td, str):
                     try:
                         td = datetime.fromisoformat(td)
@@ -305,12 +305,12 @@ class DataProcessor:
 
         summary = {
             "total_records": len(records),
-            "unique_tests": len(test_codes),
-            "unique_instruments": len(instruments),
+            "unique_tests": len(step_codes),
+            "unique_departments": len(departments),
             "unique_patients": len(patients),
             "unique_departments": len(departments),
-            "test_codes": sorted(test_codes),
-            "instruments": sorted(instruments),
+            "step_codes": sorted(step_codes),
+            "departments": sorted(departments),
             "departments": sorted(departments),
             "date_range": {
                 "min": date_range["min"].isoformat() if date_range["min"] else None,

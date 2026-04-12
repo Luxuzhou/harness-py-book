@@ -203,17 +203,17 @@ class FilterEngine:
             tr = filters.time_range
             if tr.start_date:
                 conditions.append(
-                    f"{result_alias}.test_date >= "
+                    f"{result_alias}.visit_date >= "
                     f"'{tr.start_date.strftime('%Y-%m-%d %H:%M:%S')}'"
                 )
             if tr.end_date:
                 conditions.append(
-                    f"{result_alias}.test_date <= "
+                    f"{result_alias}.visit_date <= "
                     f"'{tr.end_date.strftime('%Y-%m-%d %H:%M:%S')}'"
                 )
             if tr.recent_days:
                 conditions.append(
-                    f"{result_alias}.test_date >= "
+                    f"{result_alias}.visit_date >= "
                     f"now() - INTERVAL {tr.recent_days} DAY"
                 )
 
@@ -432,26 +432,26 @@ class FilterEngine:
             start = end - timedelta(days=time_filter.recent_days)
 
         for r in records:
-            test_date = r.get("test_date")
-            if test_date is None:
+            visit_date = r.get("visit_date")
+            if visit_date is None:
                 continue
 
-            if isinstance(test_date, str):
+            if isinstance(visit_date, str):
                 try:
-                    test_date = datetime.fromisoformat(
-                        test_date.replace("Z", "+00:00")
+                    visit_date = datetime.fromisoformat(
+                        visit_date.replace("Z", "+00:00")
                     )
                 except (ValueError, TypeError):
                     try:
-                        test_date = datetime.strptime(
-                            test_date, "%Y-%m-%d %H:%M:%S"
+                        visit_date = datetime.strptime(
+                            visit_date, "%Y-%m-%d %H:%M:%S"
                         )
                     except (ValueError, TypeError):
                         continue
 
-            if start and test_date < start:
+            if start and visit_date < start:
                 continue
-            if end and test_date > end:
+            if end and visit_date > end:
                 continue
 
             result.append(r)

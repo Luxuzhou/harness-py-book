@@ -25,7 +25,7 @@ BUILTIN_USERS = {
     "lab_user": {
         "password": "lab2024",
         "role": "user",
-        "name": "检验科用户",
+        "name": "诊疗科用户",
     },
     "viewer": {
         "password": "viewer123",

@@ -2,7 +2,7 @@
 
 ## 案例概述
 
-跨 Java + Python 的检验质控系统集成开发：为现有系统新增"智能报警分析"模块。
+跨 Java + Python 的诊疗临床路径系统集成开发：为现有系统新增"路径变异智能预警"模块。
 演示四Agent角色隔离编排：Architect、Java Developer、Python Developer、QA Engineer。
 
 ## Agent角色隔离规则
@@ -63,10 +63,10 @@ multiagent_enterprise/
 │   ├── java_developer.md     # Java Developer Agent 角色定义
 │   ├── python_developer.md   # Python Developer Agent 角色定义
 │   └── qa_engineer.md        # QA Engineer Agent 角色定义
-├── java_module/              # Java 端代码（模拟 H34 子模块）
+├── java_module/              # Java 端代码（模拟 临床路径管理系统 子模块）
 │   ├── pom.xml
 │   └── src/
-└── python_module/            # Python 端代码（模拟 S37 子模块）
+└── python_module/            # Python 端代码（模拟 诊疗数据分析服务 子模块）
     ├── app/
     ├── tests/
     └── requirements.txt

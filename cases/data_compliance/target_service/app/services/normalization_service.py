@@ -1,6 +1,6 @@
 """
 回归归一化服务
-用于不同仪器/方法间的结果归一化和可比性评估
+用于不同科室/方法间的结果归一化和可比性评估
 """
 
 import logging
@@ -37,8 +37,8 @@ class NormalizationService:
         执行回归归一化
 
         Parameters:
-            source_data: 源仪器/方法的数据
-            reference_data: 参考仪器/方法的数据
+            source_data: 源科室/方法的数据
+            reference_data: 参考科室/方法的数据
             method: 回归方法
 
         Returns:
@@ -229,29 +229,29 @@ class NormalizationService:
             ),
         }
 
-    def compare_instruments(self, instrument1_data: List[float],
-                            instrument2_data: List[float],
-                            test_code: str = "",
+    def compare_departments(self, department1_data: List[float],
+                            department2_data: List[float],
+                            step_code: str = "",
                             method: str = "deming"
                             ) -> Dict[str, Any]:
         """
-        比较两台仪器的检测结果
+        比较两台科室的检测结果
 
         Returns:
-            包含回归分析和统计检验的比较结果
+            包含回归分析和统计诊疗的比较结果
         """
-        result = self.normalize(instrument1_data, instrument2_data, method)
+        result = self.normalize(department1_data, department2_data, method)
 
         if result.get("status") != "success":
             return result
 
-        arr1 = np.array(instrument1_data)
-        arr2 = np.array(instrument2_data)
+        arr1 = np.array(department1_data)
+        arr2 = np.array(department2_data)
 
-        # t检验
+        # t诊疗
         t_stat, t_p = scipy_stats.ttest_rel(arr1, arr2)
 
-        # Wilcoxon符号秩检验
+        # Wilcoxon符号秩诊疗
         try:
             w_stat, w_p = scipy_stats.wilcoxon(arr1, arr2)
         except Exception:
@@ -262,7 +262,7 @@ class NormalizationService:
         cohens_d = float(np.mean(diff) / np.std(diff, ddof=1)) if np.std(diff, ddof=1) > 0 else 0
 
         result["comparison"] = {
-            "test_code": test_code,
+            "step_code": step_code,
             "paired_t_test": {
                 "statistic": float(t_stat),
                 "p_value": float(t_p),
@@ -278,7 +278,7 @@ class NormalizationService:
         }
 
         self._comparison_history.append({
-            "test_code": test_code,
+            "step_code": step_code,
             "method": method,
             "r": result["regression"]["correlation"],
             "bias_pct": result["performance"]["bias_percent"],
@@ -290,23 +290,23 @@ class NormalizationService:
                         method: str = "deming"
                         ) -> Dict[str, Dict[str, Any]]:
         """
-        批量归一化多个检验项目
+        批量归一化多个诊疗环节
 
         Parameters:
-            data_pairs: {test_code: (source_data, reference_data)}
+            data_pairs: {step_code: (source_data, reference_data)}
 
         Returns:
-            {test_code: normalization_result}
+            {step_code: normalization_result}
         """
         results = {}
-        for test_code, (source, reference) in data_pairs.items():
-            print(f"[DEBUG] Normalizing {test_code}...")
+        for step_code, (source, reference) in data_pairs.items():
+            print(f"[DEBUG] Normalizing {step_code}...")
             try:
                 result = self.normalize(source, reference, method)
-                results[test_code] = result
+                results[step_code] = result
             except Exception as e:
-                print(f"[ERROR] Normalization failed for {test_code}: {e}")
-                results[test_code] = {"status": "error", "message": str(e)}
+                print(f"[ERROR] Normalization failed for {step_code}: {e}")
+                results[step_code] = {"status": "error", "message": str(e)}
 
         return results
 

@@ -2,7 +2,7 @@
 
 ## 任务目标
 
-通过四Agent协作，完成检验质控系统"智能报警分析"模块的跨 Java/Python 集成开发。
+通过四Agent协作，完成诊疗临床路径系统"路径变异智能预警"模块的跨 Java/Python 集成开发。
 
 ---
 
@@ -104,9 +104,9 @@ Round 2 完成后（两个 Developer 都完成）。
 
 ### 输出文件
 - `python_module/tests/test_contract_consistency.py`
-- `python_module/tests/test_alarm_analyzer.py`
-- `java_module/src/test/java/com/example/sqc/alarm/AlarmServiceTest.java`
-- `java_module/src/test/java/com/example/sqc/alarm/AlarmControllerTest.java`
+- `python_module/tests/test_anomaly_analyzer.py`
+- `java_module/src/test/java/com/example/cp/anomaly/AnomalyServiceTest.java`
+- `java_module/src/test/java/com/example/cp/anomaly/AnomalyControllerTest.java`
 - `test_report.md`（根目录下）
 
 ### 完成标准
@@ -147,7 +147,7 @@ Round 3 的 `test_report.md` 中存在失败的测试。
 
 ```yaml
 orchestration:
-  name: "sqc-alarm-module"
+  name: "cp-anomaly-module"
   rounds:
     - name: "architecture-design"
       agents: ["architect"]

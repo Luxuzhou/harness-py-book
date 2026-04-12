@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """应用配置"""
 
     # 基础配置
-    APP_NAME: str = "PBRTQC Data Service"
+    APP_NAME: str = "PathwayAnalytics Data Service"
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
@@ -56,9 +56,9 @@ class Settings(BaseSettings):
 
     # 日志配置
     LOG_LEVEL: str = "INFO"
-    LOG_FILE: str = "C:\\pbrtqc_logs\\service.log"  # 坏味道: 硬编码路径
+    LOG_FILE: str = "C:\\pathway_analytics_logs\\service.log"  # 坏味道: 硬编码路径
 
-    # PBRTQC配置
+    # PathwayAnalytics配置
     DEFAULT_WINDOW_SIZE: int = 20
     DEFAULT_MA_METHOD: str = "EWMA"
     DEFAULT_ALPHA: float = 0.2

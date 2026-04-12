@@ -242,9 +242,9 @@ class ExportService:
                                ) -> Dict[str, Any]:
         """导出分析报告"""
         if filename is None:
-            test_code = analysis_result.get("test_code", "unknown")
+            step_code = analysis_result.get("step_code", "unknown")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"report_{test_code}_{timestamp}.{format}"
+            filename = f"report_{step_code}_{timestamp}.{format}"
 
         filepath = os.path.join(self.export_dir, filename)
 

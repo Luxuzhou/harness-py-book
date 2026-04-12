@@ -2,7 +2,7 @@
 Pydantic数据模型定义
 对标S37的1504行schemas.py
 
-包含50+个模型，覆盖患者过滤、任务配置、检验结果、仪器管理等
+包含50+个模型，覆盖患者过滤、任务配置、诊疗记录、科室管理等
 """
 
 from __future__ import annotations
@@ -218,22 +218,22 @@ class PatientListResponse(BaseResponse):
 
 
 # ──────────────────────────────────────────────────────────────
-# 检验结果模型
+# 诊疗记录模型
 # ──────────────────────────────────────────────────────────────
 class LabResultBase(BaseModel):
-    """检验结果基础"""
+    """诊疗记录基础"""
     result_id: Optional[str] = Field(default=None, description="结果ID")
     patient_id: str = Field(..., description="患者ID")
-    test_code: str = Field(..., description="检验代码")
-    test_name: Optional[str] = Field(default=None, description="检验名称")
-    value: Optional[float] = Field(default=None, description="检验值")
+    step_code: str = Field(..., description="诊疗代码")
+    step_name: Optional[str] = Field(default=None, description="诊疗名称")
+    value: Optional[float] = Field(default=None, description="诊疗值")
     value_text: Optional[str] = Field(default=None, description="文本结果")
     unit: Optional[str] = Field(default=None, description="单位")
     reference_low: Optional[float] = Field(default=None, description="参考范围下限")
     reference_high: Optional[float] = Field(default=None, description="参考范围上限")
     flag: Optional[str] = Field(default=None, description="标志(H/L/N)")
-    instrument_id: Optional[str] = Field(default=None, description="仪器ID")
-    test_date: Optional[datetime] = Field(default=None, description="检验日期")
+    department_id: Optional[str] = Field(default=None, description="科室ID")
+    visit_date: Optional[datetime] = Field(default=None, description="诊疗日期")
     report_date: Optional[datetime] = Field(default=None, description="报告日期")
     specimen_type: Optional[SpecimenTypeEnum] = Field(
         default=None, description="标本类型"
@@ -245,12 +245,12 @@ class LabResultBase(BaseModel):
 
 
 class LabResultCreate(LabResultBase):
-    """创建检验结果"""
+    """创建诊疗记录"""
     pass
 
 
 class LabResultResponse(LabResultBase):
-    """检验结果响应"""
+    """诊疗记录响应"""
     model_config = ConfigDict(from_attributes=True)
     created_at: Optional[datetime] = None
     is_abnormal: Optional[bool] = None
@@ -269,28 +269,28 @@ class LabResultResponse(LabResultBase):
 
 
 class LabResultListResponse(BaseResponse):
-    """检验结果列表响应"""
+    """诊疗记录列表响应"""
     data: List[LabResultResponse] = Field(default_factory=list)
     pagination: Optional[PaginationParams] = None
 
 
 class LabResultBatchCreate(BaseModel):
-    """批量创建检验结果"""
+    """批量创建诊疗记录"""
     results: List[LabResultCreate] = Field(
         ..., min_length=1, max_length=10000,
-        description="检验结果列表"
+        description="诊疗记录列表"
     )
-    instrument_id: Optional[str] = None
+    department_id: Optional[str] = None
     operator: Optional[str] = None
 
 
 # ──────────────────────────────────────────────────────────────
-# 仪器模型
+# 科室模型
 # ──────────────────────────────────────────────────────────────
 class InstrumentBase(BaseModel):
-    """仪器基础信息"""
-    instrument_id: str = Field(..., description="仪器ID")
-    name: str = Field(..., description="仪器名称")
+    """科室基础信息"""
+    department_id: str = Field(..., description="科室ID")
+    name: str = Field(..., description="科室名称")
     manufacturer: Optional[str] = Field(default=None, description="厂商")
     model: Optional[str] = Field(default=None, description="型号")
     serial_number: Optional[str] = Field(default=None, description="序列号")
@@ -306,7 +306,7 @@ class InstrumentBase(BaseModel):
         default=None, description="下次校准时间"
     )
     supported_tests: List[str] = Field(
-        default_factory=list, description="支持的检验项目"
+        default_factory=list, description="支持的诊疗环节"
     )
     daily_capacity: Optional[int] = Field(
         default=None, description="日处理能力"
@@ -314,7 +314,7 @@ class InstrumentBase(BaseModel):
 
 
 class InstrumentResponse(InstrumentBase):
-    """仪器响应"""
+    """科室响应"""
     model_config = ConfigDict(from_attributes=True)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -324,7 +324,7 @@ class InstrumentResponse(InstrumentBase):
 
 
 class InstrumentListResponse(BaseResponse):
-    """仪器列表响应"""
+    """科室列表响应"""
     data: List[InstrumentResponse] = Field(default_factory=list)
 
 
@@ -508,7 +508,7 @@ class SimulationFilters(BaseModel):
 
 
 # ──────────────────────────────────────────────────────────────
-# PBRTQC配置模型
+# PathwayAnalytics配置模型
 # ──────────────────────────────────────────────────────────────
 class DataConfig(BaseModel):
     """数据源配置"""
@@ -549,7 +549,7 @@ class Objectives(BaseModel):
 
 
 class QCRuleConfig(BaseModel):
-    """质控规则配置"""
+    """临床路径规则配置"""
     rule_1_2s: bool = Field(default=True, description="启用1-2s规则")
     rule_1_3s: bool = Field(default=True, description="启用1-3s规则")
     rule_2_2s: bool = Field(default=True, description="启用2-2s规则")
@@ -562,9 +562,9 @@ class QCRuleConfig(BaseModel):
 
 
 class MAConfig(BaseModel):
-    """移动均值配置"""
+    """路径依从率配置"""
     method: MAMethodEnum = Field(
-        default=MAMethodEnum.EWMA, description="移动均值方法"
+        default=MAMethodEnum.EWMA, description="路径依从率方法"
     )
     window_size: int = Field(
         default=20, ge=5, le=500, description="窗口大小"
@@ -583,7 +583,7 @@ class TransformConfig(BaseModel):
         default=TransformMethodEnum.AUTO, description="变换方法"
     )
     test_normality: bool = Field(
-        default=True, description="是否检验正态性"
+        default=True, description="是否诊疗正态性"
     )
     alpha: float = Field(
         default=0.05, ge=0.001, le=0.1, description="显著性水平"
@@ -612,11 +612,11 @@ class TaskConfig(BaseModel):
     """
     task_id: Optional[str] = Field(default=None, description="任务ID")
     task_name: Optional[str] = Field(default=None, description="任务名称")
-    test_code: str = Field(..., description="检验项目代码")
-    test_name: Optional[str] = Field(default=None, description="检验项目名称")
-    instrument_id: Optional[str] = Field(default=None, description="仪器ID")
-    instrument_ids: List[str] = Field(
-        default_factory=list, description="多仪器ID列表"
+    step_code: str = Field(..., description="诊疗环节代码")
+    step_name: Optional[str] = Field(default=None, description="诊疗环节名称")
+    department_id: Optional[str] = Field(default=None, description="科室ID")
+    department_ids: List[str] = Field(
+        default_factory=list, description="多科室ID列表"
     )
 
     # 子配置
@@ -630,10 +630,10 @@ class TaskConfig(BaseModel):
         default_factory=SimulationFilters, description="过滤条件"
     )
     qc_rules: QCRuleConfig = Field(
-        default_factory=QCRuleConfig, description="质控规则"
+        default_factory=QCRuleConfig, description="临床路径规则"
     )
     ma_config: MAConfig = Field(
-        default_factory=MAConfig, description="移动均值配置"
+        default_factory=MAConfig, description="路径依从率配置"
     )
     transform_config: TransformConfig = Field(
         default_factory=TransformConfig, description="变换配置"
@@ -666,9 +666,9 @@ class TaskConfig(BaseModel):
 
 class TaskConfigCreate(BaseModel):
     """创建任务配置请求"""
-    test_code: str = Field(..., description="检验项目代码")
-    test_name: Optional[str] = None
-    instrument_id: Optional[str] = None
+    step_code: str = Field(..., description="诊疗环节代码")
+    step_name: Optional[str] = None
+    department_id: Optional[str] = None
     filters: Optional[SimulationFilters] = None
     qc_rules: Optional[QCRuleConfig] = None
     ma_config: Optional[MAConfig] = None
@@ -738,7 +738,7 @@ class ControlLimits(BaseModel):
 
 
 class MovingAverageResultSchema(BaseModel):
-    """移动均值结果"""
+    """路径依从率结果"""
     method: str = ""
     window_size: int = 0
     data_points: int = 0
@@ -766,8 +766,8 @@ class WestgardResult(BaseModel):
 class AnalysisResult(BaseModel):
     """完整分析结果"""
     status: str = ""
-    test_code: str = ""
-    instrument_id: str = ""
+    step_code: str = ""
+    department_id: str = ""
     analysis_time: Optional[str] = None
     duration_seconds: float = 0.0
     data_summary: Dict[str, int] = Field(default_factory=dict)
@@ -802,11 +802,11 @@ class BatchAnalysisResponse(BaseResponse):
 # ──────────────────────────────────────────────────────────────
 class QueryRequest(BaseModel):
     """数据查询请求"""
-    test_codes: List[str] = Field(
-        default_factory=list, description="检验项目代码列表"
+    step_codes: List[str] = Field(
+        default_factory=list, description="诊疗环节代码列表"
     )
-    instrument_ids: List[str] = Field(
-        default_factory=list, description="仪器ID列表"
+    department_ids: List[str] = Field(
+        default_factory=list, description="科室ID列表"
     )
     filters: Optional[SimulationFilters] = Field(
         default=None, description="过滤条件"
@@ -844,11 +844,11 @@ class ExportRequest(BaseModel):
     format: ExportFormatEnum = Field(
         default=ExportFormatEnum.CSV, description="导出格式"
     )
-    test_codes: List[str] = Field(
-        default_factory=list, description="检验项目"
+    step_codes: List[str] = Field(
+        default_factory=list, description="诊疗环节"
     )
-    instrument_ids: List[str] = Field(
-        default_factory=list, description="仪器ID"
+    department_ids: List[str] = Field(
+        default_factory=list, description="科室ID"
     )
     filters: Optional[SimulationFilters] = None
     time_range: Optional[TimeRangeFilter] = None
@@ -881,8 +881,8 @@ class ExportResponse(BaseResponse):
 # ──────────────────────────────────────────────────────────────
 class ReferenceRange(BaseModel):
     """参考范围"""
-    test_code: str = Field(..., description="检验代码")
-    test_name: str = Field(default="", description="检验名称")
+    step_code: str = Field(..., description="诊疗代码")
+    step_name: str = Field(default="", description="诊疗名称")
     unit: str = Field(default="", description="单位")
     lower_limit: Optional[float] = Field(default=None, description="下限")
     upper_limit: Optional[float] = Field(default=None, description="上限")
@@ -910,9 +910,9 @@ class ReferenceRangeListResponse(BaseResponse):
 # ──────────────────────────────────────────────────────────────
 class NormalizationRequest(BaseModel):
     """归一化请求"""
-    source_instrument_id: str = Field(..., description="源仪器ID")
-    target_instrument_id: str = Field(..., description="目标仪器ID")
-    test_code: str = Field(..., description="检验项目代码")
+    source_department_id: str = Field(..., description="源科室ID")
+    target_department_id: str = Field(..., description="目标科室ID")
+    step_code: str = Field(..., description="诊疗环节代码")
     method: RegressionMethodEnum = Field(
         default=RegressionMethodEnum.DEMING, description="回归方法"
     )
@@ -969,8 +969,8 @@ class AuditLogResponse(BaseResponse):
 # ──────────────────────────────────────────────────────────────
 class TrendAnalysisRequest(BaseModel):
     """趋势分析请求"""
-    test_code: str = Field(..., description="检验项目代码")
-    instrument_id: Optional[str] = None
+    step_code: str = Field(..., description="诊疗环节代码")
+    department_id: Optional[str] = None
     time_range: Optional[TimeRangeFilter] = None
     ma_method: MAMethodEnum = Field(default=MAMethodEnum.EWMA)
     window_size: int = Field(default=20, ge=5)
@@ -994,13 +994,13 @@ class TrendAnalysisResponse(BaseResponse):
 
 
 # ──────────────────────────────────────────────────────────────
-# 仪器比较模型
+# 科室比较模型
 # ──────────────────────────────────────────────────────────────
 class InstrumentComparisonRequest(BaseModel):
-    """仪器比较请求"""
-    instrument_id_1: str = Field(..., description="仪器1 ID")
-    instrument_id_2: str = Field(..., description="仪器2 ID")
-    test_code: str = Field(..., description="检验项目代码")
+    """科室比较请求"""
+    department_id_1: str = Field(..., description="科室1 ID")
+    department_id_2: str = Field(..., description="科室2 ID")
+    step_code: str = Field(..., description="诊疗环节代码")
     time_range: Optional[TimeRangeFilter] = None
     regression_method: RegressionMethodEnum = Field(
         default=RegressionMethodEnum.DEMING
@@ -1008,10 +1008,10 @@ class InstrumentComparisonRequest(BaseModel):
 
 
 class InstrumentComparisonResult(BaseModel):
-    """仪器比较结果"""
-    instrument_id_1: str = ""
-    instrument_id_2: str = ""
-    test_code: str = ""
+    """科室比较结果"""
+    department_id_1: str = ""
+    department_id_2: str = ""
+    step_code: str = ""
     slope: float = 0.0
     intercept: float = 0.0
     correlation: float = 0.0
@@ -1024,7 +1024,7 @@ class InstrumentComparisonResult(BaseModel):
 
 
 class InstrumentComparisonResponse(BaseResponse):
-    """仪器比较响应"""
+    """科室比较响应"""
     data: Optional[InstrumentComparisonResult] = None
 
 
@@ -1057,7 +1057,7 @@ class HealthCheck(BaseModel):
     version: str = ""
     uptime_seconds: float = 0.0
     database_connected: bool = False
-    instrument_count: int = 0
+    department_count: int = 0
     active_tasks: int = 0
 
 
