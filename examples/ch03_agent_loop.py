@@ -11,6 +11,16 @@ import sys
 sys.path.insert(0, '.')
 
 from pathlib import Path
+
+# 加载.env文件（如果存在）
+_env_file = Path(__file__).parent.parent / '.env'
+if _env_file.exists():
+    import os
+    for line in _env_file.read_text(encoding='utf-8').splitlines():
+        if line.strip() and not line.startswith('#') and '=' in line:
+            k, _, v = line.partition('=')
+            os.environ.setdefault(k.strip(), v.strip())
+
 from harness_py.config import AgentConfig
 
 
@@ -72,7 +82,7 @@ def demo_minimal_loop():
 
     mc = ModelConfig.from_env()
     if not mc.api_key:
-        print('\n[跳过] 最小循环演示需要设置OPENAI_API_KEY环境变量')
+        print('\n[跳过] 最小循环演示需要设置OPENAI_API_KEY或HARNESS_API_KEY环境变量')
         return
 
     print('\n=== 最小Agent循环 ===')
