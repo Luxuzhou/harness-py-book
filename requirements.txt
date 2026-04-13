@@ -1,1 +1,9 @@
+# 教学层框架 (harness_py/)
 requests>=2.31.0
+
+# 第3章完整demo (examples/ch03_harness_demo/)
+openai>=1.0.0
+pyyaml>=6.0
+
+# 测试
+pytest>=7.0.0
