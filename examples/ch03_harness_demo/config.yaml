@@ -1,0 +1,27 @@
+# Harness Demo Configuration
+
+# DeepSeek API（也可以通过环境变量OPENAI_API_KEY覆盖）
+api_key: "${OPENAI_API_KEY}"
+base_url: "https://api.deepseek.com"
+model: "deepseek-chat"
+
+# Safety layer
+allowed_paths:
+  - "target_project"
+command_blacklist:
+  - "\\brm\\s+-rf\\b"
+  - "\\brmdir\\b"
+  - "\\bshutil\\.rmtree\\b"
+  - "\\bdel\\s+/[sqf]"
+  - "\\bformat\\b"
+
+# Context layer - project rules
+project_rules:
+  naming_convention: "Use snake_case for functions and variables, PascalCase for classes"
+  test_framework: "pytest with class-based test organization (class TestXxx)"
+  docstrings: "Google style docstrings for all public functions"
+  error_handling: "Use specific exceptions, never bare except"
+  imports: "Standard library first, then third-party, then local"
+
+# Agent settings
+max_steps: 15
