@@ -8,6 +8,7 @@ Repository 把记录落地到 `audit_logs/*.jsonl`。
 
 from __future__ import annotations
 
+import itertools
 import json
 import logging
 import threading
@@ -18,6 +19,18 @@ from typing import Any, Dict, List, Optional
 from app.repositories.base import BaseRepository, Pagination, SortSpec
 
 logger = logging.getLogger(__name__)
+
+# 全局单调计数器：把 audit_id 里的时间戳和一个进程内唯一后缀拼起来，
+# 规避 datetime.now() 在 Windows 上只有毫秒精度（高频写入会让微秒位
+# 撞成同一个时间戳，从而触发 DuplicateKeyError）。
+_AUDIT_ID_COUNTER = itertools.count()
+_AUDIT_ID_LOCK = threading.Lock()
+
+
+def _next_audit_id() -> str:
+    with _AUDIT_ID_LOCK:
+        seq = next(_AUDIT_ID_COUNTER)
+    return f'AUDIT-{datetime.now().strftime("%Y%m%d%H%M%S%f")}-{seq:08d}'
 
 
 class AuditRepository(BaseRepository[Dict[str, Any]]):
@@ -87,7 +100,7 @@ class AuditRepository(BaseRepository[Dict[str, Any]]):
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         entry = {
-            'audit_id': f'AUDIT-{datetime.now().strftime("%Y%m%d%H%M%S%f")}',
+            'audit_id': _next_audit_id(),
             'timestamp': datetime.now().isoformat(),
             'event_type': 'http_request',
             'user': user or 'anonymous',
@@ -115,7 +128,7 @@ class AuditRepository(BaseRepository[Dict[str, Any]]):
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         entry = {
-            'audit_id': f'AUDIT-{datetime.now().strftime("%Y%m%d%H%M%S%f")}',
+            'audit_id': _next_audit_id(),
             'timestamp': datetime.now().isoformat(),
             'event_type': 'data_access',
             'user': user or 'anonymous',
@@ -140,7 +153,7 @@ class AuditRepository(BaseRepository[Dict[str, Any]]):
         output_path: str,
     ) -> Dict[str, Any]:
         entry = {
-            'audit_id': f'AUDIT-{datetime.now().strftime("%Y%m%d%H%M%S%f")}',
+            'audit_id': _next_audit_id(),
             'timestamp': datetime.now().isoformat(),
             'event_type': 'data_export',
             'user': user or 'anonymous',
@@ -163,7 +176,7 @@ class AuditRepository(BaseRepository[Dict[str, Any]]):
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         entry = {
-            'audit_id': f'AUDIT-{datetime.now().strftime("%Y%m%d%H%M%S%f")}',
+            'audit_id': _next_audit_id(),
             'timestamp': datetime.now().isoformat(),
             'event_type': 'auth_event',
             'user': user,

@@ -9,10 +9,23 @@
 
 from __future__ import annotations
 
+import io
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+# Windows 控制台默认 GBK，subprocess 输出里有可能夹带 \ufffd 替换符（来自
+# bytes -> utf-8(errors='replace') 的兜底解码），直接 print 到 GBK 终端会抛
+# UnicodeEncodeError。把 stdout/stderr 统一包一层 UTF-8 写入器，兼顾可读性与健壮性。
+if sys.platform == 'win32':
+    try:
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding='utf-8', errors='replace')
+        sys.stderr = io.TextIOWrapper(
+            sys.stderr.buffer, encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 CASE_DIR = Path(__file__).parent
 TARGET = CASE_DIR / 'target_project'
@@ -138,48 +151,44 @@ def check_java_syntax() -> tuple[bool, list[str]]:
 
     优先用 mvn compile；若没有 mvn，则用 javac 对 service/ 下每个文件做语法检查。
     """
-    findings: list[str] = []
-    try:
-        # 优先 mvn compile
-        result = subprocess.run(
-            ['mvn', '-q', 'compile', '-DskipTests'],
-            cwd=str(TARGET),
-            capture_output=True,
-            text=True,
-            timeout=180,
-        )
-        if result.returncode != 0:
-            findings.append('mvn compile 失败：\n' + result.stdout[-500:])
-        return (not findings), findings
-    except FileNotFoundError:
-        pass
-    except subprocess.TimeoutExpired:
-        return False, ['mvn compile 超时']
-
-    # Fallback: 用 javac --help 判定 java 是否可用
-    try:
-        jres = subprocess.run(['javac', '-version'], capture_output=True, timeout=10)
-        if jres.returncode != 0:
-            # 无 java 工具链，降级为"不判定"，视为 pass 并给一条 info
-            return True, ['INFO: 未检测到 mvn/javac，跳过编译验证（本机未安装 Java 工具链）']
-    except FileNotFoundError:
-        return True, ['INFO: 未检测到 mvn/javac，跳过编译验证（本机未安装 Java 工具链）']
-
-    # 有 javac 但无 mvn：对 service/ 下最小子集做语法检查
-    for java_file in SERVICE_DIR.rglob('*.java'):
-        if '__' in java_file.name:
-            continue
+    # 跨平台的稳健解码：mvn / javac 在 Windows 上常输出 GBK，而 Python 默认按
+    # utf-8 严格解码会抛 UnicodeDecodeError。这里统一抓 bytes，再以 errors="replace"
+    # 解码，避免脚本末尾出现编码噪音。
+    def _run_safe(cmd: list[str], cwd: str | None = None, timeout: int = 60):
         try:
             res = subprocess.run(
-                ['javac', '-d', str(TARGET / 'target_stub'), '-sourcepath',
-                 str(TARGET / 'src' / 'main' / 'java'), str(java_file)],
-                capture_output=True, text=True, timeout=30,
+                cmd, cwd=cwd, capture_output=True, timeout=timeout,
             )
-            if res.returncode != 0 and 'cannot find symbol' not in res.stderr:
-                findings.append(f'{java_file.name}: 语法错误（{res.stderr[:200]}）')
-        except Exception:
-            pass
-    return (not findings), findings[:5]
+        except FileNotFoundError:
+            return None, None, -1
+        except subprocess.TimeoutExpired:
+            return None, None, -2
+        out = (res.stdout or b'').decode('utf-8', errors='replace')
+        err = (res.stderr or b'').decode('utf-8', errors='replace')
+        return out, err, res.returncode
+
+    findings: list[str] = []
+    # 优先 mvn compile
+    out, err, code = _run_safe(
+        ['mvn', '-q', 'compile', '-DskipTests'], cwd=str(TARGET), timeout=180,
+    )
+    if code == -2:
+        return False, ['mvn compile 超时（>180s）']
+    if code == 0:
+        return True, []
+    if code is not None and code != -1:
+        # mvn 存在但编译失败
+        tail = (out or err or '')[-500:]
+        return False, [f'mvn compile 失败：\n{tail}']
+
+    # mvn 不在 PATH：降级为"不判定"。
+    # 不尝试 javac 单文件编译——Spring Boot 项目有 Maven 依赖树（Lombok、MyBatis-Flex
+    # 等），没有 classpath 的单文件 javac 必然全部报"找不到符号"，得不到有价值的反馈。
+    # 真要做严格的编译验证，读者需要自己安装 Maven 后重跑。
+    return True, [
+        'INFO: 本机未安装 Maven，跳过编译验证；读者要做严格编译验收请先 '
+        '`mvn -v` 确认 Maven 可用，然后重新运行 `python cases/refactor_enterprise/verify.py`'
+    ]
 
 
 def check_no_unauthorized_changes() -> tuple[bool, list[str]]:

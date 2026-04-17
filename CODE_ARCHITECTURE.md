@@ -236,8 +236,6 @@ harness-py-book/
 │   ├── ch07_verify.py               ← LoopGuard → harness_py.loop_guard.*
 │   └── ch11_observe.py              ← Token分析（纯jsonl解析）
 │
-├── examples/                      ← [保留] 原始自包含版本（历史参考）
-│
 ├── harness_py/                      ← 教学层框架（~1500行，Ch3-7逐章叠加）
 │   ├── __init__.py
 │   ├── config.py                    ← Ch3: 配置
@@ -270,25 +268,23 @@ harness-py-book/
 │   ├── session.py                   ← jsonl会话持久化
 │   └── swarm.py                     ← 多Agent编排（orchestrate + pipeline）
 │
-├── cases/                           ← 三个实战项目（26文件）
-│   ├── refactor/                    ← Ch8: 遗留系统重构
-│   │   ├── TASK.md                  ← 四阶段重构任务
+├── cases/                           ← 三个实战项目（Ch8-10，见下）
+│   ├── refactor_enterprise/         ← Ch8: Java 企业项目重构（72 文件 / 7,929 行）
+│   │   ├── TASK.md                  ← God Class 拆分 + 契约不变的十项验收
 │   │   ├── CLAUDE.md                ← 重构约束规则
-│   │   ├── run.py / verify.py       ← 运行+验证脚本
-│   │   └── target_project/          ← ~900行待重构代码（God Class+SQL注入+硬编码）
-│   ├── medical/                     ← Ch9: 医疗数据分析
-│   │   ├── TASK.md                  ← 数据分析任务+合规要求
-│   │   ├── CLAUDE.md                ← 医疗合规配置
-│   │   ├── compliance_hooks.py      ← 合规Hook（PII过滤+审计+网络隔离）
-│   │   ├── run.py / verify.py       ← 运行+合规验证
-│   │   └── sample_data/             ← 150条脱敏血常规数据
-│   └── fullstack/                   ← Ch10: 多Agent全栈开发
-│       ├── TASK.md                  ← 三角色协作任务
-│       ├── CLAUDE.md                ← 编排规则
-│       ├── spec.md                  ← 一句话需求
-│       ├── roles/                   ← Planner/Generator/Evaluator角色定义
-│       ├── run.py / verify.py       ← 运行+功能验证
-│       └── output/                  ← Agent生成的代码（运行后产生）
+│   │   ├── run.py / verify.py       ← 运行 + 静态验收脚本
+│   │   └── target_project/          ← 完整 Spring Boot 项目（Controller/Service/DAO/DTO 八层）
+│   ├── data_compliance/             ← Ch9: 医疗数据合规（约 15,000 行 Python）
+│   │   ├── TASK.md                  ← 六项合规验收
+│   │   ├── CLAUDE.md                ← 三层防御规则（SQL/PII/审计/沙箱/网络）
+│   │   ├── run.py / verify.py       ← 运行 + 合规验证
+│   │   └── target_service/          ← FastAPI 服务（api/repositories/services/tests 六层）
+│   └── multiagent_enterprise/       ← Ch10: 跨项目多 Agent 编排（编排骨架 + cwd 指向 Ch8/Ch9）
+│       ├── TASK.md                  ← 四轮编排定义 + 角色隔离约束
+│       ├── CLAUDE.md                ← 契约治理规则
+│       ├── spec/                    ← requirement.md / api_contract.yaml / architecture.md
+│       ├── roles/                   ← architect/java_developer/python_developer/qa_engineer
+│       └── run.py / verify.py       ← 运行 + 跨项目一致性验证
 │
 ├── experiments/                     ← 实验脚本
 │   ├── compression_demo.py          ← Ch6: DeepSeek 128K压缩实验
