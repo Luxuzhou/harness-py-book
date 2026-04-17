@@ -4,8 +4,15 @@
 用法: python experiments/run_all_cases.py
 需要: .env 中的 OPENAI_API_KEY 或 HARNESS_API_KEY
 
+新版三案例（对应书稿第 8-10 章）：
+- Case1  cases/refactor_enterprise   — Java 企业项目重构（Ch8）
+- Case2  cases/data_compliance       — Python 医疗合规服务（Ch9）
+- Case3  cases/multiagent_enterprise — 跨 Java/Python 多 Agent 编排（Ch10）
+
 每个案例的运行日志、验证结果、运行指标自动保存到
 experiments/results/ 目录下，作为书稿写作素材。
+
+旧版三案例（refactor/medical/fullstack）已移到 cases/_archive/*_legacy/。
 """
 
 import io
@@ -154,23 +161,20 @@ def _serialize_result(result) -> dict | None:
     return str(result)
 
 
-# ============ Case 1: 遗留系统重构 ============
+# ============ Case 1: Java 企业项目重构（Ch8） ============
 
 def run_case1():
-    import tempfile
-    tmp = tempfile.mkdtemp()
-    os.environ['INVENTORY_DB'] = os.path.join(tmp, 'inventory.db')
-
     from harness_py_pro import run, ModelConfig, AgentConfig
-    task = (ROOT / 'cases' / 'refactor' / 'TASK.md').read_text(encoding='utf-8')
-    target_dir = ROOT / 'cases' / 'refactor' / 'target_project'
+    case_dir = ROOT / 'cases' / 'refactor_enterprise'
+    task = (case_dir / 'TASK.md').read_text(encoding='utf-8')
+    target_dir = case_dir / 'target_project'
 
     return run(
         task,
         model_config=ModelConfig.from_env(),
         agent_config=AgentConfig(
             cwd=target_dir,
-            max_iterations=40,
+            max_iterations=50,
             planning_turns=3,
             allow_write=True,
             allow_shell=True,
@@ -179,112 +183,68 @@ def run_case1():
 
 
 def verify_case1():
-    sys.path.insert(0, str(ROOT / 'cases' / 'refactor'))
-    import importlib
-    spec = importlib.util.spec_from_file_location('verify', ROOT / 'cases' / 'refactor' / 'verify.py')
+    import importlib.util
+    case_dir = ROOT / 'cases' / 'refactor_enterprise'
+    sys.path.insert(0, str(case_dir))
+    spec = importlib.util.spec_from_file_location('verify_refactor', case_dir / 'verify.py')
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.main()
 
 
-# ============ Case 2: 医疗数据分析 ============
+# ============ Case 2: Python 医疗合规服务（Ch9） ============
 
 def run_case2():
     from harness_py_pro import run, ModelConfig, AgentConfig
-    from harness_py_pro.config import HookConfig
 
-    sys.path.insert(0, str(ROOT / 'cases' / 'medical'))
-    from compliance_hooks import pre_tool_hook, post_tool_hook
-
-    task = (ROOT / 'cases' / 'medical' / 'TASK.md').read_text(encoding='utf-8')
-    case_dir = ROOT / 'cases' / 'medical'
+    case_dir = ROOT / 'cases' / 'data_compliance'
+    task = (case_dir / 'TASK.md').read_text(encoding='utf-8')
+    target_dir = case_dir / 'target_service'
 
     return run(
         task,
         model_config=ModelConfig.from_env(),
         agent_config=AgentConfig(
-            cwd=case_dir,
-            max_iterations=30,
+            cwd=target_dir,
+            max_iterations=40,
             planning_turns=2,
             allow_write=True,
             allow_shell=True,
             network_isolated=True,
-            allowed_paths=['sample_data', '.'],
-            hooks=HookConfig(
-                pre_tool=pre_tool_hook,
-                post_tool=post_tool_hook,
-            ),
+            allowed_paths=['.'],
         ),
     )
 
 
 def verify_case2():
-    spec = __import__('importlib').util.spec_from_file_location('verify', ROOT / 'cases' / 'medical' / 'verify.py')
-    mod = __import__('importlib').util.module_from_spec(spec)
+    import importlib.util
+    case_dir = ROOT / 'cases' / 'data_compliance'
+    sys.path.insert(0, str(case_dir))
+    spec = importlib.util.spec_from_file_location('verify_compliance', case_dir / 'verify.py')
+    mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.main()
 
 
-# ============ Case 3: 多Agent全栈 ============
+# ============ Case 3: 跨 Java/Python 多 Agent 编排（Ch10） ============
 
 def run_case3():
-    from harness_py_pro import ModelConfig
-    from harness_py_pro.swarm import orchestrate, AgentRole
-    import re
-
-    case_dir = ROOT / 'cases' / 'fullstack'
-    (case_dir / 'output').mkdir(exist_ok=True)
-
-    task = (case_dir / 'TASK.md').read_text(encoding='utf-8')
-    planner_prompt = (case_dir / 'roles' / 'planner.md').read_text(encoding='utf-8')
-    generator_prompt = (case_dir / 'roles' / 'generator.md').read_text(encoding='utf-8')
-    evaluator_prompt = (case_dir / 'roles' / 'evaluator.md').read_text(encoding='utf-8')
-
-    roles = [
-        AgentRole(
-            name='Planner',
-            role_prompt=planner_prompt,
-            tool_filter=['read_file', 'grep_search', 'glob_search', 'write_file'],
-            max_iterations=10, planning_turns=1, allow_shell=False,
-        ),
-        AgentRole(
-            name='Generator',
-            role_prompt=generator_prompt,
-            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search', 'glob_search'],
-            max_iterations=20, planning_turns=2,
-        ),
-        AgentRole(
-            name='Evaluator',
-            role_prompt=evaluator_prompt,
-            tool_filter=['read_file', 'grep_search', 'glob_search', 'bash', 'write_file'],
-            max_iterations=12, planning_turns=1, allow_write=True,
-        ),
-    ]
-
-    def convergence_check(round_num, work_dir):
-        review_file = work_dir / 'output' / 'review.md'
-        if not review_file.exists():
-            return False, ''
-        content = review_file.read_text(encoding='utf-8')
-        if 'PASS' in content.upper() and '判定' in content:
-            score_match = re.search(r'(\d+)\s*/\s*100', content)
-            score = int(score_match.group(1)) if score_match else 0
-            if score >= 70:
-                return True, f'Evaluator评分 {score}/100 >= 70, PASS'
-        return False, ''
-
-    return orchestrate(
-        task, roles,
-        model_config=ModelConfig.from_env(),
-        cwd=case_dir,
-        max_rounds=3,
-        convergence_check=convergence_check,
-    )
+    """通过 cases/multiagent_enterprise/run.py 运行多Agent编排。"""
+    import importlib.util
+    case_dir = ROOT / 'cases' / 'multiagent_enterprise'
+    sys.path.insert(0, str(case_dir))
+    spec = importlib.util.spec_from_file_location('run_multiagent', case_dir / 'run.py')
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.main()
 
 
 def verify_case3():
-    spec = __import__('importlib').util.spec_from_file_location('verify', ROOT / 'cases' / 'fullstack' / 'verify.py')
-    mod = __import__('importlib').util.module_from_spec(spec)
+    import importlib.util
+    case_dir = ROOT / 'cases' / 'multiagent_enterprise'
+    sys.path.insert(0, str(case_dir))
+    spec = importlib.util.spec_from_file_location('verify_multiagent', case_dir / 'verify.py')
+    mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.main()
 
@@ -308,9 +268,9 @@ def main():
     print()
 
     cases = [
-        ('Case1_Refactor', run_case1, verify_case1),
-        ('Case2_Medical', run_case2, verify_case2),
-        ('Case3_Fullstack', run_case3, verify_case3),
+        ('Case1_RefactorEnterprise', run_case1, verify_case1),
+        ('Case2_DataCompliance', run_case2, verify_case2),
+        ('Case3_MultiagentEnterprise', run_case3, verify_case3),
     ]
 
     summary = []
