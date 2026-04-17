@@ -1,8 +1,9 @@
 """
 Pydantic数据模型定义
-对标S37的1504行schemas.py
 
-包含50+个模型，覆盖患者过滤、任务配置、诊疗记录、科室管理等
+本模块是临床数据合规服务的核心数据契约层，参照真实生产系统脱敏改写。
+包含 50+ 个模型，覆盖患者筛选、任务配置、检验结果、仪器管理等维度，
+同时承载 PII 脱敏规则、字段级权限约束、审计追溯元数据。
 """
 
 from __future__ import annotations
@@ -329,7 +330,7 @@ class InstrumentListResponse(BaseResponse):
 
 
 # ──────────────────────────────────────────────────────────────
-# 过滤模型 (对标S37的嵌套过滤)
+# 过滤模型：支持嵌套的多维度条件组合与布尔表达式
 # ──────────────────────────────────────────────────────────────
 class FilterItem(BaseModel):
     """单个过滤条件"""
@@ -391,7 +392,7 @@ class FilterGroup(BaseModel):
 
 
 # ──────────────────────────────────────────────────────────────
-# 患者过滤条件（对标S37的SimulationFilters）
+# 患者筛选条件：支持按疾病、时段、科室、年龄、性别多维度过滤
 # ──────────────────────────────────────────────────────────────
 class DepartmentFilter(BaseModel):
     """科室过滤"""
@@ -460,8 +461,10 @@ class TimeRangeFilter(BaseModel):
 
 class SimulationFilters(BaseModel):
     """
-    综合模拟过滤条件
-    对标S37的SimulationFilters, 包含所有维度的过滤
+    综合模拟过滤条件。
+
+    聚合性别、年龄、科室、检验类型、时段等多维度筛选器，
+    用于临床路径分析任务的入参约束。
     """
     gender: Optional[GenderEnum] = Field(default=None, description="性别过滤")
     age: Optional[AgeFilter] = Field(default=None, description="年龄过滤")
@@ -608,7 +611,10 @@ class TruncationConfig(BaseModel):
 
 class TaskConfig(BaseModel):
     """
-    完整的任务配置（对标S37的TaskConfig）
+    分析任务完整配置。
+
+    覆盖任务元信息、输入参数、输出选项、调度策略四组字段，
+    被 pathway_analyzer、anomaly_rule_engine、export 三条主链共用。
     """
     task_id: Optional[str] = Field(default=None, description="任务ID")
     task_name: Optional[str] = Field(default=None, description="任务名称")

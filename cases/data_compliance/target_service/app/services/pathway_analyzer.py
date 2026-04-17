@@ -1,9 +1,9 @@
 """
-PathwayAnalytics (Patient-Based Real-Time Quality Control) Analyzer
-基于患者数据的实时临床路径分析器
+临床路径分析主模块（pathway_analyzer）。
 
-对标S37 data_service的4120行pathway_analyzer.py
-包含统计计算、异常检测、正态性变换、路径依从率计算等核心功能
+职责：基于患者检验与诊疗数据，实时识别临床路径、检测偏差、归因异常。
+覆盖统计计算、异常检测、正态性变换、路径依从率计算四条主链。
+本模块参照真实生产系统脱敏改写，保留企业级数据服务的核心算法结构。
 """
 
 import os

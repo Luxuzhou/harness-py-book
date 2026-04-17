@@ -70,12 +70,12 @@ class DataProcessor:
             print(f"[ERROR] Failed to load patients: {e}")
             return []
 
-    def load_treatment_records_csv(self, filepath: str) -> List[Dict[str, Any]]:
+    def load_lab_results_csv(self, filepath: str) -> List[Dict[str, Any]]:
         """
-        加载诊疗记录CSV
+        加载检验结果 CSV。
 
         Returns:
-            诊疗记录记录列表
+            检验结果记录列表（result_id, patient_id, step_code, value, unit, ...）
         """
         records = []
         try:
@@ -119,8 +119,8 @@ class DataProcessor:
             print(f"[ERROR] Failed to load results: {e}")
             return []
 
-    def load_departments_csv(self, filepath: str) -> List[Dict[str, Any]]:
-        """加载科室数据CSV"""
+    def load_instruments_csv(self, filepath: str) -> List[Dict[str, Any]]:
+        """加载仪器设备清单 CSV（对应 instruments.csv）。"""
         records = []
         try:
             with open(filepath, 'r', encoding='utf-8') as f:

@@ -1,9 +1,9 @@
 """
-查询优化服务
-对标S37的optimized_query_service.py
+高性能查询服务（query_service）。
 
-包含SQL查询生成、ClickHouse PREWHERE优化、动态过滤条件拼接
-坏味道: SQL字符串拼接（注入风险）
+针对临床大表的物化视图、分页、动态过滤条件组装进行优化，
+覆盖 SQL 查询生成、ClickHouse PREWHERE 下推、条件拼接三个主链。
+坏味道（刻意保留以供第 9 章改造）：SQL 字符串拼接存在注入风险。
 """
 
 import logging

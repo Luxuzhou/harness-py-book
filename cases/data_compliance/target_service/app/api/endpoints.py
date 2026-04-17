@@ -511,17 +511,17 @@ async def load_sample_data(data_dir: str = "sample_data"):
     data_path = os.path.join(base_dir, data_dir)
 
     patients_path = os.path.join(data_path, "patients.csv")
-    results_path = os.path.join(data_path, "treatment_records.csv")
-    departments_path = os.path.join(data_path, "departments.csv")
+    results_path = os.path.join(data_path, "lab_results.csv")
+    instruments_path = os.path.join(data_path, "instruments.csv")
 
     _patients_store = _data_processor.load_patients_csv(patients_path)
-    _results_store = _data_processor.load_treatment_records_csv(results_path)
-    _departments_store = _data_processor.load_departments_csv(departments_path)
+    _results_store = _data_processor.load_lab_results_csv(results_path)
+    _departments_store = _data_processor.load_instruments_csv(instruments_path)
 
     return BaseResponse(
         message=(f"数据加载完成: {len(_patients_store)}名患者, "
-                f"{len(_results_store)}条结果, "
-                f"{len(_departments_store)}台科室"),
+                f"{len(_results_store)}条检验结果, "
+                f"{len(_departments_store)}台仪器"),
     )
 
 
@@ -532,8 +532,8 @@ async def data_summary():
         "success": True,
         "data": {
             "patients": len(_patients_store),
-            "treatment_records": len(_results_store),
-            "departments": len(_departments_store),
+            "lab_results": len(_results_store),
+            "instruments": len(_departments_store),
             "tasks": len(_tasks_store),
         },
     }

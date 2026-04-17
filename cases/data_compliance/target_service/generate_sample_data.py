@@ -364,10 +364,10 @@ def main():
         writer.writerows(patients)
     print(f"    -> {patients_path} ({len(patients)}条)")
 
-    # 2. 诊疗记录
-    print("  生成诊疗记录 (8000条)...")
+    # 2. 检验结果
+    print("  生成检验结果 (8000条)...")
     results = generate_treatment_records(patients, 8000)
-    results_path = os.path.join(OUTPUT_DIR, "treatment_records.csv")
+    results_path = os.path.join(OUTPUT_DIR, "lab_results.csv")
     with open(results_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=[
             "result_id", "patient_id", "step_code", "step_name",
@@ -377,11 +377,11 @@ def main():
         writer.writerows(results)
     print(f"    -> {results_path} ({len(results)}条)")
 
-    # 3. 科室数据
-    print("  生成科室数据 (50条)...")
-    departments = generate_departments(50)
-    departments_path = os.path.join(OUTPUT_DIR, "departments.csv")
-    with open(departments_path, "w", newline="", encoding="utf-8") as f:
+    # 3. 仪器设备清单
+    print("  生成仪器设备清单 (50条)...")
+    instruments = generate_departments(50)
+    instruments_path = os.path.join(OUTPUT_DIR, "instruments.csv")
+    with open(instruments_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=[
             "department_id", "name", "manufacturer", "model",
             "serial_number", "department", "location", "status",
@@ -389,8 +389,8 @@ def main():
             "supported_tests", "daily_capacity",
         ])
         writer.writeheader()
-        writer.writerows(departments)
-    print(f"    -> {departments_path} ({len(departments)}条)")
+        writer.writerows(instruments)
+    print(f"    -> {instruments_path} ({len(instruments)}条)")
 
     # 4. 参考范围
     print("  生成参考范围...")
@@ -402,8 +402,8 @@ def main():
 
     print("\n数据生成完成!")
     print(f"  患者: {len(patients)}条")
-    print(f"  诊疗记录: {len(results)}条")
-    print(f"  科室: {len(departments)}条")
+    print(f"  检验结果: {len(results)}条")
+    print(f"  仪器设备: {len(instruments)}条")
     print(f"  参考范围: {len(ref_ranges)}项")
 
 
