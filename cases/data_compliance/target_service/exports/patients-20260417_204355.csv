@@ -1,0 +1,5 @@
+﻿# exported_at=2026-04-17T20:43:55.296195
+# rows_limit=100000
+# masked_fields=name,id_card,phone
+patient_id,name,id_card,age
+P1,张*,110101********001X,30
