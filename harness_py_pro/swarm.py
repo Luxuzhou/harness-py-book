@@ -33,6 +33,10 @@ class AgentRole:
     allow_shell: bool = True
     hooks: HookConfig = field(default_factory=HookConfig)
 
+    # 跨项目多Agent场景：覆盖 orchestrate() 的全局 cwd，
+    # 让该角色在自己的代码库根目录下执行。
+    cwd: Path | None = None
+
 
 @dataclass
 class SwarmResult:
@@ -54,6 +58,7 @@ def orchestrate(
     convergence_check: Any | None = None,
     completion_client: object | None = None,
     verbose: bool = True,
+    parallel_groups: dict[int, list[str]] | None = None,
 ) -> SwarmResult:
     """
     多Agent编排入口。
@@ -65,6 +70,13 @@ def orchestrate(
     4. 最多max_rounds轮
 
     convergence_check: (round_number, cwd) -> (converged, reason)
+
+    parallel_groups: {round_number: [role_name, ...]}
+        在对应轮次里，这些角色被视为"语义并行"：它们看到的前序产出
+        不包含同组其他角色在当轮的输出。执行仍按 roles 顺序串行调用，
+        但当轮组内角色互相隔离视角，等价于"多人同时动手"。
+        例如 {2: ['JavaDeveloper', 'PythonDeveloper']} 表示第2轮
+        Java 和 Python 开发者并行工作、互不等待。
     """
     from .config import ModelConfig as MC
 
@@ -86,16 +98,39 @@ def orchestrate(
 
         swarm_result.rounds = round_num
 
+        # 计算本轮的并行组（角色名集合）。同组角色互不可见对方当轮输出。
+        parallel_names: set[str] = set()
+        if parallel_groups and round_num in parallel_groups:
+            parallel_names = set(parallel_groups[round_num])
+            if verbose and parallel_names:
+                print(f'[SWARM] 本轮并行组: {sorted(parallel_names)}')
+
+        # 记录本轮各角色产出（用于下一个角色的 _build_agent_task 可见性判断）
+        round_outputs: dict[str, str] = {}
+
         for role in roles:
             if verbose:
                 print(f'\n--- Agent: {role.name} ---')
 
-            # 构建Agent任务（包含原始任务 + 角色指令）
-            agent_task = _build_agent_task(task, role, round_num, work_dir)
+            # 该角色在本轮能看到的"已产出内容"：
+            # 若自己在并行组里，屏蔽组内其他角色的当轮输出。
+            visible_round_outputs = {
+                n: o for n, o in round_outputs.items()
+                if not (role.name in parallel_names and n in parallel_names)
+            }
+
+            # 角色各自的工作目录：优先用 role.cwd，否则全局 cwd
+            role_cwd = role.cwd or work_dir
+
+            # 构建Agent任务（包含原始任务 + 角色指令 + 可见前序产出）
+            agent_task = _build_agent_task(
+                task, role, round_num, role_cwd,
+                visible_round_outputs=visible_round_outputs,
+            )
 
             # 配置Agent
             agent_config = AgentConfig(
-                cwd=work_dir,
+                cwd=role_cwd,
                 max_iterations=role.max_iterations,
                 planning_turns=role.planning_turns,
                 allow_write=role.allow_write,
@@ -128,9 +163,13 @@ def orchestrate(
                 'tool_calls': agent_result.tool_calls,
                 'tokens': agent_result.total_tokens,
                 'stop_reason': agent_result.stop_reason,
+                'cwd': str(role_cwd),
             })
             swarm_result.total_tokens += agent_result.total_tokens
             swarm_result.total_tool_calls += agent_result.tool_calls
+
+            # 记录本角色的产出，供同轮后续非并行角色参考
+            round_outputs[role.name] = agent_result.output or ''
 
         # 收敛检查
         if convergence_check:
@@ -161,6 +200,7 @@ def _build_agent_task(
     role: AgentRole,
     round_num: int,
     work_dir: Path,
+    visible_round_outputs: dict[str, str] | None = None,
 ) -> str:
     """为Agent构建任务描述。"""
     parts = [f'# 任务\n\n{original_task}']
@@ -174,6 +214,16 @@ def _build_agent_task(
         existing = [f.name for f in output_dir.iterdir() if f.is_file()]
         if existing:
             parts.append(f'\n## 已有文件\n`output/` 目录下已有: {", ".join(existing[:10])}')
+
+    # 本轮前序角色的输出摘要（若处于并行组中，上游同组角色会被屏蔽）
+    if visible_round_outputs:
+        summary_lines = []
+        for n, out in visible_round_outputs.items():
+            snippet = (out or '').strip().splitlines()
+            head = '\n'.join(snippet[:6])
+            summary_lines.append(f'### 来自 {n} 的产出摘要\n{head}')
+        if summary_lines:
+            parts.append('\n## 本轮前序角色输出（供参考，不包含与本角色并行的角色）\n' + '\n\n'.join(summary_lines))
 
     return '\n'.join(parts)
 
@@ -198,8 +248,9 @@ def run_pipeline(
         if verbose:
             print(f'\n--- Pipeline Stage {i+1}/{len(stages)}: {role.name} ---')
 
+        stage_cwd = role.cwd or work_dir
         agent_config = AgentConfig(
-            cwd=work_dir,
+            cwd=stage_cwd,
             max_iterations=role.max_iterations,
             planning_turns=role.planning_turns,
             allow_write=role.allow_write,

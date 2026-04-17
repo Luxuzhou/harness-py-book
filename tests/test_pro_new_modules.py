@@ -202,3 +202,160 @@ def test_config_watcher_detects_change():
         cfg.write_text('{"updated": true}')
         assert watcher.check() == True
         assert len(called) == 1
+
+
+# === swarm.py: AgentRole.cwd + orchestrate.parallel_groups ===
+
+def test_agent_role_accepts_cwd():
+    """AgentRole 支持 cwd 字段，用于跨项目多Agent场景。"""
+    from harness_py_pro.swarm import AgentRole
+    role = AgentRole(
+        name='Dev',
+        role_prompt='test',
+        cwd=Path('/tmp/demo'),
+    )
+    assert role.cwd == Path('/tmp/demo')
+
+
+def test_agent_role_cwd_defaults_to_none():
+    """不传 cwd 时默认 None，orchestrate 会 fallback 到全局 cwd。"""
+    from harness_py_pro.swarm import AgentRole
+    role = AgentRole(name='Dev', role_prompt='test')
+    assert role.cwd is None
+
+
+def test_orchestrate_signature_has_parallel_groups():
+    """orchestrate() 签名支持 parallel_groups 参数。"""
+    import inspect
+    from harness_py_pro.swarm import orchestrate
+    sig = inspect.signature(orchestrate)
+    assert 'parallel_groups' in sig.parameters
+    assert sig.parameters['parallel_groups'].default is None
+
+
+class _StopClient:
+    """最小假客户端：直接返回无工具调用的 assistant 响应，等价于 agent 一轮自然停。"""
+    def __init__(self):
+        self.calls = 0
+        self.messages_log: list[list[dict]] = []
+
+    def complete(self, messages, tools=None):
+        self.calls += 1
+        self.messages_log.append(messages)
+        return {'content': f'output_{self.calls}', 'tool_calls': [], 'usage': {
+            'prompt_tokens': 10, 'completion_tokens': 5, 'total_tokens': 15,
+        }}
+
+
+def test_orchestrate_runs_with_parallel_groups_offline():
+    """parallel_groups 参数能被 orchestrate 接受并记录角色的 cwd。"""
+    from harness_py_pro.swarm import AgentRole, orchestrate
+    from harness_py_pro.config import ModelConfig
+
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        java_root = root / 'java_proj'
+        python_root = root / 'python_proj'
+        java_root.mkdir()
+        python_root.mkdir()
+
+        roles = [
+            AgentRole(name='JavaDev', role_prompt='java', max_iterations=1,
+                      planning_turns=0, cwd=java_root),
+            AgentRole(name='PyDev', role_prompt='python', max_iterations=1,
+                      planning_turns=0, cwd=python_root),
+        ]
+
+        result = orchestrate(
+            'build cross-language client',
+            roles,
+            model_config=ModelConfig(model='gpt-4o', api_key='test-key',
+                                     base_url='https://example.com'),
+            cwd=root,
+            max_rounds=1,
+            parallel_groups={1: ['JavaDev', 'PyDev']},
+            completion_client=_StopClient(),
+            verbose=False,
+        )
+
+        assert result.rounds == 1
+        assert len(result.agents_run) == 2
+        cwds = {r['cwd'] for r in result.agents_run}
+        assert str(java_root) in cwds
+        assert str(python_root) in cwds
+
+
+def test_orchestrate_parallel_group_isolates_round_outputs():
+    """并行组内角色不应在当轮任务描述里看到同组其他角色的产出。"""
+    from harness_py_pro.swarm import AgentRole, orchestrate
+    from harness_py_pro.config import ModelConfig
+
+    client = _StopClient()
+
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        roles = [
+            AgentRole(name='A', role_prompt='role_a', max_iterations=1, planning_turns=0),
+            AgentRole(name='B', role_prompt='role_b', max_iterations=1, planning_turns=0),
+        ]
+
+        orchestrate(
+            'task',
+            roles,
+            model_config=ModelConfig(model='gpt-4o', api_key='test-key',
+                                     base_url='https://example.com'),
+            cwd=root,
+            max_rounds=1,
+            parallel_groups={1: ['A', 'B']},
+            completion_client=client,
+            verbose=False,
+        )
+
+        assert client.calls == 2
+        # B 是第二个被调用的角色，它的 user prompt 里不应含 "来自 A 的产出摘要"
+        second_call_messages = client.messages_log[1]
+        # 把整个 messages 拼起来搜索
+        all_text = '\n'.join(
+            (m.get('content') or '') if isinstance(m.get('content'), str)
+            else str(m.get('content') or '')
+            for m in second_call_messages
+        )
+        assert '来自 A 的产出摘要' not in all_text, \
+            '并行组内 B 不应看到同组 A 的当轮产出'
+
+
+def test_orchestrate_non_parallel_shares_round_outputs():
+    """不在 parallel_groups 里的角色，应当在当轮看到前一个角色的产出。"""
+    from harness_py_pro.swarm import AgentRole, orchestrate
+    from harness_py_pro.config import ModelConfig
+
+    client = _StopClient()
+
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        roles = [
+            AgentRole(name='A', role_prompt='role_a', max_iterations=1, planning_turns=0),
+            AgentRole(name='B', role_prompt='role_b', max_iterations=1, planning_turns=0),
+        ]
+
+        orchestrate(
+            'task',
+            roles,
+            model_config=ModelConfig(model='gpt-4o', api_key='test-key',
+                                     base_url='https://example.com'),
+            cwd=root,
+            max_rounds=1,
+            parallel_groups=None,
+            completion_client=client,
+            verbose=False,
+        )
+
+        assert client.calls == 2
+        second_call_messages = client.messages_log[1]
+        all_text = '\n'.join(
+            (m.get('content') or '') if isinstance(m.get('content'), str)
+            else str(m.get('content') or '')
+            for m in second_call_messages
+        )
+        assert '来自 A 的产出摘要' in all_text, \
+            '非并行场景下 B 应当看到 A 的当轮产出'
