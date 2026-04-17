@@ -85,6 +85,12 @@ cases/medical/cases/
 cases/medical/analysis_report.md
 cases/medical/complete_analysis*
 
+# === 合规案例的导出/审计/报表/通知目录 ===
+cases/data_compliance/target_service/exports/
+cases/data_compliance/target_service/audit_logs/
+cases/data_compliance/target_service/reports/
+cases/data_compliance/target_service/notifications/
+
 # === 旧的顶层文件 ===
 TASK.md
 test_e2e.py
