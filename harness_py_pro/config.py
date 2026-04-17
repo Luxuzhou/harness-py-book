@@ -11,7 +11,7 @@ import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Optional
 
 
 def ensure_utf8_console():
@@ -72,6 +72,14 @@ class AgentConfig:
     max_cost_usd: float = 0.0
     allow_write: bool = True
     allow_shell: bool = True
+
+    # 生产定制扩展点：用户可传入自定义 CostTracker 实例（比如对接
+    # Prometheus / Grafana / 自家计费系统），传入则替换 engine 内部的默认
+    # CostTracker。Optional[Any] 是为了避免 config.py 与 token_budget.py
+    # 的循环依赖——engine 接收任意 duck-typed 对象，只要支持
+    # record(model, input_tokens, output_tokens) / total_cost /
+    # over_budget / summary() 四个方法即可。
+    cost_tracker: Optional[Any] = None
 
     # 压缩配置
     compress_threshold_pct: float = 0.7

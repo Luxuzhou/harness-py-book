@@ -122,7 +122,9 @@ def run(
     compressor = Compressor(preserve_messages=ac.compact_preserve_messages)
     guard = LoopGuard()
     budget = TokenBudget.allocate(mc.context_window)
-    cost_tracker = CostTracker(budget_usd=ac.max_cost_usd)
+    # AgentConfig.cost_tracker 是生产定制扩展点：用户传入自定义实例（比如对接
+    # Prometheus / 自家计费）则替换默认 CostTracker，否则用内置实现。
+    cost_tracker = ac.cost_tracker or CostTracker(budget_usd=ac.max_cost_usd)
     metrics = Metrics(start_time=time.time())
 
     # 沙箱

@@ -359,3 +359,63 @@ def test_orchestrate_non_parallel_shares_round_outputs():
         )
         assert '来自 A 的产出摘要' in all_text, \
             '非并行场景下 B 应当看到 A 的当轮产出'
+
+
+def test_agent_config_accepts_custom_cost_tracker():
+    """AgentConfig.cost_tracker 允许用户替换默认 CostTracker。"""
+    from harness_py_pro.config import AgentConfig
+
+    class FakeCostTracker:
+        def __init__(self):
+            self.calls: list = []
+            self.total_cost = 0.0
+            self.over_budget = False
+        def record(self, model, input_tokens, output_tokens):
+            self.calls.append((model, input_tokens, output_tokens))
+        def summary(self):
+            return {'calls': len(self.calls)}
+
+    ct = FakeCostTracker()
+    ac = AgentConfig(cost_tracker=ct)
+    assert ac.cost_tracker is ct
+
+
+def test_engine_uses_custom_cost_tracker():
+    """engine.run 使用 AgentConfig.cost_tracker 而非新建 CostTracker。"""
+    import tempfile
+    from pathlib import Path as _Path
+    from harness_py_pro.config import AgentConfig, ModelConfig
+    from harness_py_pro.engine import run as run_engine
+
+    class TupleClient:
+        def __init__(self):
+            self.calls = 0
+        def complete(self, messages, tools=None):
+            self.calls += 1
+            return ({'content': 'done', 'tool_calls': [],
+                     'usage': {'prompt_tokens': 10, 'completion_tokens': 5}}, 'router-a')
+
+    class FakeCostTracker:
+        def __init__(self):
+            self.records: list = []
+            self.total_cost = 0.0
+            self.over_budget = False
+        def record(self, model, input_tokens, output_tokens):
+            self.records.append((model, input_tokens, output_tokens))
+        def summary(self):
+            return {'records': len(self.records), 'is_fake': True}
+
+    with tempfile.TemporaryDirectory() as d:
+        ct = FakeCostTracker()
+        result = run_engine(
+            'noop',
+            model_config=ModelConfig(model='gpt-4o', api_key='k',
+                                     base_url='https://example.com'),
+            agent_config=AgentConfig(cwd=_Path(d), max_iterations=1,
+                                     cost_tracker=ct),
+            completion_client=TupleClient(),
+            verbose=False,
+        )
+        # 用户传入的 FakeCostTracker 被 engine 使用
+        assert len(ct.records) >= 1
+        assert result.cost_summary.get('is_fake') is True
