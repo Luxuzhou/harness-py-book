@@ -4,7 +4,7 @@
 
 ```
 +------------------+          REST API          +--------------------+
-|   临床路径管理系统 (Java)     | <----------------------->  |   诊疗数据分析服务 (Python)     |
+|   Java 临床路径后端 (Java)     | <----------------------->  |   Python 诊疗数据合规服务 (Python)     |
 |   Spring Boot    |                            |   FastAPI          |
 |   临床路径规则管理   |                            |   临床路径数据分析     |
 |   数据持久化     |                            |   算法引擎         |
@@ -16,7 +16,7 @@
     +---------+                                    +-------------+
 ```
 
-## 2. 临床路径管理系统 — Java 临床路径管理平台
+## 2. Java 临床路径后端 — Java 临床路径管理平台
 
 ### 2.1 技术栈
 - Java 17 + Spring Boot 3.x
@@ -52,12 +52,12 @@ com.example.cp/
 - 临床路径数据录入
 - （新增）智能预警规则管理 <-- 本次开发
 
-## 3. 诊疗数据分析服务 — Python 临床路径分析引擎
+## 3. Python 诊疗数据合规服务 — Python 临床路径分析引擎
 
 ### 3.1 技术栈
 - Python 3.11 + FastAPI
 - NumPy（数值计算）
-- httpx（HTTP 客户端，调用 临床路径管理系统 API）
+- httpx（HTTP 客户端，调用 Java 临床路径后端 API）
 - Pydantic v2（数据校验）
 - pytest（测试框架）
 
@@ -71,7 +71,7 @@ app/
 ├── models/
 │   └── schemas.py      # Pydantic 数据模型
 ├── clients/
-│   └── h34_client.py   # 调用 临床路径管理系统 Java 端的 HTTP 客户端
+│   └── java_api_client.py   # 调用 Java 临床路径后端 Java 端的 HTTP 客户端
 └── core/
     └── config.py       # 配置管理
 ```
@@ -107,9 +107,9 @@ app/
 ## 5. 开发环境
 
 ### 5.1 本地运行
-- 临床路径管理系统: `mvn spring-boot:run`（端口 8080）
-- 诊疗数据分析服务: `uvicorn app.main:app --port 8000`
+- Java 临床路径后端: `mvn spring-boot:run`（端口 8080）
+- Python 诊疗数据合规服务: `uvicorn app.main:app --port 8000`
 
 ### 5.2 测试
-- 临床路径管理系统: `mvn test`
-- 诊疗数据分析服务: `pytest`
+- Java 临床路径后端: `mvn test`
+- Python 诊疗数据合规服务: `pytest`

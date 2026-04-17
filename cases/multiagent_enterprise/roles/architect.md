@@ -20,8 +20,8 @@
 1. `spec/requirement.md` — 完整需求规格
 2. `spec/api_contract.yaml` — OpenAPI 接口契约
 3. `spec/architecture.md` — 现有系统架构说明
-4. `java_module/` — Java 端现有代码骨架
-5. `python_module/` — Python 端现有代码骨架
+4. `cases/refactor_enterprise/target_project/` — Java 端现有代码骨架
+5. `cases/data_compliance/target_service/` — Python 端现有代码骨架
 
 ## 任务
 

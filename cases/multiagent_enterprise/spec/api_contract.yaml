@@ -2,7 +2,7 @@ openapi: "3.0.3"
 info:
   title: CP Intelligent Anomaly API
   description: |
-    诊疗临床路径智能异常预警模块 — Java端(临床路径管理系统)暴露给Python端(诊疗数据分析服务)的REST API契约。
+    诊疗临床路径智能异常预警模块 — Java端(Java 临床路径后端)暴露给Python端(Python 诊疗数据合规服务)的REST API契约。
     此契约由 Architect Agent 审定，任何修改需经 Architect 审批。
   version: "1.0.0"
   contact:
@@ -11,7 +11,7 @@ info:
 
 servers:
   - url: http://localhost:8080
-    description: 临床路径管理系统 Java 服务（开发环境）
+    description: Java 临床路径后端 Java 服务（开发环境）
 
 paths:
   /api/v1/anomaly/rules:

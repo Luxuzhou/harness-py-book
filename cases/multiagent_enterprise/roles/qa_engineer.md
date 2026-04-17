@@ -15,7 +15,7 @@
 | grep_search | 搜索 | 搜索代码模式 |
 | bash | 受限 | 执行 `mvn test`、`pytest`、`python` 脚本 |
 
-**限制：QA 不可修改 `java_module/src/main/` 或 `python_module/app/` 下的业务代码。**
+**限制：QA 不可修改 `cases/refactor_enterprise/target_project/src/main/` 或 `cases/data_compliance/target_service/app/` 下的业务代码。**
 如果发现 bug，QA 应记录失败测试并输出报告，由对应 Developer 修复。
 
 ## 输入
@@ -23,14 +23,14 @@
 1. `implementation_plan.md` — Architect 的测试策略章节
 2. `spec/api_contract.yaml` — 接口契约
 3. `spec/requirement.md` — 需求文档
-4. `java_module/` — Java 端实现代码
-5. `python_module/` — Python 端实现代码
+4. `cases/refactor_enterprise/target_project/` — Java 端实现代码
+5. `cases/data_compliance/target_service/` — Python 端实现代码
 
 ## 任务
 
 ### 第一步：契约一致性验证
 
-编写 `python_module/tests/test_contract_consistency.py`：
+编写 `cases/data_compliance/target_service/tests/test_contract_consistency.py`：
 
 ```python
 """
@@ -50,7 +50,7 @@
 
 ### 第二步：Python 端单元测试
 
-编写 `python_module/tests/test_anomaly_analyzer.py`：
+编写 `cases/data_compliance/target_service/tests/test_anomaly_analyzer.py`：
 
 **测试 compute_moving_averages:**
 ```python
@@ -105,7 +105,7 @@ def test_golden_boundary_n_minus_1():
 
 ### 第三步：Java 端单元测试
 
-编写 `java_module/src/test/java/com/example/cp/anomaly/AnomalyServiceTest.java`：
+编写 `cases/refactor_enterprise/target_project/src/test/java/com/example/cp/anomaly/AnomalyServiceTest.java`：
 
 ```java
 // 测试 Service 层逻辑（Mock Repository）
@@ -116,7 +116,7 @@ def test_golden_boundary_n_minus_1():
 // - testCreateEvent_Success
 ```
 
-编写 `java_module/src/test/java/com/example/cp/anomaly/AnomalyControllerTest.java`：
+编写 `cases/refactor_enterprise/target_project/src/test/java/com/example/cp/anomaly/AnomalyControllerTest.java`：
 
 ```java
 // 测试 Controller 层（MockMvc）
