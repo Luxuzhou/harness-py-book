@@ -102,7 +102,8 @@ def check_contract_consistency():
     if not contract_file.exists():
         return False, 'api_contract.yaml 不存在'
     if yaml is None:
-        return True, 'INFO: 未安装 PyYAML，跳过契约解析'
+        return False, ('未安装 PyYAML，无法解析契约。请 `pip install pyyaml` '
+                       '后重新运行验证。')
     try:
         contract = yaml.safe_load(contract_file.read_text(encoding='utf-8'))
     except Exception as e:
@@ -118,14 +119,20 @@ def check_contract_consistency():
     py_classes = {
         n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)
     }
-    if not contract_schemas:
-        return True, 'api_contract.yaml 里没有定义 schemas（软通过）'
     key_schemas = {'AnomalyRuleResponse', 'AnomalyEventCreateRequest',
                    'AnomalyEventResponse', 'DeviationPoint', 'ErrorResponse'}
-    missing = key_schemas - py_classes - contract_schemas
-    return True, (f'OpenAPI schemas: {len(contract_schemas)}；'
-                   f'Ch9 schemas.py 类: {len(py_classes)}；'
-                   f'关键类缺失: {len(missing)}')
+    if not contract_schemas:
+        # 契约尚未定义 schemas 时不能视为通过：run.py 执行后 Architect 应补契约
+        return False, ('api_contract.yaml 中缺少 components.schemas 段；'
+                       '多 Agent 编排完成前此项应为 FAIL。')
+    missing = key_schemas - py_classes
+    unresolved = key_schemas - py_classes - contract_schemas
+    detail = (f'OpenAPI schemas: {len(contract_schemas)}；'
+              f'Ch9 schemas.py 类: {len(py_classes)}；'
+              f'Ch9 端缺失的关键类: {sorted(missing)}；'
+              f'两端都缺失的关键类: {sorted(unresolved)}')
+    # 所有关键类必须在 Ch9 schemas.py 或 api_contract.yaml 中存在
+    return (len(unresolved) == 0 and len(missing) == 0), detail
 
 
 # ── Check 5 ──────────────────────────────────────────
@@ -177,8 +184,12 @@ def main() -> bool:
 
     print(f'\n{"=" * 60}')
     print(f'结果: {passed}/{len(checks)} 通过')
-    print('提示: Architect Plan 与 测试报告 只能在 run.py 执行后才会生成。')
-    return passed >= 4  # 至少前 4 项必须通过
+    print('提示: Architect Plan 与 QA 测试报告只能在 run.py 跑完一轮之后才会生成。'
+          '\n      在编排未执行前，这两项会稳定 FAIL；执行后应当全部通过才算真正收敛。')
+    # 出版/审稿语义：六项全部通过才算"多 Agent 协作成功收敛"。
+    # 编排尚未执行时只可能通过前 4 项（anchors / 骨架 / 脚本语法 / 契约），
+    # 这不是 PASS 状态——脚本返回 False 让 CI 与读者立刻看到"还未收敛"。
+    return passed == len(checks)
 
 
 if __name__ == '__main__':
