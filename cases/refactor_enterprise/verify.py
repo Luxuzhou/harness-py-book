@@ -147,9 +147,13 @@ def check_tests_exist() -> tuple[bool, list[str]]:
 
 
 def check_java_syntax() -> tuple[bool, list[str]]:
-    """验收5：编译（或轻量语法）通过。
+    """验收 5：编译通过（或无 Maven 时降级为 INFO）。
 
-    优先用 mvn compile；若没有 mvn，则用 javac 对 service/ 下每个文件做语法检查。
+    策略：优先用 `mvn compile` 做真实编译；本机找不到 mvn 时**不再回退到
+    javac 单文件编译**（Spring Boot 项目有 Lombok / MyBatis-Flex 等依赖，
+    单文件 javac 必然全部报"找不到符号"，产出的信号噪声比得不偿失），
+    直接降级为 INFO 并在报告里明确标注"未安装 Maven，跳过严格编译验证"。
+    读者要做严格编译验收，需自行安装 Maven 后重跑本脚本。
     """
     # 跨平台的稳健解码：mvn / javac 在 Windows 上常输出 GBK，而 Python 默认按
     # utf-8 严格解码会抛 UnicodeDecodeError。这里统一抓 bytes，再以 errors="replace"

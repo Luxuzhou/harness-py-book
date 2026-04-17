@@ -37,7 +37,7 @@ harness-py-book/
 │   ├── data_compliance/     第9章：~15,000行Python合规服务 + 10K条合成数据
 │   └── multiagent_enterprise/ 第10章：跨Ch8+Ch9真实代码的四Agent协作
 │
-├── tests/               根测试套件（60 passed）
+├── tests/               根测试套件（62 passed）
 ├── cases/data_compliance/target_service/tests/  第9章案例自带测试（104 passed）
 ├── experiments/          实验脚本
 └── figures/             书中配图（300dpi PNG）
@@ -64,7 +64,7 @@ pip install -r cases/data_compliance/target_service/requirements.txt
 cp .env.example .env
 
 # 验证
-python -m pytest tests/ -v                                          # 根 60 passed
+python -m pytest tests/ -v                                          # 根 62 passed
 python -m pytest cases/data_compliance/target_service/tests/ -v     # 案例 104 passed
 ```
 
@@ -115,7 +115,7 @@ OPENAI_MODEL=deepseek-chat
 ```bash
 # 根测试套件（不需要API Key；教学层 + harness_py_pro 框架测试）
 python -m pytest tests/ -v
-# 预期结果：60 passed
+# 预期结果：62 passed
 
 # 第 9 章案例测试（合规服务自带，依赖 fastapi / httpx / openpyxl，见 cases/data_compliance/target_service/requirements.txt）
 pip install -r cases/data_compliance/target_service/requirements.txt
