@@ -5,7 +5,7 @@
 > 用国产大模型从零构建生产级Agent系统
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-39%20passed-green.svg)](#运行测试)
+[![Tests](https://img.shields.io/badge/tests-65%20core%20%2B%20104%20case-green.svg)](#运行测试)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
 ---
@@ -32,12 +32,13 @@ harness-py-book/
 ├── examples/            每章验证脚本（9个）
 │                        调用harness_py模块，一行命令验证章节概念
 │
-├── cases/               三个企业级实战项目
+├── cases/               三个企业级实战项目（每个含 TASK/CLAUDE/run/verify 壳层）
 │   ├── refactor_enterprise/  第8章：7,929行Java Spring Boot临床路径系统
-│   ├── data_compliance/     第9章：6,759行Python诊疗数据服务 + 10K条数据
-│   └── multiagent_enterprise/ 第10章：跨Java+Python的四Agent协作
+│   ├── data_compliance/     第9章：~15,000行Python合规服务 + 10K条合成数据
+│   └── multiagent_enterprise/ 第10章：跨Ch8+Ch9真实代码的四Agent协作
 │
-├── tests/               单元测试（39个，全通过）
+├── tests/               根测试套件（65 passed）
+├── cases/data_compliance/target_service/tests/  第9章案例自带测试（104 passed）
 ├── experiments/          实验脚本
 └── figures/             书中配图（300dpi PNG）
 ```
@@ -109,7 +110,12 @@ OPENAI_MODEL=deepseek-chat
 # 全量测试（不需要API Key）
 python -m pytest tests/ -v
 
-# 预期结果：39 passed
+# 预期结果：65 passed（根测试套件）
+
+# 第9章案例测试（合规服务自带）
+cd cases/data_compliance/target_service && python -m pytest tests/ -q
+
+# 预期结果：104 passed
 ```
 
 ## 实战项目
@@ -120,11 +126,11 @@ python -m pytest tests/ -v
 
 ### 第9章：医疗数据服务合规加固
 
-6,759行Python FastAPI数据处理服务 + 10,833条合成医疗数据。包含PII泄露、SQL拼接、无审计日志等10个合规漏洞。三层防御（沙箱+Hook+CLAUDE.md）实战。
+按业务域拆分为路由 / 服务 / Repository / 异常规则引擎 / 调度任务 / 数据导出六大层的 FastAPI 临床数据合规服务（约 15,000 行），配套 10,050 条合成数据（patients / lab_results / instruments）。包含 PII 泄露、SQL 拼接、无审计日志等 10 个合规漏洞。三层防御（沙箱 + Hook + CLAUDE.md）实战。**服务自带 104 个单元测试覆盖 Repository / 服务 / 路由 / 规则引擎 / 调度 / 导出。**
 
 ### 第10章：跨语言多Agent系统集成
 
-给Java临床路径系统 + Python诊疗分析服务新增路径变异智能预警模块。四Agent角色（Architect/Java Dev/Python Dev/QA）并行开发，接口契约治理，收敛验证。
+本案例**不自建业务代码**：`multiagent_enterprise/run.py` 把 JavaDeveloper 的 cwd 指向 Ch8 的 `refactor_enterprise/target_project/`、PythonDeveloper 的 cwd 指向 Ch9 的 `data_compliance/target_service/`，由 Harness 编排四角色（Architect/JavaDev/PythonDev/QA）在真实业务代码上并行开发。接口契约治理、`parallel_groups` 语义、收敛验证一次性展示。
 
 ## 技术选型
 
