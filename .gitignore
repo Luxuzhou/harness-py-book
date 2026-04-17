@@ -17,7 +17,7 @@ build/
 venv/
 env/
 
-# === API密钥（绝对不能提交） ===
+# === API 密钥（绝对不能提交） ===
 .env
 .env.local
 .env.production
@@ -31,84 +31,47 @@ env/
 .DS_Store
 Thumbs.db
 
-# === 测试中间产物 ===
+# === 测试与缓存 ===
 .pytest_cache/
-tmp_test/
-tests_runtime_tmp/
 htmlcov/
 .coverage
 
-# === Agent运行产生的session数据 ===
+# === 运行时临时目录（pytest / Agent 产物） ===
+tmp_test/
+tests_runtime_tmp/
+.tmp/
+.tmp_test/
+
+# === Agent 运行产生的 session 数据 ===
 .harness_sessions/
 *.log.jsonl
-
-# === 实验运行结果（读者应自己跑产生） ===
-experiments/results/
-
-# === 旧案例归档（不需要提交给读者） ===
-cases/_archive/
-
-# === 合规日志（运行时产生） ===
 compliance_log.jsonl
 
-# === 临时和大文件 ===
-*.duckdb
-*.duckdb.wal
-*.tar.gz
-*.log
+# === 实验运行结果（读者自己跑产生） ===
+experiments/results/
 
-# === Agent工具临时文件 ===
-node_modules/
-.omx/
-
-# === Codex/Claude工具配置 ===
-.codex/
-.claude/
-
-# === Word文档（出版社交付物，不入仓库） ===
-*.docx
-
-# === 代码审计报告（本地产物） ===
-reports/
-
-# === 旧standalone（已被examples/替代） ===
-standalone/
-
-# === 运行时数据库和日志 ===
-*.db
-*.coverage
-inventory.log
-
-# === Agent运行产出（读者自己跑产生） ===
+# === 合规案例运行时产出（读者自己跑产生） ===
 cases/*/output/
-cases/medical/cases/
-cases/medical/analysis_report.md
-cases/medical/complete_analysis*
-
-# === 合规案例的导出/审计/报表/通知目录 ===
 cases/data_compliance/target_service/exports/
 cases/data_compliance/target_service/audit_logs/
 cases/data_compliance/target_service/reports/
 cases/data_compliance/target_service/notifications/
 
-# === 旧的顶层文件 ===
-TASK.md
-test_e2e.py
-src/
+# === 运行时数据库和日志 ===
+*.db
+inventory.log
+*.log
 
-# === 旧案例目录（已被企业级案例替代）===
-cases/refactor/
-cases/medical/
-cases/fullstack/spec.md
-cases/fullstack/roles/evaluator.md
-cases/fullstack/roles/generator.md
-cases/fullstack/roles/planner.md
+# === 其他 Agent 工具配置（和本项目无关） ===
+.omx/
+.codex/
+.claude/
+node_modules/
 
-# === 遗留垃圾（已清理）===
-tmp_test/
-tests_runtime_tmp/
-.tmp/
-.tmp_test/
-test_e2e.py
-TASK.md
-src/
+# === Word 文档（出版社交付物，不入仓库） ===
+*.docx
+
+# === 大文件 ===
+*.duckdb
+*.duckdb.wal
+*.tar.gz
