@@ -5,7 +5,7 @@
 > 用国产大模型从零构建生产级Agent系统
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-60%20core%20%2B%20104%20case-green.svg)](#运行测试)
+[![Tests](https://img.shields.io/badge/tests-62%20core%20%2B%20104%20case-green.svg)](#运行测试)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
 ---
