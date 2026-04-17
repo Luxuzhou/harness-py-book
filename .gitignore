@@ -101,6 +101,8 @@ cases/fullstack/roles/planner.md
 # === 遗留垃圾（已清理）===
 tmp_test/
 tests_runtime_tmp/
+.tmp/
+.tmp_test/
 test_e2e.py
 TASK.md
 src/
