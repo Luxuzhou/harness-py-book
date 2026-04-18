@@ -58,18 +58,49 @@ class PermissionMode(Enum):
     PLAN = 'plan'
 
 
+def _call_confirm_with_timeout(
+    confirm_fn: Any, action: str, detail: str, timeout: int,
+) -> tuple[bool, str]:
+    """
+    带超时的用户确认调用。超时默认拒绝（fail-closed），避免 Agent 在无人值守
+    场景下因 confirm_fn 永远阻塞而卡死。
+    """
+    if timeout is None or timeout <= 0:
+        # 显式关掉超时，恢复阻塞语义
+        try:
+            allowed = bool(confirm_fn(action, detail))
+        except Exception as e:
+            return False, f'confirm_fn 异常: {type(e).__name__}: {e}'
+        return allowed, '' if allowed else '用户拒绝'
+
+    import concurrent.futures
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+            future = ex.submit(confirm_fn, action, detail)
+            allowed = bool(future.result(timeout=timeout))
+        return allowed, '' if allowed else '用户拒绝'
+    except concurrent.futures.TimeoutError:
+        return False, f'用户确认超时（{timeout}s），已拒绝'
+    except Exception as e:
+        return False, f'confirm_fn 异常: {type(e).__name__}: {e}'
+
+
 def check_permission(
     mode: PermissionMode,
     action: str,
     detail: str = '',
     *,
     confirm_fn: Any = None,
+    confirm_timeout: int = 30,
 ) -> tuple[bool, str]:
     """
     根据权限模式检查操作是否允许。
 
     action: 'read' | 'write' | 'edit' | 'execute' | 'network'
     confirm_fn: 可选的用户确认回调 (action, detail) -> bool
+    confirm_timeout: 调用 confirm_fn 的超时秒数；超时按"拒绝"处理。
+        设为 0 或负数表示禁用超时（恢复阻塞语义）。默认 30s 是"人类正常操作
+        + 短暂走神"的合理上限；大于这个时长 Agent 应自己决定继续还是停。
 
     返回 (allowed, reason)
     """
@@ -89,8 +120,8 @@ def check_permission(
             return True, ''
         # execute/network需要确认
         if confirm_fn:
-            allowed = confirm_fn(action, detail)
-            return allowed, '' if allowed else '用户拒绝'
+            return _call_confirm_with_timeout(
+                confirm_fn, action, detail, confirm_timeout)
         return False, '需要用户确认但未配置confirm_fn'
 
     # ASK模式：读自动批准，其余需确认
@@ -98,8 +129,8 @@ def check_permission(
         if action == 'read':
             return True, ''
         if confirm_fn:
-            allowed = confirm_fn(action, detail)
-            return allowed, '' if allowed else '用户拒绝'
+            return _call_confirm_with_timeout(
+                confirm_fn, action, detail, confirm_timeout)
         return False, '需要用户确认但未配置confirm_fn'
 
     return True, ''
@@ -251,15 +282,36 @@ class FilesystemPolicy:
 
     allowed_roots: 允许访问的根目录列表（为空则不限制）
     denied_patterns: 额外的拒绝模式（glob格式）
+    denied_filenames: 文件名级精细拒绝（不依赖路径前缀，比如 ".env"、"id_rsa"
+        总是拒绝，无论目录在哪里）
     read_only_paths: 只允许读取不允许写入的路径
+    block_symlinks: 是否拒绝任何符号链接，避免 symlink-to-/etc/passwd 这类绕过
+    max_file_size_bytes: 写入时拦截过大文件，预防 zip 炸弹/内存炸弹
     """
     allowed_roots: list[Path] = field(default_factory=list)
     denied_patterns: list[str] = field(default_factory=list)
+    denied_filenames: list[str] = field(default_factory=lambda: [
+        '.env', '.env.local', '.env.production',
+        'id_rsa', 'id_ed25519', 'id_ecdsa',
+        '.aws/credentials', '.git-credentials', '.npmrc', '.pypirc',
+        'kubeconfig', '.kube/config',
+    ])
     read_only_paths: list[Path] = field(default_factory=list)
     block_sensitive: bool = True
+    block_symlinks: bool = True
+    max_file_size_bytes: int = 50 * 1024 * 1024  # 50MB
 
     def check_path(self, path: Path, action: str = 'read') -> tuple[bool, str]:
         """检查路径访问是否允许。"""
+        # Layer 0: 符号链接拦截（在 resolve() 之前判断，否则 resolve 会跟随链接）
+        if self.block_symlinks:
+            try:
+                if path.is_symlink():
+                    return False, f'符号链接拦截: {path}'
+            except OSError:
+                # is_symlink 在路径不存在时也可能抛 OSError，忽略让后续检查继续
+                pass
+
         resolved = str(path.resolve())
         # 统一为正斜杠以便跨平台匹配
         resolved_unix = resolved.replace('\\', '/')
@@ -269,6 +321,13 @@ class FilesystemPolicy:
             for segment in SENSITIVE_SEGMENTS:
                 if segment in resolved_unix:
                     return False, f'敏感路径保护: {path}'
+
+        # Layer 1.5: 文件名级拒绝（无论在哪个目录）
+        for denied_name in self.denied_filenames:
+            if resolved_unix.endswith('/' + denied_name) or resolved_unix.endswith(denied_name):
+                # 精确匹配文件名，避免误伤同前缀文件（如 .envoy 不应命中 .env）
+                if path.name == denied_name or resolved_unix.endswith('/' + denied_name):
+                    return False, f'敏感文件名拦截: {path.name}'
 
         # Layer 2: allowed_roots白名单
         if self.allowed_roots:
@@ -298,6 +357,15 @@ class FilesystemPolicy:
                     return False, f'只读路径: {path}'
                 except ValueError:
                     continue
+
+        # Layer 5: 文件大小（写入场景预防内存炸弹）
+        if action in ('write', 'edit') and path.exists():
+            try:
+                if path.stat().st_size > self.max_file_size_bytes:
+                    return False, (f'文件超过大小上限 {self.max_file_size_bytes // 1024 // 1024}MB: '
+                                   f'{path}')
+            except OSError:
+                pass
 
         return True, ''
 
@@ -519,26 +587,44 @@ def create_docker_sandbox_command(
     memory_limit: str = '512m',
     cpu_limit: float = 1.0,
     timeout: int = 300,
+    pids_limit: int = 256,
+    hardened: bool = True,
 ) -> str:
     """
-    生成Docker沙箱命令。对标Codex的容器隔离模型。
+    生成 Docker 沙箱命令。对标 Codex 的容器隔离模型。
 
-    返回一个docker run命令字符串，可直接执行。
-    适用于高安全要求场景（如生产环境、多租户）。
+    返回一个 docker run 命令字符串，可直接执行。适用于高安全要求场景
+    （如生产环境、多租户、untrusted code）。
 
-    注意：需要Docker已安装。本书中作为方案介绍，
-    实际案例使用进程级沙箱即可。
+    `hardened=True`（默认）启用四项常见加固：
+      --read-only                   根文件系统只读
+      --tmpfs=/tmp:rw,noexec,...    /tmp 走 tmpfs 且禁止可执行
+      --security-opt=no-new-privileges:true  禁止 setuid 提权
+      --cap-drop=ALL                删除所有 Linux capabilities
+
+    生产环境强烈建议保留 `hardened=True`；只有跑老脚本（依赖写根文件系统、
+    依赖某个 capability）时才显式关掉。
     """
-    parts = [
+    parts: list[str] = [
         'docker', 'run', '--rm',
         f'--memory={memory_limit}',
+        f'--memory-swap={memory_limit}',  # 与 memory 等值禁止 swap
         f'--cpus={cpu_limit}',
-        f'-v', f'{cwd}:/workspace',
+        f'--pids-limit={pids_limit}',
+        '-v', f'{cwd}:/workspace',
         '-w', '/workspace',
     ]
 
     if not network:
         parts.append('--network=none')
+
+    if hardened:
+        parts.extend([
+            '--read-only',
+            '--tmpfs=/tmp:rw,noexec,nosuid,size=128m',
+            '--security-opt=no-new-privileges:true',
+            '--cap-drop=ALL',
+        ])
 
     inner_command = command
     if timeout > 0 and sys.platform != 'win32':

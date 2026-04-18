@@ -30,6 +30,14 @@ class LLMClient:
             'Authorization': f'Bearer {self.config.api_key}',
             'Content-Type': 'application/json',
         })
+        # 连接池：默认串行 Agent 用 1 个连接就够了；多 Agent 并行或并行
+        # 工具调用场景下，把 ModelConfig.pool_size 调大避免连接复用瓶颈。
+        pool = max(1, int(getattr(self.config, 'pool_size', 1)))
+        if pool > 1:
+            from requests.adapters import HTTPAdapter
+            adapter = HTTPAdapter(pool_connections=pool, pool_maxsize=pool)
+            s.mount('http://', adapter)
+            s.mount('https://', adapter)
         return s
 
     def complete(
@@ -59,6 +67,11 @@ class LLMClient:
             'temperature': temperature if temperature is not None else self.config.temperature,
             'max_tokens': max_tokens or self.config.max_output_tokens,
         }
+
+        # 复现性：如果配置了 seed，随请求一起下发。DeepSeek 与 OpenAI gpt-4o
+        # 都支持 seed 字段；不支持的模型会忽略，无副作用。
+        if self.config.seed is not None:
+            payload['seed'] = self.config.seed
 
         if tools:
             payload['tools'] = [{'type': 'function', 'function': t} for t in tools]

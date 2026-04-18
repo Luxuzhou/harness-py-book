@@ -16,16 +16,25 @@ from dataclasses import dataclass, field
 @dataclass
 class LoopGuard:
     """
-    循环守卫。四种检测机制：
+    循环守卫。五种检测机制：
     1. 相同调用重复检测
     2. 连续错误累积
     3. 同工具连续使用
     4. 总量限制
+    5. **交替循环检测**（A→B→A→B→...）：单工具检测覆盖不到的"两工具来回切"反模式
+
+    交替循环典型场景：Agent 在 read_file 和 edit_file 之间反复切换却没有进展，
+    每次只看一行就改一行，从单工具维度看不像死循环（streak 计数清零），
+    但其实是不收敛的低效循环。
     """
     max_identical_calls: int = 3
     max_consecutive_errors: int = 5
     max_same_tool_streak: int = 8
     max_total_tool_calls: int = 200
+    # 第 5 种检测的参数：在最近 N 次调用里，若出现 [A, B] 这种 2 元 pattern
+    # 重复 K 次（即 2K 次调用都是同一对工具来回切），判为交替循环。
+    alternation_window: int = 6
+    alternation_repetitions: int = 3
 
     _call_hashes: dict[str, int] = field(default_factory=lambda: defaultdict(int))
     _consecutive_errors: int = 0
@@ -33,6 +42,7 @@ class LoopGuard:
     _tool_streak: int = 0
     _total_calls: int = 0
     _intervention_count: int = 0
+    _recent_tools: list[str] = field(default_factory=list)
 
     def check(
         self,
@@ -93,7 +103,43 @@ class LoopGuard:
                 f'请尽快完成当前任务或提交阶段性成果。'
             )
 
+        # 检测5：交替循环（A→B→A→B→...）
+        self._recent_tools.append(tool_name)
+        if len(self._recent_tools) > self.alternation_window:
+            self._recent_tools = self._recent_tools[-self.alternation_window:]
+        alt_pair = self._detect_alternation()
+        if alt_pair is not None:
+            self._intervention_count += 1
+            a, b = alt_pair
+            return True, (
+                f'检测到交替循环：{a} ↔ {b} 来回切换 {self.alternation_repetitions} 轮。'
+                f'通常意味着上下文不足以一次完成任务（比如读一行改一行）。'
+                f'请先用 grep/glob 一次性定位多处再批量编辑，或退一步规划。'
+            )
+
         return False, ''
+
+    def _detect_alternation(self) -> tuple[str, str] | None:
+        """
+        检测最近 alternation_window 次调用是否构成 [A, B] 重复 alternation_repetitions 次的模式。
+        返回触发交替的 (A, B)，或 None。
+        """
+        n = self.alternation_window
+        k = self.alternation_repetitions
+        if len(self._recent_tools) < n:
+            return None
+        if 2 * k != n:
+            # 当前只支持 2-元交替；如需 3-元/4-元 pattern，可扩展此处
+            return None
+        recent = self._recent_tools[-n:]
+        a, b = recent[0], recent[1]
+        if a == b:
+            return None
+        # 期望模式：[a, b, a, b, ..., a, b]
+        expected = [a if i % 2 == 0 else b for i in range(n)]
+        if recent == expected:
+            return (a, b)
+        return None
 
     def reset(self):
         """重置所有计数器。"""
@@ -103,6 +149,7 @@ class LoopGuard:
         self._tool_streak = 0
         self._total_calls = 0
         self._intervention_count = 0
+        self._recent_tools = []
 
     @property
     def stats(self) -> dict:

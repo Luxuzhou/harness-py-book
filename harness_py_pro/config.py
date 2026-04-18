@@ -41,14 +41,27 @@ class ModelConfig:
     max_output_tokens: int = 8_192
     temperature: float = 0.0
 
+    # 复现性：seed 不为 None 时把它通过 `seed` 字段传给支持的模型
+    # （DeepSeek、OpenAI gpt-4o 等都支持），同样的 prompt+seed 会得到
+    # 接近一致的输出。temperature=0 仍然有浮点精度的随机性，加 seed
+    # 能让"教学示例的输出可复现"这件事更靠谱。
+    seed: Optional[int] = None
+
+    # HTTP 连接池大小：默认 1（串行 Agent 工作流）；如果上层做并行
+    # 工具调用或多 Agent 并发，需要把 pool_size 调大避免连接复用瓶颈。
+    pool_size: int = 1
+
     @classmethod
     def from_env(cls) -> ModelConfig:
+        seed_env = os.getenv('HARNESS_SEED', '')
         return cls(
             model=os.getenv('HARNESS_MODEL', os.getenv('MODEL', 'deepseek-chat')),
             api_key=os.getenv('HARNESS_API_KEY', os.getenv('OPENAI_API_KEY', '')),
             base_url=os.getenv('HARNESS_BASE_URL', os.getenv('OPENAI_BASE_URL', 'https://api.deepseek.com/v1')),
             context_window=int(os.getenv('HARNESS_CONTEXT_WINDOW', '128000')),
             max_output_tokens=int(os.getenv('HARNESS_MAX_OUTPUT', '8192')),
+            seed=int(seed_env) if seed_env.strip() else None,
+            pool_size=int(os.getenv('HARNESS_POOL_SIZE', '1')),
         )
 
 

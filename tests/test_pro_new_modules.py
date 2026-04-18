@@ -419,3 +419,133 @@ def test_engine_uses_custom_cost_tracker():
         # 用户传入的 FakeCostTracker 被 engine 使用
         assert len(ct.records) >= 1
         assert result.cost_summary.get('is_fake') is True
+
+
+# === Ch3 deepseek-review-driven enhancements ===
+
+def test_loop_guard_detects_alternation_pattern():
+    """LoopGuard 检测交替循环 A→B→A→B→A→B（书 3.5.4 新增第 5 种检测）。"""
+    from harness_py_pro.loop_guard import LoopGuard
+    g = LoopGuard()
+    triggered = False
+    for i in range(6):
+        tool = 'read_file' if i % 2 == 0 else 'edit_file'
+        # 用不同 args 避免命中"相同调用重复"那条
+        intervene, msg = g.check(tool, {'path': f'p{i}.py'}, success=True, result_preview=f'r{i}')
+        if intervene and '交替循环' in msg:
+            triggered = True
+            break
+    assert triggered, '未触发交替循环检测'
+
+
+def test_loop_guard_no_alternation_with_three_tools():
+    """三个工具循环（A→B→C→A→B→C）不应触发 2-元交替检测。"""
+    from harness_py_pro.loop_guard import LoopGuard
+    g = LoopGuard()
+    tools = ['read_file', 'edit_file', 'bash']
+    for i in range(6):
+        intervene, msg = g.check(tools[i % 3], {'i': i}, success=True, result_preview=f'r{i}')
+        # 不应该报"交替循环"
+        if intervene:
+            assert '交替循环' not in msg, f'误触发交替: {msg}'
+
+
+def test_model_config_supports_seed_and_pool_size():
+    """ModelConfig 暴露 seed + pool_size，from_env 读取 HARNESS_SEED / HARNESS_POOL_SIZE。"""
+    import os
+    from harness_py_pro.config import ModelConfig
+    # 直接构造
+    mc = ModelConfig(model='gpt-4o', api_key='k', base_url='https://x', seed=42, pool_size=4)
+    assert mc.seed == 42
+    assert mc.pool_size == 4
+    # 默认值
+    mc_default = ModelConfig()
+    assert mc_default.seed is None
+    assert mc_default.pool_size == 1
+    # 环境变量
+    os.environ['HARNESS_SEED'] = '99'
+    os.environ['HARNESS_POOL_SIZE'] = '8'
+    try:
+        mc_env = ModelConfig.from_env()
+        assert mc_env.seed == 99
+        assert mc_env.pool_size == 8
+    finally:
+        del os.environ['HARNESS_SEED']
+        del os.environ['HARNESS_POOL_SIZE']
+
+
+def test_filesystem_policy_blocks_symlinks_and_denied_filenames():
+    """FilesystemPolicy 拦截符号链接和敏感文件名（书 3.2.1 新增）。"""
+    import os
+    from pathlib import Path
+    from harness_py_pro.sandbox import FilesystemPolicy
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        # 1) 文件名级拒绝
+        env_file = root / '.env'
+        env_file.write_text('SECRET=x')
+        policy = FilesystemPolicy(allowed_roots=[root])
+        ok, reason = policy.check_path(env_file, 'read')
+        assert not ok and '敏感文件名' in reason
+
+        # .envoy 不应误伤（前缀相同但不是 .env）
+        envoy = root / '.envoy'
+        envoy.write_text('config')
+        ok2, _ = policy.check_path(envoy, 'read')
+        assert ok2
+
+        # 2) 符号链接拦截（只在能创建符号链接的环境跑）
+        target = root / 'real.txt'
+        target.write_text('data')
+        link = root / 'link.txt'
+        try:
+            os.symlink(str(target), str(link))
+        except (OSError, NotImplementedError):
+            return  # Windows 无权限或 OS 不支持，跳过这一档
+        ok3, reason3 = policy.check_path(link, 'read')
+        assert not ok3 and '符号链接' in reason3
+
+
+def test_create_docker_sandbox_command_hardened_default():
+    """create_docker_sandbox_command 默认启用四项加固。"""
+    from pathlib import Path
+    from harness_py_pro.sandbox import create_docker_sandbox_command
+    cmd = create_docker_sandbox_command('ls /', Path('/tmp'))
+    for token in ('--read-only', '--tmpfs=/tmp', '--security-opt=no-new-privileges:true',
+                  '--cap-drop=ALL', '--pids-limit=256', '--memory-swap='):
+        assert token in cmd, f'加固选项缺失: {token}\n实际命令: {cmd}'
+    # 关掉加固后这些都不应出现
+    cmd_legacy = create_docker_sandbox_command('ls /', Path('/tmp'), hardened=False)
+    assert '--read-only' not in cmd_legacy
+    assert '--cap-drop=ALL' not in cmd_legacy
+
+
+def test_check_permission_confirm_fn_timeout_default_deny():
+    """confirm_fn 阻塞超过 confirm_timeout 时默认拒绝（书 3.5.2 新增）。"""
+    import time
+    from harness_py_pro.sandbox import PermissionMode, check_permission
+
+    def slow_confirm(action, detail):
+        time.sleep(2)  # 2s > timeout=1s
+        return True
+
+    allowed, reason = check_permission(
+        PermissionMode.ASK, 'execute', 'rm something',
+        confirm_fn=slow_confirm, confirm_timeout=1,
+    )
+    assert not allowed
+    assert '超时' in reason
+
+
+def test_check_permission_confirm_fn_within_timeout_allowed():
+    """confirm_fn 在 timeout 内返回 True 时正常通过。"""
+    from harness_py_pro.sandbox import PermissionMode, check_permission
+
+    def fast_confirm(action, detail):
+        return True
+
+    allowed, _ = check_permission(
+        PermissionMode.ASK, 'execute', 'mvn test',
+        confirm_fn=fast_confirm, confirm_timeout=5,
+    )
+    assert allowed
