@@ -160,8 +160,11 @@ def check_java_syntax() -> tuple[bool, list[str]]:
     # 解码，避免脚本末尾出现编码噪音。
     def _run_safe(cmd: list[str], cwd: str | None = None, timeout: int = 60):
         try:
+            # Windows 上 mvn 是 .cmd 文件，需要 shell=True 才能被 subprocess 解析
+            use_shell = sys.platform == 'win32'
             res = subprocess.run(
                 cmd, cwd=cwd, capture_output=True, timeout=timeout,
+                shell=use_shell,
             )
         except FileNotFoundError:
             return None, None, -1

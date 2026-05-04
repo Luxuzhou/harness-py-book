@@ -31,12 +31,13 @@ def _build_hook_config():
 
     WRITABLE_PREFIXES = (
         'src/main/java/com/example/cp/service/',
+        'src/main/java/com/example/cp/controller/',
         'src/test/java/com/example/cp/service/',
         'REFACTOR_REPORT.md',
     )
-    # Controller 层允许读但禁止写
+    # Controller 层允许有限修改：重构拆分后需要更新依赖注入关系。
+    # 对外 API 契约由 verify.py 的路由基线检查兜底，不在 Hook 中一刀切冻结。
     FROZEN_PREFIXES = (
-        'src/main/java/com/example/cp/controller/',
         'src/main/java/com/example/cp/dto/',
         'src/main/java/com/example/cp/mapper/',
         'src/main/java/com/example/cp/model/',
@@ -44,7 +45,7 @@ def _build_hook_config():
         'pom.xml',
     )
 
-    def pre_tool(tool_name: str, tool_args: dict) -> tuple[bool, str]:
+    def pre_tool(tool_name: str, tool_args: dict, config: dict) -> tuple[bool, str]:
         if tool_name in {'write_file', 'edit_file'}:
             path = tool_args.get('path') or tool_args.get('file_path') or ''
             norm = str(path).replace('\\', '/')
@@ -71,10 +72,11 @@ def main():
         model_config=ModelConfig.from_env(),
         agent_config=AgentConfig(
             cwd=target_dir,
-            max_iterations=50,
-            planning_turns=3,
+            max_iterations=60,
+            planning_turns=5,
             allow_write=True,
             allow_shell=True,
+            sandbox_mode='bypass',
             network_isolated=True,
             allowed_paths=[str(target_dir)],
             hooks=hooks,
