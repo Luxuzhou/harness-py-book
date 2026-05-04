@@ -79,6 +79,7 @@ def main():
             sandbox_mode='bypass',
             network_isolated=True,
             allowed_paths=[str(target_dir)],
+            filesystem_roots=['.', str(CASE_DIR), str(REPO_ROOT)],  # 允许访问项目根
             hooks=hooks,
             system_prompt_append=claude_md,
         ),
