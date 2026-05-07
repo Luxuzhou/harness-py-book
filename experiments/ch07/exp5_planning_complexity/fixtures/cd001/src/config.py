@@ -1,0 +1,5 @@
+"""应用配置常量。"""
+
+PAGE_SIZE = 20
+MAX_RESULTS = 1000
+API_TIMEOUT = 30

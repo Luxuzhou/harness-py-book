@@ -1,0 +1,6 @@
+{
+  "id": "b3_exception",
+  "category": "exception_missing",
+  "user_prompt": "src/safe_divide.py 里的 safe_divide 函数没有处理除零。docstring 说 b=0 时应返回 0，但实际抛 ZeroDivisionError。请修复。修复完成后告诉我'任务完成'。",
+  "ground_truth": "需要：(1) b=0 返回 0; (2) a=None 或 b=None 返回 0。Prompt 只点 (1)。"
+}

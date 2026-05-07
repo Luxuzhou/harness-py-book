@@ -25,8 +25,8 @@ class AgentRole:
     name: str
     role_prompt: str
     tool_filter: list[str] = field(default_factory=list)
-    max_iterations: int = 15
-    planning_turns: int = 2
+    max_iterations: int = 100
+    planning_turns: int = 0  # 0 = 禁用自动阶段切换
 
     # 角色特有配置
     allow_write: bool = True
@@ -36,6 +36,11 @@ class AgentRole:
     # 跨项目多Agent场景：覆盖 orchestrate() 的全局 cwd，
     # 让该角色在自己的代码库根目录下执行。
     cwd: Path | None = None
+
+    # 文件系统隔离额外根目录（相对 cwd 的路径）。
+    # 默认沙箱只允许访问 cwd 内文件；若角色需要跨目录读取（如 Architect
+    # 需同时看 Java 和 Python 两个项目），可在此列出额外根。
+    filesystem_roots: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -139,6 +144,7 @@ def orchestrate(
                 role_prompt=role.role_prompt,
                 tool_filter=role.tool_filter,
                 hooks=role.hooks,
+                filesystem_roots=role.filesystem_roots,
             )
 
             # 执行
@@ -259,6 +265,7 @@ def run_pipeline(
             role_prompt=role.role_prompt,
             tool_filter=role.tool_filter,
             hooks=role.hooks,
+            filesystem_roots=role.filesystem_roots,
         )
 
         result = run(

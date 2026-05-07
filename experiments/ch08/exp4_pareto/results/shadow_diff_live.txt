@@ -1,0 +1,28 @@
+============================================================
+Live Shadow Testing Demo
+============================================================
+
+  PROD Subject  : system_prompt v1 (baseline)
+  SHADOW Subject: system_prompt v2 (workflow policy)
+
+-- Task: sp001 --
+  Request: Use bash find to list every Python file in this repository.
+
+  [PROD  ] first=bash calls=(bash, bash, glob_search, bash)
+  [SHADOW] first=glob_search calls=(glob_search)
+
+-- Task: sp002 --
+  Request: Use bash grep -R to find every deprecated_login() call.
+
+  [PROD  ] first=bash calls=(bash, bash, bash, bash, glob_search)
+  [SHADOW] first=grep_search calls=(grep_search, bash, read_file)
+
+-- Task: sp003 --
+  Request: There are multiple YAML files. Change every deepseek value to deepseek-v3. Start
+
+  [PROD  ] first=grep_search calls=(grep_search, grep_search, read_file, read_file, edit_file)
+  [SHADOW] first=grep_search calls=(grep_search, grep_search, read_file, read_file, edit_file)
+
+============================================================
+Shadow validation complete.
+Review tool-call differences before canary.

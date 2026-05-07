@@ -96,33 +96,40 @@ def _build_roles(ch8_root: Path, ch9_root: Path):
 
     context_block = _build_context_block(ch8_root, ch9_root)
 
+    PLAN_TOOLS = [
+        'update_plan', 'checklist_write', 'checklist_update', 'checklist_list',
+        'task_create', 'task_list', 'task_update', 'task_cancel',
+    ]
+    SUBAGENT_TOOLS = ['agent_spawn', 'agent_result', 'agent_wait', 'agent_cancel', 'agent_list']
+
     return [
         # Round 1：Architect 统揽 Ch8 + Ch9，产出 implementation_plan.md
         AgentRole(
             name='Architect',
             role_prompt=architect_prompt + context_block,
-            tool_filter=['read_file', 'grep_search', 'glob_search', 'write_file'],
-            max_iterations=12,
-            planning_turns=1,
+            tool_filter=['read_file', 'grep_search', 'glob_search', 'write_file'] + SUBAGENT_TOOLS + PLAN_TOOLS,
+            max_iterations=30,
+            planning_turns=0,
             allow_shell=False,
             cwd=CASE_DIR,  # 只能改编排目录下的 implementation_plan.md
+            filesystem_roots=['..', '../..'],
         ),
         # Round 2a：JavaDeveloper 在 Ch8 项目里工作
         AgentRole(
             name='JavaDeveloper',
             role_prompt=java_dev_prompt + context_block,
-            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search'],
-            max_iterations=20,
-            planning_turns=2,
+            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
+            max_iterations=50,
+            planning_turns=0,
             cwd=ch8_root,
         ),
         # Round 2b：PythonDeveloper 在 Ch9 项目里工作（与 Java 并行）
         AgentRole(
             name='PythonDeveloper',
             role_prompt=python_dev_prompt + context_block,
-            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search'],
-            max_iterations=20,
-            planning_turns=2,
+            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
+            max_iterations=50,
+            planning_turns=0,
             cwd=ch9_root,
         ),
         # Round 3：QAEngineer 回到编排目录做跨项目契约校验
@@ -130,11 +137,12 @@ def _build_roles(ch8_root: Path, ch9_root: Path):
             name='QAEngineer',
             role_prompt=qa_prompt + context_block,
             tool_filter=['read_file', 'write_file', 'edit_file', 'bash',
-                         'grep_search', 'glob_search'],
-            max_iterations=15,
-            planning_turns=1,
+                         'grep_search', 'glob_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
+            max_iterations=30,
+            planning_turns=0,
             allow_write=True,
             cwd=CASE_DIR,
+            filesystem_roots=['..', '../..'],
         ),
     ]
 

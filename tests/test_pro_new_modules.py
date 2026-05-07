@@ -423,31 +423,53 @@ def test_engine_uses_custom_cost_tracker():
 
 # === Ch3 deepseek-review-driven enhancements ===
 
-def test_loop_guard_detects_alternation_pattern():
-    """LoopGuard 检测交替循环 A→B→A→B→A→B（书 3.5.4 新增第 5 种检测）。"""
+def test_loop_guard_blocks_identical_calls():
+    """相同调用第 3 次被 block（对齐 TUI IDENTICAL_CALL_BLOCK_THRESHOLD=3）。"""
     from harness_py_pro.loop_guard import LoopGuard
     g = LoopGuard()
-    triggered = False
-    for i in range(6):
-        tool = 'read_file' if i % 2 == 0 else 'edit_file'
-        # 用不同 args 避免命中"相同调用重复"那条
-        intervene, msg = g.check(tool, {'path': f'p{i}.py'}, success=True, result_preview=f'r{i}')
-        if intervene and '交替循环' in msg:
-            triggered = True
-            break
-    assert triggered, '未触发交替循环检测'
+    assert g.check_pre('read_file', {'path': 'a.py'})[0] == 'proceed'
+    assert g.check_pre('read_file', {'path': 'a.py'})[0] == 'proceed'
+    action, msg = g.check_pre('read_file', {'path': 'a.py'})
+    assert action == 'block'
+    assert 'Blocked' in msg
 
 
-def test_loop_guard_no_alternation_with_three_tools():
-    """三个工具循环（A→B→C→A→B→C）不应触发 2-元交替检测。"""
+def test_loop_guard_paginated_reads_not_blocked():
+    """分页读取不同 offset 不应被 block。"""
     from harness_py_pro.loop_guard import LoopGuard
     g = LoopGuard()
-    tools = ['read_file', 'edit_file', 'bash']
-    for i in range(6):
-        intervene, msg = g.check(tools[i % 3], {'i': i}, success=True, result_preview=f'r{i}')
-        # 不应该报"交替循环"
-        if intervene:
-            assert '交替循环' not in msg, f'误触发交替: {msg}'
+    for offset in [0, 100, 200]:
+        action, _ = g.check_pre('read_file', {'path': 'a.py', 'offset': offset})
+        assert action == 'proceed', f'offset={offset} 不应被 block'
+
+
+def test_loop_guard_failure_warn_at_three_halt_at_eight():
+    """同一工具连续失败 3 次 warn，8 次 halt（对齐 TUI）。"""
+    from harness_py_pro.loop_guard import LoopGuard
+    g = LoopGuard()
+    assert g.check_post('grep_search', False)[0] == 'continue'
+    assert g.check_post('grep_search', False)[0] == 'continue'
+    action, msg = g.check_post('grep_search', False)
+    assert action == 'warn', f'第 3 次失败应 warn,  got {action}'
+    assert 'failed 3 consecutive times' in msg
+
+    for _ in range(4, 8):
+        assert g.check_post('grep_search', False)[0] == 'continue'
+
+    action, msg = g.check_post('grep_search', False)
+    assert action == 'halt', f'第 8 次失败应 halt, got {action}'
+    assert 'failed 8 consecutive times' in msg
+
+
+def test_loop_guard_success_resets_failure_counter():
+    """成功调用重置该工具的失败计数器。"""
+    from harness_py_pro.loop_guard import LoopGuard
+    g = LoopGuard()
+    g.check_post('grep_search', False)
+    g.check_post('grep_search', False)
+    assert g.check_post('grep_search', True)[0] == 'continue'
+    # 重置后重新计数
+    assert g.check_post('grep_search', False)[0] == 'continue'
 
 
 def test_model_config_supports_seed_and_pool_size():
@@ -549,3 +571,259 @@ def test_check_permission_confirm_fn_within_timeout_allowed():
         confirm_fn=fast_confirm, confirm_timeout=5,
     )
     assert allowed
+
+
+# === Ch10 TUI 规划体系 ===
+
+def test_plan_state_update_and_format():
+    from harness_py_pro.plan_state import PlanState, StepStatus
+    plan = PlanState()
+    plan.update([
+        {'step': 'Read Java code', 'status': 'pending'},
+        {'step': 'Read Python code', 'status': 'in_progress'},
+    ], explanation='Investigating both sides')
+    assert len(plan.steps) == 2
+    assert plan.steps[0].status == StepStatus.PENDING
+    assert plan.steps[1].status == StepStatus.IN_PROGRESS
+    text = plan.format_for_prompt()
+    assert '○ Read Java code' in text
+    assert '◎ Read Python code' in text
+    assert 'Investigating both sides' in text
+
+
+def test_plan_state_mark_completed():
+    from harness_py_pro.plan_state import PlanState, StepStatus
+    plan = PlanState()
+    plan.update([{'step': 'A', 'status': 'pending'}])
+    assert plan.mark_in_progress('A')
+    assert plan.steps[0].status == StepStatus.IN_PROGRESS
+    assert plan.mark_completed('A')
+    assert plan.steps[0].status == StepStatus.COMPLETED
+    assert not plan.mark_completed('B')  # not found
+
+
+def test_checklist_state_crud():
+    from harness_py_pro.plan_state import ChecklistState, StepStatus
+    cl = ChecklistState()
+    item = cl.add('Step 1', 'pending')
+    assert item.id == 1
+    assert item.status == StepStatus.PENDING
+    cl.add('Step 2', 'in_progress')
+    assert len(cl.items) == 2
+    assert cl.completion_pct() == 0
+    cl.update(1, 'completed')
+    assert cl.items[0].status == StepStatus.COMPLETED
+    assert cl.completion_pct() == 50
+    assert cl.in_progress_id() == 2
+
+
+def test_task_registry_crud():
+    from harness_py_pro.plan_state import TaskRegistry
+    reg = TaskRegistry()
+    task = reg.create('Refactor auth', 'Move auth to middleware')
+    assert task.title == 'Refactor auth'
+    assert task.status.value == 'pending'
+    assert reg.get(task.id) is not None
+    reg.update(task.id, 'completed')
+    assert reg.get(task.id).status.value == 'completed'
+    assert len(reg.list()) == 1
+    reg.cancel(task.id)
+    assert len(reg.list()) == 0
+
+
+def test_plan_state_manager_persistence():
+    import tempfile
+    from harness_py_pro.plan_state import PlanStateManager
+    with tempfile.TemporaryDirectory() as d:
+        mgr = PlanStateManager(Path(d))
+        mgr.plan.update([{'step': 'S1', 'status': 'in_progress'}])
+        mgr.checklist.add('C1', 'pending')
+        mgr.tasks.create('T1')
+        mgr.save()
+
+        # 重新加载
+        mgr2 = PlanStateManager(Path(d))
+        assert len(mgr2.plan.steps) == 1
+        assert mgr2.plan.steps[0].step == 'S1'
+        assert len(mgr2.checklist.items) == 1
+        assert len(mgr2.tasks.tasks) == 1
+
+
+def test_plan_tools_schemas():
+    from harness_py_pro.plan_tools import (
+        UpdatePlanTool, ChecklistWriteTool, ChecklistUpdateTool,
+        ChecklistListTool, TaskCreateTool, TaskListTool, TaskUpdateTool, TaskCancelTool,
+    )
+    for ToolCls in [UpdatePlanTool, ChecklistWriteTool, ChecklistUpdateTool,
+                    ChecklistListTool, TaskCreateTool, TaskListTool, TaskUpdateTool, TaskCancelTool]:
+        tool = ToolCls()
+        schema = tool.get_schema()
+        assert 'name' in schema
+        assert 'description' in schema
+        assert schema['name'] == ToolCls.name
+
+
+def test_plan_tools_execution():
+    import tempfile
+    from harness_py_pro.plan_state import PlanStateManager
+    from harness_py_pro.plan_tools import UpdatePlanTool, ChecklistWriteTool, ChecklistUpdateTool
+    from harness_py_pro.config import AgentConfig
+    with tempfile.TemporaryDirectory() as d:
+        mgr = PlanStateManager(Path(d))
+        config = AgentConfig(cwd=Path(d))
+
+        # update_plan
+        tool = UpdatePlanTool(mgr)
+        ok, result = tool.execute({
+            'steps': [
+                {'step': 'Read code', 'status': 'in_progress'},
+                {'step': 'Write plan', 'status': 'pending'},
+            ],
+            'explanation': 'Starting investigation',
+        }, config)
+        assert ok
+        assert 'Read code' in result
+
+        # checklist_write
+        tool2 = ChecklistWriteTool(mgr)
+        ok2, result2 = tool2.execute({
+            'items': [
+                {'content': 'Check Java', 'status': 'in_progress'},
+                {'content': 'Check Python', 'status': 'pending'},
+            ],
+        }, config)
+        assert ok2
+        assert 'Check Java' in result2
+
+        # checklist_update
+        tool3 = ChecklistUpdateTool(mgr)
+        ok3, result3 = tool3.execute({'updates': [{'id': 1, 'status': 'completed'}]}, config)
+        assert ok3
+        assert 'Updated 1 item' in result3
+
+
+# === 异步子代理体系 (SubAgentManager) ===
+
+def test_subagent_manager_spawn_and_poll():
+    """SubAgentManager 异步 spawn，poll_completions 返回已完成记录。"""
+    import time
+    from harness_py_pro.subagent_manager import SubAgentManager
+
+    mgr = SubAgentManager(max_concurrent=5)
+
+    def runner():
+        time.sleep(0.1)
+        return True, 'Done'
+
+    record = mgr.spawn('test-1', 'investigate', 'explore', runner)
+    assert record.agent_id == 'test-1'
+    assert record.status.value == 'running'
+
+    # 等待完成
+    result = mgr.wait('test-1', timeout=5)
+    assert result is not None
+    assert result['status'] == 'completed'
+    assert 'Done' in result['result_summary']
+
+    # consume_completions 应包含该记录（仅一次）
+    completed = mgr.consume_completions()
+    assert any(r.agent_id == 'test-1' for r in completed)
+    # 再次消费应为空（已去重）
+    assert mgr.consume_completions() == []
+
+    mgr.shutdown()
+
+
+def test_subagent_manager_cancel():
+    """取消 running 的子代理。"""
+    import time
+    from harness_py_pro.subagent_manager import SubAgentManager
+
+    mgr = SubAgentManager(max_concurrent=5)
+
+    def slow_runner():
+        time.sleep(10)
+        return True, 'Should not finish'
+
+    mgr.spawn('slow-1', 'task', 'explore', slow_runner)
+    time.sleep(0.05)  # 确保已启动
+
+    ok = mgr.cancel('slow-1')
+    assert ok is True
+
+    result = mgr.get_result('slow-1')
+    assert result['status'] == 'cancelled'
+
+    # 再次取消应失败
+    assert mgr.cancel('slow-1') is False
+    mgr.shutdown()
+
+
+def test_subagent_manager_list_and_running_count():
+    """list_agents 和 running_count 正确反映状态。"""
+    import time
+    from harness_py_pro.subagent_manager import SubAgentManager
+
+    mgr = SubAgentManager(max_concurrent=5)
+
+    def runner():
+        time.sleep(0.2)
+        return True, 'OK'
+
+    mgr.spawn('a-1', 't1', 'explore', runner)
+    mgr.spawn('a-2', 't2', 'plan', runner)
+
+    agents = mgr.list_agents()
+    assert len(agents) == 2
+
+    # 等待全部完成
+    mgr.wait('a-1', timeout=5)
+    mgr.wait('a-2', timeout=5)
+
+    assert mgr.running_count == 0
+    mgr.shutdown()
+
+
+def test_subagent_manager_persistence():
+    """子代理完成后自动持久化到 session_dir。"""
+    import time
+    from harness_py_pro.subagent_manager import SubAgentManager
+
+    with tempfile.TemporaryDirectory() as d:
+        session_dir = Path(d)
+        mgr = SubAgentManager(max_concurrent=5, session_dir=session_dir)
+
+        def runner():
+            time.sleep(0.05)
+            return True, 'Persisted'
+
+        mgr.spawn('persist-1', 'task', 'explore', runner)
+        mgr.wait('persist-1', timeout=5)
+
+        # 检查文件是否写入
+        files = list(session_dir.glob('subagent_*.json'))
+        assert len(files) >= 1
+        data = json.loads(files[0].read_text(encoding='utf-8'))
+        assert data['agent_id'] == 'persist-1'
+        assert data['status'] == 'completed'
+
+        mgr.shutdown()
+
+
+def test_subagent_manager_failed_runner():
+    """子代理 runner 抛异常时记录为 failed。"""
+    import time
+    from harness_py_pro.subagent_manager import SubAgentManager
+
+    mgr = SubAgentManager(max_concurrent=5)
+
+    def bad_runner():
+        raise ValueError('boom')
+
+    mgr.spawn('fail-1', 'task', 'explore', bad_runner)
+    time.sleep(0.1)
+
+    result = mgr.get_result('fail-1')
+    assert result['status'] == 'failed'
+    assert 'boom' in result['error']
+    mgr.shutdown()

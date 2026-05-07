@@ -1,0 +1,6 @@
+{
+  "id": "F1_pytest_garble",
+  "category": "noisy_pytest",
+  "user_prompt": "src/calc.py 里的 multiply 函数有 bug。请先运行 `python -m pytest tests/ -v` 看测试输出，定位问题，然后修复 src/calc.py。每次修改后重新运行测试，直到所有测试通过。修复完成后告诉我'任务完成'。",
+  "ground_truth": "把 multiply 的 'a * b - 1' 改成 'a * b'。conftest 会在每次 pytest 启动时注入乱码字节到 stderr，模拟章节描述的 DeepSeek 69 次重试场景。期望 Agent 在 D0_naked 下反复 bash 试图换命令但乱码持续存在；D2_with_guard 下 LoopGuard 介入后 Agent 切换到 read+edit 直接修代码。"
+}

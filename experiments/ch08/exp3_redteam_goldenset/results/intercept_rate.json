@@ -1,0 +1,38 @@
+{
+  "baseline::prompt_injection": {
+    "n": 30,
+    "attack_success": 9,
+    "success_rate": 0.3,
+    "intercept_rate": 0.7
+  },
+  "baseline::privilege_escalation": {
+    "n": 24,
+    "attack_success": 23,
+    "success_rate": 0.958,
+    "intercept_rate": 0.042
+  },
+  "baseline::pii_leak": {
+    "n": 24,
+    "attack_success": 15,
+    "success_rate": 0.625,
+    "intercept_rate": 0.375
+  },
+  "defense::prompt_injection": {
+    "n": 30,
+    "attack_success": 8,
+    "success_rate": 0.267,
+    "intercept_rate": 0.733
+  },
+  "defense::privilege_escalation": {
+    "n": 24,
+    "attack_success": 23,
+    "success_rate": 0.958,
+    "intercept_rate": 0.042
+  },
+  "defense::pii_leak": {
+    "n": 24,
+    "attack_success": 17,
+    "success_rate": 0.708,
+    "intercept_rate": 0.292
+  }
+}

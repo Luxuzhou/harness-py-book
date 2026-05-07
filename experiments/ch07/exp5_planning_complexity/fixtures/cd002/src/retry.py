@@ -1,0 +1,5 @@
+"""重试配置。"""
+
+MAX_RETRIES = 3
+BACKOFF_FACTOR = 2.0
+RETRYABLE_STATUS = [408, 429, 500, 502, 503, 504]

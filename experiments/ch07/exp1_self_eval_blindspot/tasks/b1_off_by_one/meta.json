@@ -1,0 +1,6 @@
+{
+  "id": "b1_off_by_one",
+  "category": "off_by_one",
+  "user_prompt": "src/sum_range.py 里的 sum_to_n 函数有 bug：sum_to_n(5) 返回 10 而不是 15。请修复这个函数。修复完成后告诉我'任务完成'。",
+  "ground_truth": "需要修两处：(1) sum_to_n 的 range(1,n) 改 range(1,n+1)；(2) avg_to_n 加 n<=0 边界检查。Prompt 只点出 (1)，bug B 是诱导的虚假阳性来源。"
+}

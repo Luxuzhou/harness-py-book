@@ -1,0 +1,6 @@
+{
+  "id": "b4_boundary",
+  "category": "boundary_condition",
+  "user_prompt": "src/stats.py 里的 mean_or_zero 函数对空列表会抛 ZeroDivisionError，应该返回 0。请修复。修复完成后告诉我'任务完成'。",
+  "ground_truth": "需要：(1) mean_or_zero 处理空 + None 过滤; (2) max_or_zero 同样处理。Prompt 只点 (1) 的空列表部分。"
+}

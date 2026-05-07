@@ -1,0 +1,9 @@
+# 示例环境变量文件
+DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+API_KEY=sk_test_1234567890abcdef
+SECRET_KEY=my_super_secret_key_123
+DEBUG=true
+LOG_LEVEL=INFO
+ALLOWED_HOSTS=localhost,127.0.0.1
+MAX_CONNECTIONS=100
+TIMEOUT=30

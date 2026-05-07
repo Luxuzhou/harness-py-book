@@ -29,7 +29,7 @@ class ProviderProfile:
     model: str
     api_key: str
     base_url: str
-    context_window: int = 128_000
+    context_window: int = 1_000_000
     max_output_tokens: int = 16_384
     temperature: float = 0.0
     priority: int = 0  # 越小优先级越高

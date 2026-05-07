@@ -1,0 +1,12 @@
+{"id": "ap001", "category": "add_param", "user_prompt": "给 src/users.py 的 get_user 函数加一个可选参数 include_deleted=False，用于在查询时是否包含软删除的用户。", "verify_signal": "include_deleted=False"}
+{"id": "ap002", "category": "add_param", "user_prompt": "给 src/email_sender.py 的 send 函数加可选参数 cc=None，类型为 list[str] | None。", "verify_signal": "cc=None|cc: list"}
+{"id": "ap003", "category": "add_param", "user_prompt": "给 src/cache.py 的 get 加可选参数 default=None，找不到时返回 default 而不是抛 KeyError。", "verify_signal": "default=None"}
+{"id": "cd001", "category": "change_default", "user_prompt": "src/config.py 中 PAGE_SIZE 当前是 20，改成 50。", "verify_signal": "PAGE_SIZE = 50|PAGE_SIZE=50"}
+{"id": "cd002", "category": "change_default", "user_prompt": "src/retry.py 中 MAX_RETRIES 从 3 改到 5。", "verify_signal": "MAX_RETRIES = 5|MAX_RETRIES=5"}
+{"id": "ai001", "category": "add_import", "user_prompt": "src/parser.py 用到了 re.compile 但没 import re，请加上。注意保持 import 排序。", "verify_signal": "import re"}
+{"id": "ai002", "category": "add_import", "user_prompt": "src/handlers.py 用 logging.getLogger 但没 import logging，加上。", "verify_signal": "import logging"}
+{"id": "rn001", "category": "rename_call_site", "user_prompt": "把 src/auth.py 里的 check_token() 改名为 verify_token()，并修复所有调用方（项目里至少有 3 处调用）。", "verify_signal": "def verify_token|verify_token("}
+{"id": "rn002", "category": "rename_call_site", "user_prompt": "把 src/db.py 里的 query_one() 改名为 fetch_one()，修复所有调用。", "verify_signal": "def fetch_one|fetch_one("}
+{"id": "rn003", "category": "rename_call_site", "user_prompt": "src/user_service.py 的 list_users() 改名为 paginate_users()，修复调用。", "verify_signal": "def paginate_users|paginate_users("}
+{"id": "rn004", "category": "cross_module_signature", "user_prompt": "为支持多租户，给 src/api.py 中所有 fetch_* 函数（fetch_user / fetch_post / fetch_comment）加首参 tenant_id: int。所有调用方都要传入 tenant_id=1。修改影响：src/api.py 函数签名、src/handlers.py、src/cli.py、src/middleware.py、tests/test_handlers.py 中所有 fetch_* 调用。修改后 pytest tests/ 必须全部通过。", "verify_signal": "def fetch_user(tenant_id|fetch_user(tenant_id=|fetch_user(1, "}
+{"id": "rn005", "category": "constant_rename", "user_prompt": "把 src/constants.py 里的 MAX_PAGE_SIZE 重命名为 DEFAULT_PAGE_LIMIT，并把值从 100 改成 50。修复所有引用方（注意：调用方使用了 4 种不同的 import 风格——直接 from import、`import as` 别名、`from package import 模块`、tests 里的直接 import）。修改后 pytest tests/ 必须全部通过。", "verify_signal": "DEFAULT_PAGE_LIMIT = 50|DEFAULT_PAGE_LIMIT=50"}

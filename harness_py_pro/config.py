@@ -54,15 +54,33 @@ class ModelConfig:
     @classmethod
     def from_env(cls) -> ModelConfig:
         seed_env = os.getenv('HARNESS_SEED', '')
+        model = os.getenv('HARNESS_MODEL', os.getenv('MODEL', 'deepseek-chat'))
         return cls(
-            model=os.getenv('HARNESS_MODEL', os.getenv('MODEL', 'deepseek-chat')),
+            model=model,
             api_key=os.getenv('HARNESS_API_KEY', os.getenv('OPENAI_API_KEY', '')),
             base_url=os.getenv('HARNESS_BASE_URL', os.getenv('OPENAI_BASE_URL', 'https://api.deepseek.com/v1')),
-            context_window=int(os.getenv('HARNESS_CONTEXT_WINDOW', '128000')),
+            context_window=int(os.getenv('HARNESS_CONTEXT_WINDOW', str(cls._infer_context_window(model)))),
             max_output_tokens=int(os.getenv('HARNESS_MAX_OUTPUT', '8192')),
             seed=int(seed_env) if seed_env.strip() else None,
             pool_size=int(os.getenv('HARNESS_POOL_SIZE', '1')),
         )
+
+    @staticmethod
+    def _infer_context_window(model: str) -> int:
+        """根据模型名称推断上下文窗口大小。"""
+        m = model.lower()
+        if 'deepseek' in m:
+            # DeepSeek V3 / R1 支持 1M 上下文
+            return 1_000_000
+        if 'claude' in m:
+            # Claude 3.5 Sonnet / Opus 支持 200K
+            return 200_000
+        if 'gpt-4o' in m or 'gpt-4-turbo' in m:
+            return 128_000
+        if 'gpt-4' in m:
+            return 8_000
+        # 默认保守值
+        return 128_000
 
 
 @dataclass
@@ -80,8 +98,8 @@ class HookConfig:
 class AgentConfig:
     """Agent行为配置。"""
     cwd: Path = field(default_factory=Path.cwd)
-    max_iterations: int = 40
-    planning_turns: int = 3
+    max_iterations: int = 100
+    planning_turns: int = 0  # 0 = 禁用自动阶段切换，所有工具始终暴露
     max_cost_usd: float = 0.0
     allow_write: bool = True
     allow_shell: bool = True
@@ -108,7 +126,7 @@ class AgentConfig:
     hooks: HookConfig = field(default_factory=HookConfig)
 
     # 沙箱配置
-    sandbox_mode: str = 'ask'  # ask / accept / bypass / plan
+    sandbox_mode: str = 'bypass'  # ask / accept / bypass / plan
     network_isolated: bool = False
     filesystem_roots: list[str] = field(default_factory=list)
     command_runner: Callable[[str, int], tuple[bool, str]] | None = None
@@ -117,3 +135,8 @@ class AgentConfig:
     role: str = ''
     role_prompt: str = ''
     tool_filter: list[str] = field(default_factory=list)
+
+    # 子代理配置
+    is_subagent: bool = False        # 当前是否为子代理
+    spawn_depth: int = 0             # 子代理嵌套深度（0=根代理）
+    max_spawn_depth: int = 2         # 最大子代理嵌套深度

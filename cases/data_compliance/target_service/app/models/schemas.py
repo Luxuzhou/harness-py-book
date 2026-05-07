@@ -1070,3 +1070,107 @@ class HealthCheck(BaseModel):
 class HealthCheckResponse(BaseResponse):
     """健康检查响应"""
     data: Optional[HealthCheck] = None
+
+
+# ──────────────────────────────────────────────────────────────
+# 路径变异智能预警模型
+# ──────────────────────────────────────────────────────────────
+
+class DeviationPoint(BaseModel):
+    """超限点位信息"""
+    model_config = ConfigDict(from_attributes=True)
+
+    index: int = Field(..., description="超限点在序列中的位置索引")
+    moving_average: float = Field(..., description="该点的路径依从率")
+    upper_limit: float = Field(..., description="上控制限")
+    lower_limit: float = Field(..., description="下控制限")
+    direction: str = Field(..., description="超限方向: HIGH 或 LOW")
+
+
+class AnomalyRuleResponse(BaseModel):
+    """预警规则响应（对应 Java 端 AnomalyRuleResponse）"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int = Field(..., description="规则ID")
+    test_item_id: str = Field(..., description="诊疗项目ID")
+    test_item_name: str = Field(..., description="诊疗项目名称")
+    window_size: int = Field(..., description="路径依从率窗口大小")
+    consecutive_count: int = Field(..., description="连续超限判定次数")
+    threshold_multiplier: float = Field(..., description="控制限倍数(相对SD)")
+    target_value: float = Field(..., description="目标值(靶值)")
+    sd_value: float = Field(..., description="标准差")
+    enabled: bool = Field(..., description="是否启用")
+    created_at: Optional[str] = Field(None, description="创建时间")
+    updated_at: Optional[str] = Field(None, description="更新时间")
+
+
+class AnomalyEventCreateRequest(BaseModel):
+    """异常事件创建请求（对应 Java 端 AnomalyEventCreateRequest）"""
+    model_config = ConfigDict(from_attributes=True)
+
+    rule_id: int = Field(..., description="关联的预警规则ID")
+    test_item_id: str = Field(..., max_length=64, description="诊疗项目ID")
+    triggered_at: str = Field(..., description="异常预警触发时间")
+    severity: str = Field(..., description="严重程度: WARNING/CRITICAL")
+    moving_averages: Optional[List[float]] = Field(None, description="触发时的路径依从率序列")
+    deviation_points: Optional[List[DeviationPoint]] = Field(None, description="超限点位信息")
+    message: Optional[str] = Field(None, max_length=512, description="异常预警描述信息")
+
+
+class AnomalyEventResponse(BaseModel):
+    """异常事件响应（对应 Java 端 AnomalyEventResponse）"""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int = Field(..., description="事件ID")
+    rule_id: int = Field(..., description="关联的预警规则ID")
+    test_item_id: str = Field(..., description="诊疗项目ID")
+    triggered_at: str = Field(..., description="异常预警触发时间")
+    severity: str = Field(..., description="严重程度")
+    message: Optional[str] = Field(None, description="异常预警描述信息")
+    created_at: Optional[str] = Field(None, description="创建时间")
+
+
+class AnomalyResult(BaseModel):
+    """实时分析结果"""
+    model_config = ConfigDict(from_attributes=True)
+
+    test_item_id: str = Field(..., description="诊疗项目ID")
+    triggered: bool = Field(..., description="是否触发异常预警")
+    moving_averages: List[float] = Field(..., description="路径依从率序列")
+    deviation_points: List[DeviationPoint] = Field(default_factory=list, description="超限点位列表")
+    consecutive_count: int = Field(0, description="连续超限次数")
+    severity: Optional[str] = Field(None, description="严重程度")
+    event_id: Optional[int] = Field(None, description="异常事件ID（如果触发）")
+    message: Optional[str] = Field(None, description="分析描述信息")
+
+
+class AnomalySegment(BaseModel):
+    """异常预警区段"""
+    model_config = ConfigDict(from_attributes=True)
+
+    start_index: int = Field(..., description="区段起始索引")
+    end_index: int = Field(..., description="区段结束索引")
+    deviation_count: int = Field(..., description="区段内超限点数")
+    max_deviation: float = Field(..., description="最大偏离值")
+    severity: str = Field(..., description="区段严重程度")
+
+
+class HistoryAnalysis(BaseModel):
+    """历史分析结果"""
+    model_config = ConfigDict(from_attributes=True)
+
+    test_item_id: str = Field(..., description="诊疗项目ID")
+    start_date: str = Field(..., description="分析起始日期")
+    end_date: str = Field(..., description="分析结束日期")
+    data_points: int = Field(..., description="数据点数")
+    moving_averages: List[float] = Field(..., description="路径依从率序列")
+    deviation_points: List[DeviationPoint] = Field(default_factory=list, description="超限点位列表")
+    segments: List[AnomalySegment] = Field(default_factory=list, description="异常预警区段列表")
+    summary: Dict[str, Any] = Field(default_factory=dict, description="统计摘要")
+
+
+class ErrorResponse(BaseModel):
+    """错误响应（对应契约 ErrorResponse schema）"""
+    error_code: str = Field(..., description="错误码")
+    message: str = Field(..., description="错误描述")
+    timestamp: Optional[str] = Field(None, description="错误发生时间")

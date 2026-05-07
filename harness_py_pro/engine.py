@@ -39,6 +39,12 @@ from .token_budget import (
 from .observe import Logger, Metrics
 from .memory import MemoryManager
 from .sandbox import Sandbox, create_sandbox
+from .plan_state import PlanStateManager
+from .plan_tools import (
+    UpdatePlanTool, ChecklistWriteTool, ChecklistUpdateTool, ChecklistListTool,
+    TaskCreateTool, TaskListTool, TaskUpdateTool, TaskCancelTool,
+)
+from .subagent_manager import SubAgentManager
 
 
 @dataclass
@@ -75,11 +81,69 @@ def _should_parallelize(tool_calls: list[dict]) -> bool:
     return names.issubset(SAFE_PARALLEL_TOOLS)
 
 
+def _validate_messages(messages: list[dict]) -> list[dict]:
+    """
+    验证消息序列的合法性，修复 assistant + tool_calls 后缺少 tool 消息的问题。
+    返回修复后的消息列表。
+    """
+    if not messages:
+        return messages
+
+    fixed: list[dict] = []
+    pending_tool_calls: list[dict] = []
+
+    for i, msg in enumerate(messages):
+        if msg.get('role') == 'assistant':
+            # 如果有未处理的 tool_calls，先补上假结果
+            for tc in pending_tool_calls:
+                tc_id = tc.get('id', '')
+                tool_name = tc.get('function', {}).get('name', 'unknown')
+                fixed.append({
+                    'role': 'tool',
+                    'tool_call_id': tc_id,
+                    'content': f'[message validation - {tool_name} result missing]',
+                })
+            pending_tool_calls = msg.get('tool_calls', []) or []
+            fixed.append(msg)
+        elif msg.get('role') == 'tool':
+            tc_id = msg.get('tool_call_id', '')
+            # 如果 tool_call_id 匹配当前 pending 的某个 tool_call，消费它
+            matched = any(tc.get('id') == tc_id for tc in pending_tool_calls)
+            if matched:
+                pending_tool_calls = [tc for tc in pending_tool_calls if tc.get('id') != tc_id]
+            fixed.append(msg)
+        else:
+            # user / system 消息：如果前面还有未处理的 tool_calls，先补上假结果
+            for tc in pending_tool_calls:
+                tc_id = tc.get('id', '')
+                tool_name = tc.get('function', {}).get('name', 'unknown')
+                fixed.append({
+                    'role': 'tool',
+                    'tool_call_id': tc_id,
+                    'content': f'[message validation - {tool_name} result missing]',
+                })
+            pending_tool_calls = []
+            fixed.append(msg)
+
+    # 结尾检查
+    for tc in pending_tool_calls:
+        tc_id = tc.get('id', '')
+        tool_name = tc.get('function', {}).get('name', 'unknown')
+        fixed.append({
+            'role': 'tool',
+            'tool_call_id': tc_id,
+            'content': f'[message validation - {tool_name} result missing]',
+        })
+
+    return fixed
+
+
 def _complete_with_client(
     client: object,
     messages: list[dict],
     tools: list[dict] | None = None,
 ) -> tuple[dict, str | None]:
+    messages = _validate_messages(messages)
     response = client.complete(messages, tools)  # type: ignore[attr-defined]
     if isinstance(response, tuple):
         if len(response) != 2 or not isinstance(response[0], dict):
@@ -116,7 +180,131 @@ def run(
 
     # 初始化组件
     client = completion_client or LLMClient(mc)
-    registry = tool_registry or create_default_registry()
+
+    # 异步子代理管理器（对齐 TUI 的异步子代理模型）
+    subagent_mgr = SubAgentManager(
+        max_concurrent=10,
+        session_dir=ac.cwd / '.harness_sessions' / 'subagents',
+    )
+
+    # 子代理 runner：用于 agent_spawn 工具（异步模型）
+    def _agent_runner(prompt: str, agent_type: str, allowed_tools: list[str] | None) -> tuple[bool, str]:
+        if ac.spawn_depth >= ac.max_spawn_depth:
+            return False, f'Sub-agent spawn depth limit reached ({ac.max_spawn_depth})'
+
+        # 根据 agent_type 确定子代理配置（对齐 TUI 类型体系）
+        type_tools = {
+            'explore': ['read_file', 'grep_search', 'glob_search'],
+            'explorer': ['read_file', 'grep_search', 'glob_search'],
+            'plan': ['read_file', 'grep_search', 'glob_search', 'write_file'],
+            'review': ['read_file', 'grep_search', 'glob_search'],
+            'implementer': ['read_file', 'write_file', 'edit_file', 'bash'],
+            'implement': ['read_file', 'write_file', 'edit_file', 'bash'],
+            'builder': ['read_file', 'write_file', 'edit_file', 'bash'],
+            'verifier': ['read_file', 'bash', 'grep_search'],
+            'verify': ['read_file', 'bash', 'grep_search'],
+            'validator': ['read_file', 'bash', 'grep_search'],
+            'tester': ['read_file', 'bash', 'grep_search'],
+            'worker': ['read_file', 'write_file', 'edit_file', 'bash', 'grep_search'],
+            'general': None,
+            'default': None,
+            'custom': None,
+        }
+        # 标准化类型名（处理 TUI 别名）
+        normalized_type = {
+            'explorer': 'explore',
+            'implementer': 'implement',
+            'builder': 'implement',
+            'verifier': 'verify',
+            'validator': 'verify',
+            'tester': 'verify',
+            'default': 'general',
+            'awaiter': 'general',
+        }.get(agent_type, agent_type)
+
+        sub_tools = allowed_tools or type_tools.get(agent_type)
+
+        # 写权限：implement/builder/custom 拥有；其他默认只读
+        needs_write = normalized_type in ('implement', 'custom')
+        # shell 权限：implement/verify/worker/custom 拥有
+        needs_shell = normalized_type in ('implement', 'verify', 'worker', 'custom')
+
+        sub_ac = AgentConfig(
+            cwd=ac.cwd,
+            max_iterations=30,  # 子代理步数限制
+            planning_turns=0,
+            allow_write=ac.allow_write and needs_write,
+            allow_shell=ac.allow_shell and needs_shell,
+            tool_filter=sub_tools or [],
+            role=f'subagent-{normalized_type}',
+            role_prompt=f'You are a sub-agent specialized in {normalized_type}. Work independently and return concise findings.',
+            is_subagent=True,
+            spawn_depth=ac.spawn_depth + 1,
+            max_spawn_depth=ac.max_spawn_depth,
+            hooks=ac.hooks,
+            sandbox_mode=ac.sandbox_mode,
+            network_isolated=ac.network_isolated,
+            filesystem_roots=ac.filesystem_roots,
+            command_runner=ac.command_runner,
+        )
+
+        # 生成唯一 agent_id
+        agent_id = f'{ac.role or "root"}-{normalized_type}-{uuid4().hex[:8]}'
+
+        if verbose:
+            indent = '  ' * (ac.spawn_depth + 1)
+            print(f'{indent}[SUBAGENT] spawn async {agent_type} id={agent_id} depth={ac.spawn_depth + 1}/{ac.max_spawn_depth}')
+
+        # 实际在后台线程运行的子代理逻辑
+        def _run_subagent() -> tuple[bool, str]:
+            result = run(
+                prompt,
+                model_config=mc,
+                agent_config=sub_ac,
+                completion_client=completion_client,
+                verbose=verbose,
+            )
+            summary = (
+                f'Sub-agent ({agent_type}) completed.\n'
+                f'Steps: {result.turns}, Tools: {result.tool_calls}, Stop: {result.stop_reason}\n'
+                f'Output:\n{result.output[:3000]}'
+            )
+            return True, summary
+
+        # 异步 spawn：立即返回 agent_id，后台线程执行
+        subagent_mgr.spawn(agent_id, prompt, agent_type, _run_subagent)
+
+        # 返回 agent_id 给调用者（模型），模型可用 agent_result/agent_wait 查询
+        info = (
+            f'Sub-agent spawned asynchronously.\n'
+            f'agent_id: {agent_id}\n'
+            f'type: {agent_type}\n'
+            f'status: running\n\n'
+            f'CRITICAL: Do NOT read, search, or investigate files that the sub-agent is covering. '
+            f'Your next action MUST be `agent_wait({agent_id})` or `agent_result({agent_id})`. '
+            f'Do NOT use read_file, grep_search, or glob_search while sub-agents are running.'
+        )
+        return True, info
+
+    # 规划状态管理器（对齐 TUI 的 Plan + Checklist + Task 体系）
+    plan_session_dir = ac.cwd / '.harness_sessions'
+    plan_manager = PlanStateManager(plan_session_dir)
+    plan_tools = [
+        UpdatePlanTool(plan_manager),
+        ChecklistWriteTool(plan_manager),
+        ChecklistUpdateTool(plan_manager),
+        ChecklistListTool(plan_manager),
+        TaskCreateTool(plan_manager),
+        TaskListTool(plan_manager),
+        TaskUpdateTool(plan_manager),
+        TaskCancelTool(plan_manager),
+    ]
+
+    registry = tool_registry or create_default_registry(
+        agent_runner=_agent_runner,
+        plan_tools=plan_tools,
+        subagent_manager=subagent_mgr,
+    )
     hook_executor = HookExecutor(ac.hooks)
     perm_checker = PermissionChecker(ac)
     compressor = Compressor(preserve_messages=ac.compact_preserve_messages)
@@ -146,11 +334,13 @@ def run(
     memory_mgr = MemoryManager(ac.cwd)
     memory_bundle = memory_mgr.load_bundle()
 
-    # 构建system prompt
+    # 构建system prompt（注入计划状态，对齐 TUI 状态回注）
+    plan_context = plan_manager.format_for_prompt()
     system_prompt = build_system_prompt(
         ac.cwd,
         role_prompt=ac.role_prompt,
         extra_context=memory_bundle,
+        plan_context=plan_context,
     )
 
     if initial_messages:
@@ -204,16 +394,16 @@ def run(
 
             # 压缩后刷新system prompt（对齐Claude Code: Compact Instructions）
             new_system = build_system_prompt(
-                ac.cwd, role_prompt=ac.role_prompt, extra_context=memory_bundle,
+                ac.cwd,
+                role_prompt=ac.role_prompt,
+                extra_context=memory_bundle,
+                plan_context=plan_manager.format_for_prompt(),
             )
             if messages and messages[0].get('role') == 'system':
                 messages[0]['content'] = new_system
 
-        # === 获取当前phase的工具schema ===
-        phase_schemas = registry.get_schemas_for_phase(iteration, ac)
-
-        if verbose and iteration == ac.planning_turns + 1 and ac.planning_turns > 0:
-            print(f'  [PHASE] 规划阶段结束，解锁全部工具')
+        # === 获取工具schema（阶段限制已移除） ===
+        phase_schemas = registry.get_schemas()
 
         # === 调用LLM ===
         api_start = time.time()
@@ -225,10 +415,11 @@ def run(
             metrics.api_errors += 1
             logger.error('API call failed', error_text)
 
-            # Reactive压缩
-            if any(kw in error_text.lower() for kw in ('context', 'token', '400', 'length')):
+            # Reactive压缩：仅对上下文长度/token超限类错误触发
+            is_context_error = any(kw in error_text.lower() for kw in ('context', 'token', 'length'))
+            if is_context_error:
                 if verbose:
-                    print(f'  [REACTIVE] API报错，紧急压缩')
+                    print(f'  [REACTIVE] API上下文报错，紧急压缩')
                 before = estimate_tokens(messages, mc.model)
                 messages = compressor.compress(
                     messages, int(mc.context_window * 0.5), reactive=True,
@@ -238,8 +429,8 @@ def run(
                 logger.compress('reactive', before, after)
                 try:
                     response, provider_name = _complete_with_client(client, messages, phase_schemas)
-                except RuntimeError:
-                    result.stop_reason = f'API error after reactive: {error_text[:100]}'
+                except RuntimeError as retry_exc:
+                    result.stop_reason = f'API error after reactive: {str(retry_exc)[:100]}'
                     break
             else:
                 result.stop_reason = f'API error: {error_text[:100]}'
@@ -270,8 +461,46 @@ def run(
         content = response.get('content', '')
         tool_calls_resp = response.get('tool_calls', [])
 
-        # === 无工具调用 → 自然停止 ===
+        # === 无工具调用 → 检查是否有运行中的子代理（对齐 TUI 自动等待机制） ===
         if not tool_calls_resp:
+            running_agents = subagent_mgr.get_running()
+            if running_agents:
+                if verbose:
+                    print(f'  [SUBAGENT] Waiting for {len(running_agents)} sub-agent(s)...')
+                for agent_info in running_agents:
+                    agent_id = agent_info['agent_id']
+                    subagent_mgr.wait(agent_id)
+                completed = subagent_mgr.consume_completions()
+                if completed:
+                    for record in completed:
+                        status_label = (
+                            'COMPLETED' if record.status.value == 'completed'
+                            else record.status.value.upper()
+                        )
+                        inject_msg = (
+                            f'<system-reminder>[SUBAGENT COMPLETE] {record.agent_id}\n'
+                            f'Type: {record.agent_type}\n'
+                            f'Status: {status_label}\n'
+                            f'Duration: {record.to_dict()["duration_sec"]:.1f}s\n'
+                            f'Summary:\n{record.result_summary[:2000]}\n'
+                            f'Error: {record.error or "none"}'
+                            f'</system-reminder>'
+                        )
+                        messages.append({'role': 'user', 'content': inject_msg})
+                        writer.write_event({
+                            'type': 'subagent_complete',
+                            'agent_id': record.agent_id,
+                            'status': record.status.value,
+                            'summary': record.result_summary[:500],
+                        })
+                        if verbose:
+                            print(
+                                f'  [SUBAGENT] {record.agent_id} {status_label} '
+                                f'({record.to_dict()["duration_sec"]:.1f}s)'
+                            )
+                # 注入结果后继续下一轮，让模型整合子代理发现
+                continue
+
             result.output = content or ''
             result.stop_reason = 'stop'
             messages.append({'role': 'assistant', 'content': content})
@@ -287,65 +516,166 @@ def run(
         if content:
             writer.write_message('assistant', content)
 
-        # === 执行工具调用（并行或串行） ===
-        if _should_parallelize(tool_calls_resp):
-            tool_results = _execute_tools_parallel(
-                tool_calls_resp, registry, hook_executor, perm_checker, sandbox,
-                ac, iteration, writer, logger, metrics, verbose,
-            )
-        else:
-            tool_results = _execute_tools_sequential(
-                tool_calls_resp, registry, hook_executor, perm_checker, sandbox,
-                ac, iteration, writer, logger, metrics, verbose,
-            )
-
-        for tc, (ok, tool_content) in zip(tool_calls_resp, tool_results):
+        # === Phase 1: Pre-execution LoopGuard (identical-call blocking) ===
+        blocked_ids: set[str] = set()
+        for tc in tool_calls_resp:
             tool_name = tc.get('function', {}).get('name', '')
-            try:
-                tc_args = json.loads(tc.get('function', {}).get('arguments', '{}'))
-            except json.JSONDecodeError:
-                tc_args = {}
-
-            # Post-hook过滤
-            if ok:
-                post_result = hook_executor.post_tool(tool_name, tc_args, tool_content, ac)
-                if post_result.filtered_result:
-                    tool_content = post_result.filtered_result
-                if post_result.warnings:
-                    result.hook_warnings.extend(post_result.warnings)
-                    if verbose:
-                        for w in post_result.warnings:
-                            print(f'  [HOOK] {w}')
-
-            result.tool_calls += 1
-
-            # 构建tool消息
-            tool_msg = {
-                'role': 'tool',
-                'tool_call_id': tc.get('id', ''),
-                'content': json.dumps(
-                    {'tool': tool_name, 'ok': ok, 'content': tool_content},
-                    ensure_ascii=False,
-                ),
-            }
-            messages.append(tool_msg)
-
-            # LoopGuard检查
             try:
                 tool_args = json.loads(tc.get('function', {}).get('arguments', '{}'))
             except json.JSONDecodeError:
                 tool_args = {}
-            intervene, guard_msg = guard.check(tool_name, tool_args, ok, tool_content[:200])
-            if intervene:
+            action, guard_msg = guard.check_pre(tool_name, tool_args)
+            if action == 'block':
+                tc_id = tc.get('id', '')
+                blocked_ids.add(tc_id)
+                result.tool_calls += 1
                 metrics.guard_interventions += 1
-                logger.guard_intervene(guard_msg)
                 if verbose:
-                    print(f'  [GUARD] {guard_msg}')
-                messages.append({
-                    'role': 'user',
-                    'content': f'<system-reminder>[LOOP GUARD] {guard_msg}</system-reminder>',
-                })
+                    print(f'  [GUARD] BLOCK {tool_name}: {guard_msg}')
+                # Inject blocked tool result so model knows what happened
+                tool_msg = {
+                    'role': 'tool',
+                    'tool_call_id': tc_id,
+                    'content': json.dumps(
+                        {'tool': tool_name, 'ok': False, 'content': f'[GUARD BLOCK] {guard_msg}'},
+                        ensure_ascii=False,
+                    ),
+                }
+                messages.append(tool_msg)
+                writer.write_tool_call(tool_name, tool_args, False, f'[GUARD BLOCK] {guard_msg}')
                 writer.write_event({'type': 'loop_guard', 'message': guard_msg})
+
+        # Filter out blocked tools for actual execution
+        tool_calls_to_execute = [tc for tc in tool_calls_resp if tc.get('id') not in blocked_ids]
+
+        # === Phase 2: Execute remaining tools (并行或串行) ===
+        halt_after_turn = False
+        if tool_calls_to_execute:
+            if _should_parallelize(tool_calls_to_execute):
+                tool_results = _execute_tools_parallel(
+                    tool_calls_to_execute, registry, hook_executor, perm_checker, sandbox,
+                    ac, iteration, writer, logger, metrics, verbose,
+                )
+            else:
+                tool_results = _execute_tools_sequential(
+                    tool_calls_to_execute, registry, hook_executor, perm_checker, sandbox,
+                    ac, iteration, writer, logger, metrics, verbose,
+                )
+
+            for tc, (ok, tool_content) in zip(tool_calls_to_execute, tool_results):
+                tool_name = tc.get('function', {}).get('name', '')
+                try:
+                    tc_args = json.loads(tc.get('function', {}).get('arguments', '{}'))
+                except json.JSONDecodeError:
+                    tc_args = {}
+
+                # Post-hook过滤
+                if ok:
+                    post_result = hook_executor.post_tool(tool_name, tc_args, tool_content, ac)
+                    if post_result.filtered_result:
+                        tool_content = post_result.filtered_result
+                    if post_result.warnings:
+                        result.hook_warnings.extend(post_result.warnings)
+                        if verbose:
+                            for w in post_result.warnings:
+                                print(f'  [HOOK] {w}')
+
+                result.tool_calls += 1
+
+                # Phase 3: Post-execution LoopGuard (failure warn/halt)
+                action, guard_msg = guard.check_post(tool_name, ok)
+                if action == 'halt':
+                    metrics.guard_interventions += 1
+                    logger.guard_intervene(guard_msg)
+                    if verbose:
+                        print(f'  [GUARD] HALT: {guard_msg}')
+                    halt_after_turn = True
+                    result.stop_reason = f'guard_halt: {guard_msg}'
+                elif action == 'warn':
+                    metrics.guard_interventions += 1
+                    logger.guard_intervene(guard_msg)
+                    if verbose:
+                        print(f'  [GUARD] WARN: {guard_msg}')
+                    # 将 warn 信息嵌入 tool result content，不插入独立 user 消息
+                    tool_content += f'\n[LOOP GUARD] {guard_msg}'
+                    writer.write_event({'type': 'loop_guard', 'message': guard_msg})
+
+                # 构建tool消息
+                tool_msg = {
+                    'role': 'tool',
+                    'tool_call_id': tc.get('id', ''),
+                    'content': json.dumps(
+                        {'tool': tool_name, 'ok': ok, 'content': tool_content},
+                        ensure_ascii=False,
+                    ),
+                }
+                messages.append(tool_msg)
+
+        if halt_after_turn:
+            break
+
+        # === 如果本回合有 agent_spawn 成功，强制等待子代理完成（防止主代理重复调查）===
+        spawn_happened = any(
+            tc.get('function', {}).get('name', '') == 'agent_spawn'
+            for tc in tool_calls_to_execute
+        )
+        if spawn_happened:
+            running = subagent_mgr.get_running()
+            if running:
+                if verbose:
+                    print(f'  [SUBAGENT] Spawned this turn, waiting for {len(running)} agent(s)...')
+                for agent_info in running:
+                    subagent_mgr.wait(agent_info['agent_id'])
+                completed = subagent_mgr.consume_completions()
+                if completed:
+                    for record in completed:
+                        status_label = 'COMPLETED' if record.status.value == 'completed' else record.status.value.upper()
+                        inject_msg = (
+                            f'<system-reminder>[SUBAGENT COMPLETE] {record.agent_id}\n'
+                            f'Type: {record.agent_type}\n'
+                            f'Status: {status_label}\n'
+                            f'Duration: {record.to_dict()["duration_sec"]:.1f}s\n'
+                            f'Summary:\n{record.result_summary[:2000]}\n'
+                            f'Error: {record.error or "none"}'
+                            f'</system-reminder>'
+                        )
+                        messages.append({'role': 'user', 'content': inject_msg})
+                        writer.write_event({
+                            'type': 'subagent_complete',
+                            'agent_id': record.agent_id,
+                            'status': record.status.value,
+                            'summary': record.result_summary[:500],
+                        })
+                        if verbose:
+                            print(
+                                f'  [SUBAGENT] {record.agent_id} {status_label} '
+                                f'({record.to_dict()["duration_sec"]:.1f}s)'
+                            )
+
+        # === 消费本轮新完成的子代理，将结果注入消息历史（对齐 TUI 的 consume 模型）===
+        completed = subagent_mgr.consume_completions()
+        if completed:
+            for record in completed:
+                status_label = 'COMPLETED' if record.status.value == 'completed' else record.status.value.upper()
+                inject_msg = (
+                    f'<system-reminder>[SUBAGENT COMPLETE] {record.agent_id}\n'
+                    f'Type: {record.agent_type}\n'
+                    f'Status: {status_label}\n'
+                    f'Duration: {record.to_dict()["duration_sec"]:.1f}s\n'
+                    f'Summary:\n{record.result_summary[:2000]}\n'
+                    f'Error: {record.error or "none"}'
+                    f'</system-reminder>'
+                )
+                messages.append({'role': 'user', 'content': inject_msg})
+                writer.write_event({
+                    'type': 'subagent_complete',
+                    'agent_id': record.agent_id,
+                    'status': record.status.value,
+                    'summary': record.result_summary[:500],
+                })
+                if verbose:
+                    print(f'  [SUBAGENT] {record.agent_id} {status_label} '
+                          f'({record.to_dict()["duration_sec"]:.1f}s)')
 
         # 进度日志
         if verbose and iteration % 5 == 0:

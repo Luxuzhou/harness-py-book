@@ -1,0 +1,58 @@
+{
+  "points": [
+    {
+      "subject_name": "system_prompt",
+      "subject_version": "v1",
+      "n": 30,
+      "first_call_acc": 0.3,
+      "policy_pass_rate": 0.3,
+      "forbidden_call_rate": 0.4,
+      "avg_cost_usd": 0.00161,
+      "avg_tool_calls": 3.73,
+      "avg_tokens": 4956.6,
+      "on_frontier": false
+    },
+    {
+      "subject_name": "system_prompt",
+      "subject_version": "v2",
+      "n": 30,
+      "first_call_acc": 0.7,
+      "policy_pass_rate": 0.6,
+      "forbidden_call_rate": 0.1,
+      "avg_cost_usd": 0.00253,
+      "avg_tool_calls": 3.3,
+      "avg_tokens": 8316.8,
+      "on_frontier": false
+    },
+    {
+      "subject_name": "tool_description",
+      "subject_version": "v1",
+      "n": 60,
+      "first_call_acc": 0.95,
+      "policy_pass_rate": 0.633,
+      "forbidden_call_rate": 0.367,
+      "avg_cost_usd": 0.00118,
+      "avg_tool_calls": 3.0,
+      "avg_tokens": 3730.2,
+      "on_frontier": true
+    },
+    {
+      "subject_name": "tool_description",
+      "subject_version": "v2",
+      "n": 60,
+      "first_call_acc": 0.9,
+      "policy_pass_rate": 0.9,
+      "forbidden_call_rate": 0.0,
+      "avg_cost_usd": 0.0019,
+      "avg_tool_calls": 2.75,
+      "avg_tokens": 6336.1,
+      "on_frontier": false
+    }
+  ],
+  "frontier": [
+    {
+      "subject_name": "tool_description",
+      "subject_version": "v1"
+    }
+  ]
+}

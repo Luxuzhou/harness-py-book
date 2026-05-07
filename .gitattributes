@@ -1,0 +1,17 @@
+# 统一跨平台换行符：所有文本文件以 LF 存储，抑制 Windows 上
+# `core.autocrlf=true` 触发的 "LF will be replaced by CRLF" 警告。
+* text=auto eol=lf
+
+# 明确几类二进制，避免被当成文本处理
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.zip binary
+*.tar.gz binary
+*.duckdb binary
+*.duckdb.wal binary

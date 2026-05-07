@@ -1,0 +1,6 @@
+修复 retry.py 中的 retry 装饰器，使 test_expected.py 中的所有测试通过。
+
+注意：
+- 只修改 retry.py，不要改 test_expected.py
+- 保留原有的指数退避逻辑（backoff 参数）
+- 完成后运行 python -m pytest test_expected.py -v 验证

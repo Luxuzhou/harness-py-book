@@ -1,0 +1,9 @@
+{
+  "snapshot_label": "before",
+  "java_file_count": 72,
+  "total_loc": 7929,
+  "god_service_loc": 1266,
+  "avg_method_loc": 19.55,
+  "pmd_warnings": 0,
+  "test_line_coverage": -1.0
+}

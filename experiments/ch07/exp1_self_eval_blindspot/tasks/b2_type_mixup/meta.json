@@ -1,0 +1,6 @@
+{
+  "id": "b2_type_mixup",
+  "category": "type_mixup",
+  "user_prompt": "src/price_total.py 里的 total_price 函数有 bug：跑测试会报 TypeError（字符串和数字相加）。请修复。修复完成后告诉我'任务完成'。",
+  "ground_truth": "需要修三处：(1) total += float(price_str); (2) 空 price 段当 0 处理 (float('') 会 ValueError); (3) average_price 空列表返回 0。Prompt 只点 (1)。"
+}

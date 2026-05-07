@@ -175,7 +175,7 @@ class FakeClient:
         return {'content': 'done', 'tool_calls': [], 'usage': {}}
 
 
-def test_engine_reactive_retry_preserves_phase_schemas(monkeypatch, workspace_tmp_path: Path):
+def test_engine_always_exposes_all_tools_no_phase_restriction(monkeypatch, workspace_tmp_path: Path):
     fake_client = FakeClient()
     monkeypatch.setattr(engine_module, 'LLMClient', lambda mc: fake_client)
 
@@ -184,19 +184,23 @@ def test_engine_reactive_retry_preserves_phase_schemas(monkeypatch, workspace_tm
         model_config=ModelConfig(model='gpt-4o', api_key='test-key', base_url='https://example.com'),
         agent_config=AgentConfig(
             cwd=workspace_tmp_path,
-            planning_turns=3,
+            planning_turns=0,
             max_iterations=1,
-            allow_write=False,
-            allow_shell=False,
+            allow_write=True,
+            allow_shell=True,
         ),
         verbose=False,
     )
 
     assert result.stop_reason == 'stop'
-    assert fake_client.schema_calls == [
-        ['read_file', 'grep_search', 'glob_search'],
-        ['read_file', 'grep_search', 'glob_search'],
+    # 阶段限制已移除：所有工具始终暴露（仅受 allow_write/allow_shell / tool_filter 限制）
+    all_tools = [
+        'read_file', 'write_file', 'edit_file', 'grep_search', 'glob_search', 'bash',
+        'agent_spawn', 'agent_result', 'agent_wait', 'agent_cancel', 'agent_list',
+        'update_plan', 'checklist_write', 'checklist_update', 'checklist_list',
+        'task_create', 'task_list', 'task_update', 'task_cancel',
     ]
+    assert fake_client.schema_calls == [all_tools, all_tools]
 
 
 class TupleClient:
@@ -249,8 +253,8 @@ def test_resume_reuses_session_messages_with_fresh_system_prompt(workspace_tmp_p
     assert first_messages[0]['content'] != 'old system'
     assert first_messages[1]['content'] == 'old user'
     assert first_messages[2]['content'] == 'old assistant'
-    assert first_messages[-2]['role'] == 'user'
-    assert first_messages[-2]['content'] == 'continue'
+    assert first_messages[-1]['role'] == 'user'
+    assert first_messages[-1]['content'] == 'continue'
 
 
 def test_list_sessions_reports_event_counts(workspace_tmp_path: Path):

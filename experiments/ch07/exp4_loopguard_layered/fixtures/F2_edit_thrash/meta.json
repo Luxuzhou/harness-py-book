@@ -1,0 +1,6 @@
+{
+  "id": "F2_edit_thrash",
+  "category": "edit_ambiguous",
+  "user_prompt": "src/api.py 里 process_payment 函数的初始 status 应该是 'init' 而不是 'pending'。请修复使所有 tests/test_api.py 测试通过（修改前后其他四个 process_* 函数的行为不能变）。修复完成后告诉我'任务完成'。",
+  "ground_truth": "把 process_payment 内部的第一处 status = 'pending' 改成 status = 'init'。chal: 文件里有 5 处 'status = \"pending\"'，edit_file 报 'ambiguous'。需要在 old_string 中包含函数定义行作为上下文（'def process_payment(data):\\n    status = \"pending\"'）才能唯一匹配。期望 D0_naked 下 Agent 反复用短 old_string edit 失败陷入循环；D2_with_guard 下 LoopGuard 介入后 Agent 切换到包含上下文的长 old_string。"
+}

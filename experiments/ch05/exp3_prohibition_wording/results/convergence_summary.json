@@ -1,0 +1,92 @@
+[
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "subprocess_run",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "subprocess_run",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "ast_literal_eval",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "ast_literal_eval",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "specific_multi",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "specific_multi",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "list_accumulator",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "n": 10,
+    "distinct_methods": 2,
+    "hhi": 0.58,
+    "top_method": "logger_instance",
+    "top_method_share": 0.7
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "param_qmark",
+    "top_method_share": 1.0
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "n": 10,
+    "distinct_methods": 1,
+    "hhi": 1.0,
+    "top_method": "param_qmark",
+    "top_method_share": 1.0
+  }
+]

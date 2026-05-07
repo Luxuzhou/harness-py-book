@@ -1,0 +1,18 @@
+{
+  "system_prompt::v1": {
+    "n": 30,
+    "first_call_acc": 0.3,
+    "expected_calls_acc": 0.9,
+    "contains_acc": 1.0,
+    "forbidden_call_rate": 0.4,
+    "policy_pass_rate": 0.3
+  },
+  "system_prompt::v2": {
+    "n": 30,
+    "first_call_acc": 0.7,
+    "expected_calls_acc": 0.9,
+    "contains_acc": 1.0,
+    "forbidden_call_rate": 0.1,
+    "policy_pass_rate": 0.6
+  }
+}

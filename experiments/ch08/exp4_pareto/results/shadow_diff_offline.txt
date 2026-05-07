@@ -1,0 +1,29 @@
+Shadow Test Diff: session_001 vs session_002
+============================================================
+
+  PROD  (session_001): 5 calls, 3 ok
+  SHADOW(session_002): 6 calls, 2 ok
+
+  PROD errors:
+    FAIL edit_file: ValueError: old_string not found in file
+    FAIL bash: FileNotFoundError: bash
+  SHADOW errors:
+    FAIL edit_file: ValueError: old_string not found in file
+    FAIL read_file: PermissionError: .env
+    FAIL bash: TimeoutError: command exceeded 30s
+    FAIL bash: TimeoutError: command exceeded 30s
+
+  Call sequence diff (10 lines):
+
+--- session_001
++++ session_002
+@@ -1,5 +1,6 @@
+   FAIL edit_file()
+   OK read_file()
+   OK edit_file()
++  FAIL read_file()
+   FAIL bash()
+-  OK read_file()
++  FAIL bash()
+
+Conclusion: Shadow diff EXISTS (review needed)

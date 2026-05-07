@@ -1,0 +1,7 @@
+修复 cost_tracker.py 中的 CostTracker 类：补充 summary() 方法，使 test_expected.py 中的所有测试通过。
+
+注意：
+- summary() 返回的字典不能泄露内部状态（外部修改不能影响内部）
+- 空 tracker 应返回空字典
+- 不要修改 test_expected.py
+- 完成后运行 python -m pytest test_expected.py -v 验证

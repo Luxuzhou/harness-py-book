@@ -40,10 +40,12 @@ class BaseTool:
     - name: 工具名称
     - schema: API schema
     - read_only: 是否只读
+    - planning_available: 规划阶段是否可用（默认False）
     - execute(args, config) -> (ok, result)
     """
     name: str = ''
     read_only: bool = True
+    planning_available: bool = False
 
     def get_schema(self) -> dict:
         raise NotImplementedError
@@ -100,21 +102,13 @@ class ToolRegistry:
 
     def get_schemas_for_phase(self, turn: int, config: AgentConfig) -> list[dict]:
         """
-        按规划阶段过滤工具。
+        获取工具schema（阶段限制已移除，始终暴露全部工具）。
 
-        逻辑顺序（不可颠倒）：
-        1. 先按phase过滤（规划阶段只给只读工具）
-        2. 再按role过滤（tool_filter限制角色可用工具）
-
-        这保证了：即使tool_filter包含write_file，规划阶段也不会暴露它。
+        仅按role过滤（tool_filter/allowed_tools/denied_tools）。
         """
-        # Step 1: Phase过滤
-        if turn <= config.planning_turns:
-            schemas = self.get_schemas(read_only_only=True)
-        else:
-            schemas = self.get_schemas()
+        schemas = self.get_schemas()
 
-        # Step 2: Role过滤
+        # Role过滤
         allowed_names = self._allowed_tool_names(config)
         schemas = [s for s in schemas if s['name'] in allowed_names]
 
@@ -125,10 +119,6 @@ class ToolRegistry:
         tool = self._tools.get(name)
         if not tool:
             return False, f'未知工具: {name}'
-
-        # Phase检查
-        if turn > 0 and turn <= config.planning_turns and not tool.read_only:
-            return False, f'规划阶段（第{turn}轮）不允许使用 {name}，仅允许只读工具'
 
         # 工具过滤检查
         if config.tool_filter and name not in config.tool_filter:
@@ -154,6 +144,35 @@ def _check_path_escape(cwd: Path, raw_path: str) -> tuple[bool, str]:
     except ValueError:
         return False, f'Path escapes working directory: {raw_path}'
     return True, ''
+
+
+def _check_path_accessible(
+    cwd: Path,
+    raw_path: str,
+    filesystem_roots: list[str] | None = None,
+) -> tuple[bool, str]:
+    """检查路径是否可访问（cwd 内或 filesystem_roots 内）。"""
+    resolved = (cwd / raw_path).resolve()
+    cwd_resolved = cwd.resolve()
+
+    # 检查是否在 cwd 内
+    try:
+        resolved.relative_to(cwd_resolved)
+        return True, ''
+    except ValueError:
+        pass
+
+    # 检查是否在 filesystem_roots 内
+    if filesystem_roots:
+        for root in filesystem_roots:
+            root_path = (cwd / root).resolve()
+            try:
+                resolved.relative_to(root_path)
+                return True, ''
+            except ValueError:
+                pass
+
+    return False, f'Path not accessible: {raw_path}'
 
 
 def _check_glob_pattern_safe(pattern: str) -> tuple[bool, str]:
@@ -188,7 +207,9 @@ class ReadFileTool(BaseTool):
         }
 
     def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
-        ok, reason = _check_path_escape(config.cwd, args['path'])
+        ok, reason = _check_path_accessible(
+            config.cwd, args['path'], getattr(config, 'filesystem_roots', None)
+        )
         if not ok:
             return False, reason
         path = config.cwd / args['path']
@@ -302,7 +323,9 @@ class GrepSearchTool(BaseTool):
         }
 
     def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
-        ok, reason = _check_path_escape(config.cwd, args.get('path', '.'))
+        ok, reason = _check_path_accessible(
+            config.cwd, args.get('path', '.'), getattr(config, 'filesystem_roots', None)
+        )
         if not ok:
             return False, reason
         ok, reason = _check_glob_pattern_safe(args['pattern'])
@@ -329,7 +352,10 @@ class GrepSearchTool(BaseTool):
                 text = fp.read_text(encoding='utf-8', errors='replace')
                 for i, line in enumerate(text.splitlines(), 1):
                     if pattern.search(line):
-                        rel = fp.relative_to(config.cwd)
+                        try:
+                            rel = fp.relative_to(search_dir)
+                        except ValueError:
+                            rel = fp.name
                         results.append(f'{rel}:{i}: {line.rstrip()[:200]}')
                         if len(results) >= 100:
                             break
@@ -362,7 +388,9 @@ class GlobSearchTool(BaseTool):
         }
 
     def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
-        ok, reason = _check_path_escape(config.cwd, args.get('path', '.'))
+        ok, reason = _check_path_accessible(
+            config.cwd, args.get('path', '.'), getattr(config, 'filesystem_roots', None)
+        )
         if not ok:
             return False, reason
         ok, reason = _check_glob_pattern_safe(args['pattern'])
@@ -374,8 +402,220 @@ class GlobSearchTool(BaseTool):
         matches = sorted(search_dir.glob(args['pattern']))[:100]
         if not matches:
             return True, '无匹配文件'
-        lines = [str(m.relative_to(config.cwd)) for m in matches]
+        lines = []
+        for m in matches:
+            try:
+                lines.append(str(m.relative_to(search_dir)))
+            except ValueError:
+                lines.append(str(m))
         return True, '\n'.join(lines)
+
+
+class AgentSpawnTool(BaseTool):
+    """Spawn a sub-agent for focused, independent work."""
+    name = 'agent_spawn'
+    read_only = False
+
+    def __init__(self, runner: Any | None = None):
+        """runner: callback(prompt, agent_type, allowed_tools) -> (ok, result_str)"""
+        self.runner = runner
+
+    def get_schema(self) -> dict:
+        return {
+            'name': 'agent_spawn',
+            'description': (
+                'Spawn a sub-agent for a focused, independent task. '
+                'The sub-agent runs with a fresh context (independent message history) and a '
+                'filtered toolset. Use this for: parallel investigation of multiple files/modules, '
+                'independent sub-tasks, or delegating work that benefits from isolation. '
+                'Each sub-agent has its own step budget (default 30). '
+                'Do NOT spawn for single reads/searches you can do yourself in one turn — '
+                'spawning has overhead. For parallel one-shot queries, emit multiple tool calls '
+                'in one turn instead.'
+            ),
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'prompt': {
+                        'type': 'string',
+                        'description': 'Task description for the sub-agent. Be specific and include expected output shape.',
+                    },
+                    'type': {
+                        'type': 'string',
+                        'description': (
+                            'Sub-agent type: general (default), explore (read-only investigation), '
+                            'plan (architecture/design), review (code review), implementer (code changes), '
+                            'verifier (testing/validation), custom (define your own toolset via allowed_tools).'
+                        ),
+                        'enum': ['general', 'explore', 'plan', 'review', 'implementer', 'verifier', 'custom'],
+                    },
+                    'agent_type': {
+                        'type': 'string',
+                        'description': 'Alias for type.',
+                    },
+                    'allowed_tools': {
+                        'type': 'array',
+                        'items': {'type': 'string'},
+                        'description': 'Explicit tool allowlist (required for custom type). Default depends on type.',
+                    },
+                },
+                'required': ['prompt'],
+            },
+        }
+
+    def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
+        if not self.runner:
+            return False, 'agent_spawn not configured in this environment'
+        prompt = args.get('prompt', '')
+        # Support both 'type' (TUI primary) and 'agent_type' (alias)
+        agent_type = args.get('type', args.get('agent_type', 'general'))
+        allowed_tools = args.get('allowed_tools', None)
+        return self.runner(prompt, agent_type, allowed_tools)
+
+
+class AgentResultTool(BaseTool):
+    """Query the status/result of a spawned sub-agent."""
+    name = 'agent_result'
+    read_only = True
+
+    def __init__(self, manager: Any | None = None):
+        self.manager = manager
+
+    def get_schema(self) -> dict:
+        return {
+            'name': 'agent_result',
+            'description': (
+                'Query the current status and result of a previously spawned sub-agent. '
+                'Returns status (running/completed/failed/cancelled), result summary, '
+                'duration, and error info if any.'
+            ),
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'agent_id': {
+                        'type': 'string',
+                        'description': 'The agent_id returned by agent_spawn',
+                    },
+                },
+                'required': ['agent_id'],
+            },
+        }
+
+    def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
+        if not self.manager:
+            return False, 'agent_result not configured in this environment'
+        agent_id = args.get('agent_id', '')
+        result = self.manager.get_result(agent_id)
+        if result is None:
+            return False, f'No sub-agent found with id: {agent_id}'
+        import json
+        return True, json.dumps(result, ensure_ascii=False, indent=2)
+
+
+class AgentWaitTool(BaseTool):
+    """Block until a sub-agent completes."""
+    name = 'agent_wait'
+    read_only = True
+
+    def __init__(self, manager: Any | None = None):
+        self.manager = manager
+
+    def get_schema(self) -> dict:
+        return {
+            'name': 'agent_wait',
+            'description': (
+                'Block until a sub-agent completes (or timeout). '
+                'Use this when you need the sub-agent result before proceeding.'
+            ),
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'agent_id': {
+                        'type': 'string',
+                        'description': 'The agent_id returned by agent_spawn',
+                    },
+                    'timeout': {
+                        'type': 'integer',
+                        'description': 'Max seconds to wait (default 60)',
+                    },
+                },
+                'required': ['agent_id'],
+            },
+        }
+
+    def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
+        if not self.manager:
+            return False, 'agent_wait not configured in this environment'
+        agent_id = args.get('agent_id', '')
+        timeout = args.get('timeout', 60)
+        result = self.manager.wait(agent_id, timeout=timeout)
+        if result is None:
+            return False, f'No sub-agent found with id: {agent_id}'
+        import json
+        return True, json.dumps(result, ensure_ascii=False, indent=2)
+
+
+class AgentCancelTool(BaseTool):
+    """Cancel a running sub-agent."""
+    name = 'agent_cancel'
+    read_only = False
+
+    def __init__(self, manager: Any | None = None):
+        self.manager = manager
+
+    def get_schema(self) -> dict:
+        return {
+            'name': 'agent_cancel',
+            'description': 'Cancel a running sub-agent. Cannot be undone.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'agent_id': {
+                        'type': 'string',
+                        'description': 'The agent_id returned by agent_spawn',
+                    },
+                },
+                'required': ['agent_id'],
+            },
+        }
+
+    def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
+        if not self.manager:
+            return False, 'agent_cancel not configured in this environment'
+        agent_id = args.get('agent_id', '')
+        ok = self.manager.cancel(agent_id)
+        return ok, 'Cancelled' if ok else f'Not running or not found: {agent_id}'
+
+
+class AgentListTool(BaseTool):
+    """List all sub-agents and their status."""
+    name = 'agent_list'
+    read_only = True
+
+    def __init__(self, manager: Any | None = None):
+        self.manager = manager
+
+    def get_schema(self) -> dict:
+        return {
+            'name': 'agent_list',
+            'description': (
+                'List all spawned sub-agents with their status, type, and duration. '
+                'Use this to check which sub-agents are still running.'
+            ),
+            'parameters': {
+                'type': 'object',
+                'properties': {},
+            },
+        }
+
+    def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
+        if not self.manager:
+            return False, 'agent_list not configured in this environment'
+        agents = self.manager.list_agents()
+        if not agents:
+            return True, 'No sub-agents spawned yet.'
+        import json
+        return True, json.dumps(agents, ensure_ascii=False, indent=2)
 
 
 class BashTool(BaseTool):
@@ -519,8 +759,17 @@ def _threaded_communicate(proc: subprocess.Popen, timeout: int) -> tuple[bytes, 
 
 # ============ 默认Registry ============
 
-def create_default_registry() -> ToolRegistry:
-    """创建包含6个内置工具的默认注册表。"""
+def create_default_registry(
+    agent_runner: Any | None = None,
+    plan_tools: list[Any] | None = None,
+    subagent_manager: Any | None = None,
+) -> ToolRegistry:
+    """创建包含内置工具的默认注册表。
+
+    agent_runner: 可选的回调，用于 agent_spawn 工具。
+    plan_tools: 可选的规划工具列表（update_plan, checklist_*, task_*）。
+    subagent_manager: 可选的 SubAgentManager 实例，用于子代理管理工具。
+    """
     registry = ToolRegistry()
     registry.register(ReadFileTool())
     registry.register(WriteFileTool())
@@ -528,4 +777,12 @@ def create_default_registry() -> ToolRegistry:
     registry.register(GrepSearchTool())
     registry.register(GlobSearchTool())
     registry.register(BashTool())
+    registry.register(AgentSpawnTool(runner=agent_runner))
+    registry.register(AgentResultTool(manager=subagent_manager))
+    registry.register(AgentWaitTool(manager=subagent_manager))
+    registry.register(AgentCancelTool(manager=subagent_manager))
+    registry.register(AgentListTool(manager=subagent_manager))
+    if plan_tools:
+        for tool in plan_tools:
+            registry.register(tool)
     return registry

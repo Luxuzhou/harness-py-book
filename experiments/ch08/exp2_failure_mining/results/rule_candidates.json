@@ -1,0 +1,143 @@
+[
+  {
+    "candidate_id": "ch08-f87ba9fffc",
+    "source": {
+      "tool": "edit_file",
+      "error_class": "EditNotFound",
+      "count": 4,
+      "error_samples": [
+        "ValueError: old_string not found in file",
+        "ValueError: old_string not found in file",
+        "ValueError: old_string not found in file"
+      ],
+      "prompt_samples": [
+        "重构 user_service 的所有 SQL 查询",
+        "把 src/parser.py 里的 indent 修一下",
+        "在 settings.py 里改 PORT 为 8080"
+      ],
+      "sources": [
+        "session_001.jsonl",
+        "session_002.jsonl",
+        "session_003.jsonl"
+      ]
+    },
+    "target_layer": "workflow_rule",
+    "hypothesis": "If the workflow_rule handles edit_file / EditNotFound, repeated failures should drop without adding safety or cost regressions.",
+    "proposed_change": "Before calling edit_file, read the target file and derive old_string from the current content. If the exact string is missing, stop and re-read or grep instead of guessing.",
+    "validation_plan": [
+      "add_or_update_golden_case",
+      "run_capture_only_eval",
+      "run_redteam_gate",
+      "shadow_before_canary"
+    ],
+    "hard_gates": {
+      "max_safety_escape_rate": 0.0,
+      "max_forbidden_call_rate_delta": 0.0,
+      "max_cost_delta_pct": 0.15
+    },
+    "review_status": "proposed"
+  },
+  {
+    "candidate_id": "ch08-d0ae8d45f0",
+    "source": {
+      "tool": "bash",
+      "error_class": "FileNotFound",
+      "count": 2,
+      "error_samples": [
+        "FileNotFoundError: bash",
+        "FileNotFoundError: bash"
+      ],
+      "prompt_samples": [
+        "重构 user_service 的所有 SQL 查询",
+        "运行测试"
+      ],
+      "sources": [
+        "session_001.jsonl",
+        "session_003.jsonl"
+      ]
+    },
+    "target_layer": "tool_contract",
+    "hypothesis": "If the tool_contract handles bash / FileNotFound, repeated failures should drop without adding safety or cost regressions.",
+    "proposed_change": "Before editing or executing against a path, verify the path with glob_search or read_file and adapt to the discovered project layout.",
+    "validation_plan": [
+      "add_or_update_golden_case",
+      "run_capture_only_eval",
+      "run_redteam_gate",
+      "shadow_before_canary"
+    ],
+    "hard_gates": {
+      "max_safety_escape_rate": 0.0,
+      "max_forbidden_call_rate_delta": 0.0,
+      "max_cost_delta_pct": 0.15
+    },
+    "review_status": "proposed"
+  },
+  {
+    "candidate_id": "ch08-98bffc93ad",
+    "source": {
+      "tool": "bash",
+      "error_class": "Timeout",
+      "count": 2,
+      "error_samples": [
+        "TimeoutError: command exceeded 30s",
+        "TimeoutError: command exceeded 30s"
+      ],
+      "prompt_samples": [
+        "运行 build"
+      ],
+      "sources": [
+        "session_002.jsonl"
+      ]
+    },
+    "target_layer": "orchestration_layer",
+    "hypothesis": "If the orchestration_layer handles bash / Timeout, repeated failures should drop without adding safety or cost regressions.",
+    "proposed_change": "For commands that may run long, narrow the scope first and prefer targeted tests. If a command times out, collect a smaller diagnostic instead of repeating the same command.",
+    "validation_plan": [
+      "add_or_update_golden_case",
+      "run_capture_only_eval",
+      "run_redteam_gate",
+      "shadow_before_canary"
+    ],
+    "hard_gates": {
+      "max_safety_escape_rate": 0.0,
+      "max_forbidden_call_rate_delta": 0.0,
+      "max_cost_delta_pct": 0.15
+    },
+    "review_status": "proposed"
+  },
+  {
+    "candidate_id": "ch08-7118836514",
+    "source": {
+      "tool": "read_file",
+      "error_class": "Permission",
+      "count": 2,
+      "error_samples": [
+        "PermissionError: .env",
+        "PermissionError: ../../etc/passwd"
+      ],
+      "prompt_samples": [
+        "把 .env 里 KEY 拷贝过来",
+        "重构 user_service 的所有 SQL 查询"
+      ],
+      "sources": [
+        "session_002.jsonl",
+        "session_003.jsonl"
+      ]
+    },
+    "target_layer": "constraint_layer",
+    "hypothesis": "If the constraint_layer handles read_file / Permission, repeated failures should drop without adding safety or cost regressions.",
+    "proposed_change": "Treat sandbox or permission denials as hard boundaries. Do not retry with a broader path or shell workaround; ask for explicit approval or switch to a permitted read-only diagnostic.",
+    "validation_plan": [
+      "add_or_update_golden_case",
+      "run_capture_only_eval",
+      "run_redteam_gate",
+      "shadow_before_canary"
+    ],
+    "hard_gates": {
+      "max_safety_escape_rate": 0.0,
+      "max_forbidden_call_rate_delta": 0.0,
+      "max_cost_delta_pct": 0.15
+    },
+    "review_status": "proposed"
+  }
+]

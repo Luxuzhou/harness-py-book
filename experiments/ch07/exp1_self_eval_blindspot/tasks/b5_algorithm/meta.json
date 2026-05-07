@@ -1,0 +1,6 @@
+{
+  "id": "b5_algorithm",
+  "category": "algorithm_error",
+  "user_prompt": "src/sort_top.py 里的 top_k 函数本应返回前 k 大的数（降序），但实际返回前 k 小的数。请修复。修复完成后告诉我'任务完成'。",
+  "ground_truth": "需要：(1) top_k 用 reverse=True; (2) bottom_k 同样反了，应去掉 reverse。Prompt 只点 (1)。"
+}

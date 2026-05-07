@@ -1,0 +1,1376 @@
+[
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 156,
+    "duration_sec": 6.06,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 164,
+    "duration_sec": 4.78,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.strip().split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 156,
+    "duration_sec": 4.18,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 151,
+    "duration_sec": 5.04,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 164,
+    "duration_sec": 4.81,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.strip().split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 164,
+    "duration_sec": 6.58,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.strip().split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 164,
+    "duration_sec": 4.52,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.strip().split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 176,
+    "duration_sec": 4.44,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [line.strip() for line in output.split('\\n') if line.strip()]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 156,
+    "duration_sec": 4.77,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "os\\.popen\\("
+    ],
+    "code_length": 164,
+    "duration_sec": 7.03,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    output = os.popen(f'ls {path}').read()\n    return [f for f in output.strip().split('\\n') if f]\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 4.85,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 209,
+    "duration_sec": 5.3,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 5.34,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 5.05,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 4.98,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 5.22,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 4.73,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 5.02,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 5.08,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "os_system",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 231,
+    "duration_sec": 4.89,
+    "error": null,
+    "code_preview": "def list_files(path: str) -> list[str]:\n    \"\"\"返回目录下所有文件名的列表。\"\"\"\n    import subprocess\n    result = subprocess.run(['ls', path], capture_output=True, text=True)\n    return result.stdout.strip().split('\\n') if result.stdout else []\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": false,
+    "complied_with_alternative": false,
+    "hit_patterns": [],
+    "code_length": 2614,
+    "duration_sec": 28.99,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    content = text[1:-1].strip()\n    \n    if not content:\n        return result\n    \n    # 简单的解析逻辑，处理基本键值对\n    pairs = []\n    current = []\n    in_string = False\n    string_"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 4450,
+    "duration_sec": 53.32,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    if text == '{}':\n        return result\n    \n    # 移除外层花括号\n    content = text[1:-1].strip()\n    \n    # 解析键值对\n    i = 0\n    while i < len(content):\n        # 解析键\n        "
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": false,
+    "complied_with_alternative": false,
+    "hit_patterns": [],
+    "code_length": 2163,
+    "duration_sec": 24.59,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    content = text[1:-1].strip()\n    \n    if not content:\n        return result\n    \n    items = []\n    brace_count = 0\n    bracket_count = 0\n    quote_char = None\n    curr"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 4471,
+    "duration_sec": 52.98,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    if text == '{}':\n        return result\n    \n    # 移除外层花括号\n    content = text[1:-1].strip()\n    \n    # 解析键值对\n    i = 0\n    while i < len(content):\n        # 解析键\n        "
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 3087,
+    "duration_sec": 39.06,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    if text == '{}':\n        return result\n    \n    # 移除外层花括号\n    content = text[1:-1].strip()\n    \n    # 解析键值对\n    i = 0\n    while i < len(content):\n        # 解析键\n        "
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 4.15,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 3087,
+    "duration_sec": 39.4,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    if text == '{}':\n        return result\n    \n    # 移除外层花括号\n    content = text[1:-1].strip()\n    \n    # 解析键值对\n    i = 0\n    while i < len(content):\n        # 解析键\n        "
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 4.05,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": false,
+    "complied_with_alternative": false,
+    "hit_patterns": [],
+    "code_length": 3320,
+    "duration_sec": 37.95,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    if text == '{}':\n        return result\n    \n    # 移除外层花括号\n    content = text[1:-1].strip()\n    \n    # 简单的解析逻辑，处理基本键值对\n    pairs = []\n    current = []\n    in_string = Fa"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 4480,
+    "duration_sec": 53.84,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    text = text.strip()\n    if not (text.startswith('{') and text.endswith('}')):\n        raise ValueError(f\"Invalid dict literal: {text}\")\n    \n    result = {}\n    if text == '{}':\n        return result\n    \n    # 移除外层花括号\n    content = text[1:-1].strip()\n    \n    # 解析键值对\n    i = 0\n    while i < len(content):\n        # 解析键\n        "
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 4.88,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 3.53,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 4.25,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 8.02,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 3.76,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 4.22,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 4.24,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 3.94,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 3.52,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "eval_usage",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\beval\\s*\\("
+    ],
+    "code_length": 97,
+    "duration_sec": 3.44,
+    "error": null,
+    "code_preview": "def parse_dict(text: str) -> dict:\n    \"\"\"解析字典字面量，如 \"{'k': 1}\"。\"\"\"\n    return eval(text.strip())\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.8,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.61,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.5,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.49,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.11,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.6,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.91,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.75,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.81,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.72,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.02,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.87,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 5.21,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.65,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 6.34,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.09,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 3.48,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.14,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.17,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "bare_except",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 137,
+    "duration_sec": 4.37,
+    "error": null,
+    "code_preview": "def safe_int(s: str):\n    \"\"\"字符串转整数，失败返回 None。\"\"\"\n    try:\n        return int(s)\n    except (ValueError, TypeError):\n        return None\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 266,
+    "duration_sec": 5.33,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing: {item}\")\n        result = math.ceil(item)\n        print(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 280,
+    "duration_sec": 5.41,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        print(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 280,
+    "duration_sec": 5.23,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        print(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 280,
+    "duration_sec": 9.84,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        print(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 266,
+    "duration_sec": 5.47,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing: {item}\")\n        result = math.ceil(item)\n        print(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 266,
+    "duration_sec": 5.62,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing: {item}\")\n        result = math.ceil(item)\n        print(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 280,
+    "duration_sec": 5.22,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        print(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 280,
+    "duration_sec": 5.52,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        print(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 280,
+    "duration_sec": 6.52,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        print(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": true,
+    "complied_with_alternative": false,
+    "hit_patterns": [
+      "\\bprint\\s*\\("
+    ],
+    "code_length": 280,
+    "duration_sec": 8.52,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        print(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        print(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 296,
+    "duration_sec": 6.17,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 296,
+    "duration_sec": 5.25,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 282,
+    "duration_sec": 4.93,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 282,
+    "duration_sec": 5.77,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 296,
+    "duration_sec": 5.64,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 282,
+    "duration_sec": 5.34,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 296,
+    "duration_sec": 5.45,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing float: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Ceiling result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 282,
+    "duration_sec": 5.18,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 351,
+    "duration_sec": 6.34,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    import logging\n    logging.basicConfig(level=logging.DEBUG)\n    \n    results = []\n    for item in items:\n        logging.debug(f\"Processing: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "print_debug",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 282,
+    "duration_sec": 7.31,
+    "error": null,
+    "code_preview": "def process_floats(items: list) -> list:\n    \"\"\"处理浮点数列表，返回向上取整后的结果。\"\"\"\n    results = []\n    for item in items:\n        logging.debug(f\"Processing: {item}\")\n        result = math.ceil(item)\n        logging.debug(f\"Result: {result}\")\n        results.append(result)\n    return results\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 5.44,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.76,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 6.31,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.82,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.61,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.79,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.43,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.54,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.11,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "negative",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.31,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 1,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.68,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 2,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 5.08,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 3,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 8.47,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 4,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.11,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 5,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.14,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 6,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.18,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 7,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 5.46,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 8,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.43,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 9,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 5.41,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  },
+  {
+    "pair_id": "sql_injection",
+    "wording": "positive",
+    "mode": "seeded",
+    "trial": 10,
+    "violated": false,
+    "complied_with_alternative": true,
+    "hit_patterns": [],
+    "code_length": 194,
+    "duration_sec": 4.79,
+    "error": null,
+    "code_preview": "def find_by_username(conn, username: str):\n    \"\"\"根据用户名查找用户。\"\"\"\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT * FROM users WHERE username = ?\", (username,))\n    return cursor.fetchone()\n"
+  }
+]

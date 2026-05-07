@@ -1,0 +1,100 @@
+{"id":"rd001","task":"读README.md看看里面写了什么","expected_tool":"read_file","expected_args":{"path":"README.md"},"forbidden_tools":["bash","grep_search"],"category":"read_positive"}
+{"id":"rd002","task":"给我看一下config.py的内容","expected_tool":"read_file","expected_args":{"path":"config.py"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd003","task":"显示utils.py的全部代码","expected_tool":"read_file","expected_args":{"path":"utils.py"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd004","task":"看看requirements.txt里都有哪些依赖","expected_tool":"read_file","expected_args":{"path":"requirements.txt"},"forbidden_tools":["bash","grep_search"],"category":"read_positive"}
+{"id":"rd005","task":"main.py里写了什么","expected_tool":"read_file","expected_args":{"path":"main.py"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd006","task":"读一下docs/guide.md","expected_tool":"read_file","expected_args":{"path":"docs/guide.md"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd007","task":"看看tests/test_config.py怎么写的","expected_tool":"read_file","expected_args":{"path":"tests/test_config.py"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd008","task":"展示data/sample.txt的内容","expected_tool":"read_file","expected_args":{"path":"data/sample.txt"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd009","task":"读src/parser.py","expected_tool":"read_file","expected_args":{"path":"src/parser.py"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd010","task":"查看.gitignore配置","expected_tool":"read_file","expected_args":{"path":".gitignore"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd011","task":"读config.py第1到20行","expected_tool":"read_file","expected_args":{"path":"config.py"},"forbidden_tools":["bash"],"category":"read_positive_with_range"}
+{"id":"rd012","task":"main.py只看前10行就行","expected_tool":"read_file","expected_args":{"path":"main.py"},"forbidden_tools":["bash"],"category":"read_positive_with_range"}
+{"id":"rd013","task":"给我看tests/test_utils.py的前5行","expected_tool":"read_file","expected_args":{"path":"tests/test_utils.py"},"forbidden_tools":["bash"],"category":"read_positive_with_range"}
+{"id":"rd014","task":"展示src/writer.py","expected_tool":"read_file","expected_args":{"path":"src/writer.py"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd015","task":"看一下tests/__init__.py","expected_tool":"read_file","expected_args":{"path":"tests/__init__.py"},"forbidden_tools":["bash"],"category":"read_positive"}
+{"id":"rd016","task":"cat一下README.md的内容","expected_tool":"read_file","forbidden_tools":["bash"],"category":"read_confuse_bash"}
+{"id":"rd017","task":"用head -20给我看config.py开头","expected_tool":"read_file","forbidden_tools":["bash"],"category":"read_confuse_bash"}
+{"id":"rd018","task":"tail main.py 看最后几行","expected_tool":"read_file","forbidden_tools":["bash"],"category":"read_confuse_bash"}
+{"id":"rd019","task":"less一下requirements.txt","expected_tool":"read_file","forbidden_tools":["bash"],"category":"read_confuse_bash"}
+{"id":"rd020","task":"more docs/guide.md","expected_tool":"read_file","forbidden_tools":["bash"],"category":"read_confuse_bash"}
+{"id":"wr001","task":"新建一个hello.py打印Hello World","expected_tool":"write_file","expected_args":{"path":"hello.py"},"forbidden_tools":["bash","edit_file"],"category":"write_positive"}
+{"id":"wr002","task":"在根目录建一个TODO.md列出三个待办","expected_tool":"write_file","expected_args":{"path":"TODO.md"},"forbidden_tools":["bash"],"category":"write_positive"}
+{"id":"wr003","task":"创建scripts/deploy.sh部署脚本","expected_tool":"write_file","expected_args":{"path":"scripts/deploy.sh"},"forbidden_tools":["bash"],"category":"write_positive"}
+{"id":"wr004","task":"新增notes.txt记录开发笔记","expected_tool":"write_file","expected_args":{"path":"notes.txt"},"forbidden_tools":["bash","edit_file"],"category":"write_positive"}
+{"id":"wr005","task":"在tests目录下建test_new.py写一个空测试","expected_tool":"write_file","expected_args":{"path":"tests/test_new.py"},"forbidden_tools":["bash"],"category":"write_positive"}
+{"id":"wr006","task":"创建一个.env.example模板文件","expected_tool":"write_file","expected_args":{"path":".env.example"},"forbidden_tools":["bash","edit_file"],"category":"write_positive"}
+{"id":"wr007","task":"新建CHANGELOG.md标记v0.1.0发布","expected_tool":"write_file","expected_args":{"path":"CHANGELOG.md"},"forbidden_tools":["bash","edit_file"],"category":"write_positive"}
+{"id":"wr008","task":"添加一个MIT LICENSE文件","expected_tool":"write_file","expected_args":{"path":"LICENSE"},"forbidden_tools":["bash","edit_file"],"category":"write_positive"}
+{"id":"wr009","task":"把config.py里的VERSION改成1.1.0","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"write_confuse_edit"}
+{"id":"wr010","task":"修改main.py把print(\"debug\")这行删掉","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"write_confuse_edit"}
+{"id":"wr011","task":"把utils.py里的helper_foo函数改名为helper_bar","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"write_confuse_edit"}
+{"id":"wr012","task":"requirements.txt里flask版本升到2.3.0","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"write_confuse_edit"}
+{"id":"wr013","task":"改一下README.md的一级标题文本","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"write_confuse_edit"}
+{"id":"wr014","task":"把tests/test_config.py里的TODO注释去掉","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"write_confuse_edit"}
+{"id":"wr015","task":"config.py里的DEBUG从False改成True","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"write_confuse_edit"}
+{"id":"ed001","task":"精确替换config.py中的\"old_name\"为\"new_name\"","expected_tool":"edit_file","expected_args":{"path":"config.py","old_string":"old_name","new_string":"new_name"},"forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed002","task":"把utils.py里的\"helper_foo\"改成\"helper_bar\"","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed003","task":"删除main.py里那行print(\"debug\")","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed004","task":"guide.md里把\"旧版\"改成\"新版\"","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed005","task":"VERSION从\"1.0.0\"改成\"2.0.0\"","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed006","task":"把flask==2.0.0改成flask==2.1.0","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed007","task":"config.py里把\"旧版入口函数\"这个docstring改一下文本","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed008","task":"把utils.py里的FIXME注释改成DONE","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed009","task":"修改requests版本从2.28.0到2.31.0","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed010","task":"把main.py里import requests这行移除","expected_tool":"edit_file","forbidden_tools":["write_file","bash"],"category":"edit_positive"}
+{"id":"ed011","task":"把config.py整个文件重写只保留一个VERSION常量","expected_tool":"write_file","forbidden_tools":["edit_file"],"category":"edit_confuse_write"}
+{"id":"ed012","task":"main.py内容全部替换成一个新的helloworld","expected_tool":"write_file","forbidden_tools":["edit_file"],"category":"edit_confuse_write"}
+{"id":"ed013","task":"重新生成tests/test_utils.py的全部内容","expected_tool":"write_file","forbidden_tools":["edit_file"],"category":"edit_confuse_write"}
+{"id":"ed014","task":"把docs/guide.md整篇重写成一个新指南","expected_tool":"write_file","forbidden_tools":["edit_file"],"category":"edit_confuse_write"}
+{"id":"ed015","task":"清空requirements.txt重写成只有pytest一个依赖","expected_tool":"write_file","forbidden_tools":["edit_file"],"category":"edit_confuse_write"}
+{"id":"gr001","task":"项目里所有出现TODO的地方","expected_tool":"grep_search","expected_args":{"pattern":"TODO"},"forbidden_tools":["bash","glob_search"],"category":"grep_positive"}
+{"id":"gr002","task":"哪些文件引用了requests库","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_positive"}
+{"id":"gr003","task":"所有print语句都在哪","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_positive"}
+{"id":"gr004","task":"FIXME标记有几处，在哪","expected_tool":"grep_search","expected_args":{"pattern":"FIXME"},"forbidden_tools":["bash"],"category":"grep_positive"}
+{"id":"gr005","task":"找所有\"config\"字符串出现的位置","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_positive"}
+{"id":"gr006","task":"哪些文件里import re","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_positive"}
+{"id":"gr007","task":"所有class定义都在哪里","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_positive"}
+{"id":"gr008","task":"VERSION关键字在代码里出现在哪些地方","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_positive"}
+{"id":"gr009","task":"注释里有没有\"deprecated\"这个词","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_positive"}
+{"id":"gr010","task":"搜一下哪里写了\"debug\"","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_positive"}
+{"id":"gr011","task":"帮我跑 grep -r \"TODO\" .","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_confuse_bash"}
+{"id":"gr012","task":"用rg搜一下print","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_confuse_bash"}
+{"id":"gr013","task":"shell里执行 grep -n TODO *.py","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_confuse_bash"}
+{"id":"gr014","task":"bash里用grep找requests的引用","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_confuse_bash"}
+{"id":"gr015","task":"执行 grep -rn \"def\" src/","expected_tool":"grep_search","forbidden_tools":["bash"],"category":"grep_confuse_bash"}
+{"id":"gr016","task":"找出所有内容中包含flask的文件","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_confuse_glob"}
+{"id":"gr017","task":"哪些py文件里写了requests.get","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_confuse_glob"}
+{"id":"gr018","task":"哪些md文件里有Harness这个关键字","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_confuse_glob"}
+{"id":"gr019","task":"所有源文件里用了TODO的","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_confuse_glob"}
+{"id":"gr020","task":"包含print(\"debug\")的文件在哪","expected_tool":"grep_search","forbidden_tools":["bash","glob_search"],"category":"grep_confuse_glob"}
+{"id":"gl001","task":"列出项目里所有.py文件","expected_tool":"glob_search","expected_args":{"pattern":"**/*.py"},"forbidden_tools":["bash","grep_search"],"category":"glob_positive"}
+{"id":"gl002","task":"项目里有哪些markdown文件","expected_tool":"glob_search","forbidden_tools":["bash","grep_search"],"category":"glob_positive"}
+{"id":"gl003","task":"tests目录下的所有测试文件","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_positive"}
+{"id":"gl004","task":"src下的python文件都有啥","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_positive"}
+{"id":"gl005","task":"所有.txt后缀的文件","expected_tool":"glob_search","forbidden_tools":["bash","grep_search"],"category":"glob_positive"}
+{"id":"gl006","task":"docs目录下有什么文件","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_positive"}
+{"id":"gl007","task":"项目根目录有哪些py文件","expected_tool":"glob_search","forbidden_tools":["bash","grep_search"],"category":"glob_positive"}
+{"id":"gl008","task":"所有shell脚本文件","expected_tool":"glob_search","forbidden_tools":["bash","grep_search"],"category":"glob_positive"}
+{"id":"gl009","task":"test_开头的所有文件","expected_tool":"glob_search","forbidden_tools":["bash","grep_search"],"category":"glob_positive"}
+{"id":"gl010","task":"所有.json文件列一下","expected_tool":"glob_search","forbidden_tools":["bash","grep_search"],"category":"glob_positive"}
+{"id":"gl011","task":"用ls *.py看看根目录py文件","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_confuse_bash"}
+{"id":"gl012","task":"find . -name \"*.md\" 执行一下","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_confuse_bash"}
+{"id":"gl013","task":"bash里ls src/看看有啥","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_confuse_bash"}
+{"id":"gl014","task":"用dir tests看测试文件","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_confuse_bash"}
+{"id":"gl015","task":"跑 find . -type f -name \"*.py\"","expected_tool":"glob_search","forbidden_tools":["bash"],"category":"glob_confuse_bash"}
+{"id":"ba001","task":"跑一下pytest看测试过不过","expected_tool":"bash","forbidden_tools":["read_file","glob_search"],"category":"bash_positive"}
+{"id":"ba002","task":"git status看看当前改了什么","expected_tool":"bash","forbidden_tools":["read_file"],"category":"bash_positive"}
+{"id":"ba003","task":"pip install requests装一下依赖","expected_tool":"bash","forbidden_tools":["read_file"],"category":"bash_positive"}
+{"id":"ba004","task":"启动dev server，npm run dev","expected_tool":"bash","forbidden_tools":["read_file"],"category":"bash_positive"}
+{"id":"ba005","task":"看看git log最近3次提交","expected_tool":"bash","forbidden_tools":["read_file"],"category":"bash_positive"}
+{"id":"ba006","task":"pytest tests/test_config.py -v","expected_tool":"bash","forbidden_tools":["read_file"],"category":"bash_positive"}
+{"id":"ba007","task":"执行 python main.py","expected_tool":"bash","forbidden_tools":["read_file"],"category":"bash_positive"}
+{"id":"ba008","task":"npm install安装前端依赖","expected_tool":"bash","forbidden_tools":["read_file"],"category":"bash_positive"}
+{"id":"ng001","task":"你好","expected_tool":null,"forbidden_tools":["*"],"category":"negative_greeting"}
+{"id":"ng002","task":"什么是Harness Engineering","expected_tool":null,"forbidden_tools":["*"],"category":"negative_concept"}
+{"id":"ng003","task":"Python里装饰器怎么用","expected_tool":null,"forbidden_tools":["*"],"category":"negative_concept"}
+{"id":"ng004","task":"讲讲你作为Agent的能力","expected_tool":null,"forbidden_tools":["*"],"category":"negative_meta"}
+{"id":"ng005","task":"介绍一下你自己","expected_tool":null,"forbidden_tools":["*"],"category":"negative_meta"}
+{"id":"ng006","task":"今天天气怎么样","expected_tool":null,"forbidden_tools":["*"],"category":"negative_offtopic"}
+{"id":"ng007","task":"谢谢你的帮助","expected_tool":null,"forbidden_tools":["*"],"category":"negative_social"}

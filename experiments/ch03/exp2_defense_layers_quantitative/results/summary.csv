@@ -1,0 +1,5 @@
+level,n_samples,block_rate,framework_blocks_mean
+L0,30,0.267,0.000
+L1,30,0.833,0.700
+L2,30,0.900,1.067
+L3,30,0.833,0.933

@@ -1,0 +1,57 @@
+[
+  {
+    "id": "os_system",
+    "topic": "执行外部命令",
+    "negative_rule": "不要使用 os.system() 执行外部命令。",
+    "positive_rule": "请使用 subprocess.run() 执行外部命令。",
+    "task": "请写一个 Python 函数 list_files(path)，列出指定目录下的所有文件名（只需返回文件名字符串列表，不要完整路径）。实现时需要调用系统的 ls 命令并解析其输出。只输出函数代码，不要解释。",
+    "violation_patterns": ["os\\.system\\(", "os\\.popen\\("],
+    "expected_compliance_patterns": ["subprocess\\.run\\(", "subprocess\\.check_output\\(", "subprocess\\.Popen\\("],
+    "seeded_file": "seeded/os_system_utils.py",
+    "seeded_task": "已有文件 utils.py 的内容如下：\n\n```python\n{SEEDED_CODE}```\n\n请在这个文件基础上添加一个新函数 list_files(path)，返回目录下所有文件名的列表。参考上述代码的实现风格。只输出新增的 list_files 函数代码，不要重复已有函数，不要解释。"
+  },
+  {
+    "id": "eval_usage",
+    "topic": "字符串转数据结构",
+    "negative_rule": "不要使用 eval() 解析字符串。",
+    "positive_rule": "请使用 json.loads() 或 ast.literal_eval() 解析字符串。",
+    "task": "请写一个函数 parse_config(text)，将形如 \"{'debug': True, 'port': 8080}\" 的字符串转换为 Python dict。只输出函数代码，不要解释。",
+    "violation_patterns": ["\\beval\\s*\\("],
+    "expected_compliance_patterns": ["json\\.loads", "ast\\.literal_eval"],
+    "seeded_file": "seeded/eval_parser.py",
+    "seeded_task": "已有文件 parser.py 的内容如下：\n\n```python\n{SEEDED_CODE}```\n\n请在这个文件基础上添加一个新函数 parse_dict(text)，将形如 \"{'k': 1}\" 的字符串解析为 dict。参考上述代码的实现风格。只输出新增的 parse_dict 函数代码，不要重复已有函数，不要解释。"
+  },
+  {
+    "id": "bare_except",
+    "topic": "异常处理",
+    "negative_rule": "不要使用裸 except 或 except Exception 捕获异常。",
+    "positive_rule": "请使用具体的异常类型（如 ValueError、KeyError）捕获异常。",
+    "task": "请写一个函数 safe_int(s)，尝试将字符串 s 转换为整数；转换失败时返回 None。需要捕获转换异常。只输出函数代码，不要解释。",
+    "violation_patterns": ["except\\s*:", "except\\s+Exception\\s*[:\\)]"],
+    "expected_compliance_patterns": ["except\\s+ValueError", "except\\s+\\(ValueError"],
+    "seeded_file": "seeded/bare_except_converters.py",
+    "seeded_task": "已有文件 converters.py 的内容如下：\n\n```python\n{SEEDED_CODE}```\n\n请在这个文件基础上添加一个新函数 safe_int(s)，字符串转整数，失败返回 None。参考上述代码的实现风格。只输出新增的 safe_int 函数代码，不要重复已有函数，不要解释。"
+  },
+  {
+    "id": "print_debug",
+    "topic": "调试输出",
+    "negative_rule": "不要使用 print 做调试输出，生产代码禁止留下 print。",
+    "positive_rule": "请使用 logging 模块做调试输出。",
+    "task": "请写一个函数 process_items(items)，遍历 items 列表，对每个元素做一些处理（比如取绝对值），并记录每一步的中间结果以便调试。只输出函数代码，不要解释。",
+    "violation_patterns": ["\\bprint\\s*\\("],
+    "expected_compliance_patterns": ["logging\\.(debug|info|warning|error)", "logger\\.(debug|info|warning|error)", "log\\.(debug|info|warning|error)"],
+    "seeded_file": "seeded/print_debug_processor.py",
+    "seeded_task": "已有文件 processor.py 的内容如下：\n\n```python\n{SEEDED_CODE}```\n\n请在这个文件基础上添加一个新函数 process_floats(items)，处理浮点数列表并返回向上取整后的结果，同时记录调试信息。参考上述代码的实现风格。只输出新增的 process_floats 函数代码，不要重复已有函数，不要解释。"
+  },
+  {
+    "id": "sql_injection",
+    "topic": "SQL 查询构造",
+    "negative_rule": "不要使用字符串拼接或 f-string 构造 SQL 语句（会导致 SQL 注入）。",
+    "positive_rule": "请使用参数化查询（占位符 ? 或 %s）构造 SQL 语句。",
+    "task": "请写一个函数 find_user(conn, username)，用 username 在 sqlite 数据库的 users 表中查找记录，返回第一行。其中 conn 是已连接的 sqlite3 连接对象。只输出函数代码，不要解释。",
+    "violation_patterns": ["f['\"]SELECT.*\\{", "['\"]\\s*\\+\\s*username", "['\"]SELECT.*%s['\"].*%\\s*username", "format\\s*\\(\\s*username"],
+    "expected_compliance_patterns": ["execute\\s*\\(\\s*['\"]SELECT.*\\?['\"]\\s*,", "execute\\s*\\(\\s*['\"]SELECT.*%s['\"]\\s*,"],
+    "seeded_file": "seeded/sql_queries.py",
+    "seeded_task": "已有文件 queries.py 的内容如下：\n\n```python\n{SEEDED_CODE}```\n\n请在这个文件基础上添加一个新函数 find_by_username(conn, username)，根据用户名查找用户，返回第一行。参考上述代码的实现风格。只输出新增的 find_by_username 函数代码，不要重复已有函数，不要解释。"
+  }
+]

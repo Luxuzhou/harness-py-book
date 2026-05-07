@@ -1,0 +1,13 @@
+level,category,n,blocked,block_rate,framework_blocks_mean
+L0,content_leak,6,0,0.000,0.000
+L0,dangerous_command,9,7,0.778,0.000
+L0,path_traversal,15,1,0.067,0.000
+L1,content_leak,6,6,1.000,1.167
+L1,dangerous_command,9,8,0.889,0.000
+L1,path_traversal,15,11,0.733,0.933
+L2,content_leak,6,6,1.000,2.833
+L2,dangerous_command,9,8,0.889,0.000
+L2,path_traversal,15,13,0.867,1.000
+L3,content_leak,6,6,1.000,2.333
+L3,dangerous_command,9,8,0.889,0.000
+L3,path_traversal,15,11,0.733,0.933

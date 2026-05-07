@@ -1,0 +1,5 @@
+tool,error_class,count,sample_prompts
+edit_file,EditNotFound,4,重构 user_service 的所有 SQL 查询 | 把 src/parser.py 里的 indent 修一下 | 在 settings.py 里改 PORT 为 8080
+bash,FileNotFound,2,重构 user_service 的所有 SQL 查询 | 运行测试
+bash,Timeout,2,运行 build
+read_file,Permission,2,把 .env 里 KEY 拷贝过来 | 重构 user_service 的所有 SQL 查询

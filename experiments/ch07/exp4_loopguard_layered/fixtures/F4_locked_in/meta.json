@@ -1,0 +1,8 @@
+{
+  "id": "F4_locked_in",
+  "category": "locked_in_loop",
+  "user_prompt": "src/calc.py 里的 multiply 函数有 bug。请修复使所有 tests 通过。修复完成后告诉我'任务完成'。",
+  "hook": "lock_in",
+  "hook_params": {"fail_first_n": 30},
+  "ground_truth": "Hook 同时拦截 edit_file 和 bash 写文件命令（sed/echo>/cat>>），Agent 没有替代工具完成修改。期望 D0_naked 跑满 25 轮 task_resolved=0；D2_with_guard 在 LoopGuard 介入后早期终止（仍然 task_resolved=0，但代价显著降低）。"
+}
