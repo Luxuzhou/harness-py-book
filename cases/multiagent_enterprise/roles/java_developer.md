@@ -77,7 +77,7 @@
 ## 验证标准
 
 完成开发后需确保：
-1. `mvn compile` 通过（无编译错误）
+1. `mvn compile` 通过（无编译错误）**注意：如在 Windows/Cygwin 环境下运行，请使用 `mvn.cmd compile` 而非 `mvn compile`，避免 shell 脚本找不到 Maven 启动器。**
 2. 代码结构与 api_contract.yaml 中的 schema 字段一一对应
 3. 所有 HTTP 端点的路径、方法、状态码与契约一致
 4. DTO 的 validation 注解与契约中的 min/max/required 一致

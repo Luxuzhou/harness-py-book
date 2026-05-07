@@ -118,7 +118,7 @@ def _build_roles(ch8_root: Path, ch9_root: Path):
         AgentRole(
             name='JavaDeveloper',
             role_prompt=java_dev_prompt + context_block,
-            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
+            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search', 'glob_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
             max_iterations=50,
             planning_turns=0,
             cwd=ch8_root,
@@ -127,7 +127,7 @@ def _build_roles(ch8_root: Path, ch9_root: Path):
         AgentRole(
             name='PythonDeveloper',
             role_prompt=python_dev_prompt + context_block,
-            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
+            tool_filter=['read_file', 'write_file', 'edit_file', 'bash', 'grep_search', 'glob_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
             max_iterations=50,
             planning_turns=0,
             cwd=ch9_root,

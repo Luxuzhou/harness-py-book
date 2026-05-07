@@ -376,7 +376,10 @@ class FilesystemPolicy:
                 return False, f'危险命令拦截: {command[:80]}'
 
         if PARENT_TRAVERSAL_RE.search(command):
-            return False, '文件系统隔离: command contains parent-directory traversal'
+            # 如果配置了 allowed_roots，允许目录穿越
+            # （实际文件访问仍受 check_path 限制）
+            if not self.allowed_roots:
+                return False, '文件系统隔离: command contains parent-directory traversal'
 
         for match in WINDOWS_ABS_PATH_RE.finditer(command):
             candidate = Path(match.group(2))

@@ -13,7 +13,7 @@
 | write_file | 写入 | 创建测试文件 |
 | edit_file | 编辑 | 修改测试文件 |
 | grep_search | 搜索 | 搜索代码模式 |
-| bash | 受限 | 执行 `mvn test`、`pytest`、`python` 脚本 |
+| bash | 受限 | 执行 `mvn test`、`pytest`、`python` 脚本。使用相对路径（如 `cd ../data_compliance/target_service`）而非绝对 Windows 路径。Windows 环境下请用 `mvn.cmd` 代替 `mvn`。 |
 
 **限制：QA 不可修改 `cases/refactor_enterprise/target_project/src/main/` 或 `cases/data_compliance/target_service/app/` 下的业务代码。**
 如果发现 bug，QA 应记录失败测试并输出报告，由对应 Developer 修复。
