@@ -122,6 +122,7 @@ def _build_roles(ch8_root: Path, ch9_root: Path):
             max_iterations=50,
             planning_turns=0,
             cwd=ch8_root,
+            filesystem_roots=['../../multiagent_enterprise'],
         ),
         # Round 2b：PythonDeveloper 在 Ch9 项目里工作（与 Java 并行）
         AgentRole(
@@ -131,6 +132,7 @@ def _build_roles(ch8_root: Path, ch9_root: Path):
             max_iterations=50,
             planning_turns=0,
             cwd=ch9_root,
+            filesystem_roots=['../../multiagent_enterprise'],
         ),
         # Round 3：QAEngineer 回到编排目录做跨项目契约校验
         AgentRole(
@@ -138,7 +140,7 @@ def _build_roles(ch8_root: Path, ch9_root: Path):
             role_prompt=qa_prompt + context_block,
             tool_filter=['read_file', 'write_file', 'edit_file', 'bash',
                          'grep_search', 'glob_search'] + SUBAGENT_TOOLS + PLAN_TOOLS,
-            max_iterations=30,
+            max_iterations=50,
             planning_turns=0,
             allow_write=True,
             cwd=CASE_DIR,
