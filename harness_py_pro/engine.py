@@ -316,7 +316,9 @@ def run(
     metrics = Metrics(start_time=time.time())
 
     # 沙箱
-    fs_roots = [ac.cwd / r for r in ac.filesystem_roots] if ac.filesystem_roots else None
+    fs_roots = [ac.cwd]
+    if ac.filesystem_roots:
+        fs_roots.extend(ac.cwd / r for r in ac.filesystem_roots)
     sandbox = create_sandbox(
         ac.cwd,
         mode=ac.sandbox_mode,
