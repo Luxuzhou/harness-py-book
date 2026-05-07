@@ -249,7 +249,9 @@ class WriteFileTool(BaseTool):
     def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
         if not config.allow_write:
             return False, '写入操作未授权'
-        ok, reason = _check_path_escape(config.cwd, args['path'])
+        ok, reason = _check_path_accessible(
+            config.cwd, args['path'], getattr(config, 'filesystem_roots', None)
+        )
         if not ok:
             return False, reason
         path = config.cwd / args['path']
@@ -283,7 +285,9 @@ class EditFileTool(BaseTool):
     def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
         if not config.allow_write:
             return False, '编辑操作未授权'
-        ok, reason = _check_path_escape(config.cwd, args['path'])
+        ok, reason = _check_path_accessible(
+            config.cwd, args['path'], getattr(config, 'filesystem_roots', None)
+        )
         if not ok:
             return False, reason
         path = config.cwd / args['path']
