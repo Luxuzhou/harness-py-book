@@ -1,0 +1,58 @@
+<svg width="1600" height="480" viewBox="0 0 1600 480" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Harness Engineering实战：构建可靠的生产级AI Agent</title>
+  <desc id="desc">本书配套代码仓库，覆盖约束、工具、上下文、记忆、验证与编排六层架构。</desc>
+  <defs>
+    <linearGradient id="background" x1="80" y1="20" x2="1520" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1020"/>
+      <stop offset="0.5" stop-color="#172554"/>
+      <stop offset="1" stop-color="#312E81"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="430" y1="0" x2="1170" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="0.5" stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#F472B6"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#FFFFFF" stroke-opacity="0.055"/>
+    </pattern>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="480" rx="28" fill="url(#background)"/>
+  <rect width="1600" height="480" rx="28" fill="url(#grid)"/>
+  <circle cx="230" cy="70" r="180" fill="#0EA5E9" fill-opacity="0.13" filter="url(#glow)"/>
+  <circle cx="1390" cy="400" r="220" fill="#C026D3" fill-opacity="0.12" filter="url(#glow)"/>
+
+  <g opacity="0.75" stroke="url(#accent)" stroke-width="2">
+    <path d="M82 98H290L350 158"/>
+    <path d="M1518 92H1328L1268 152"/>
+    <path d="M82 382H286L346 322"/>
+    <path d="M1518 388H1320L1260 328"/>
+  </g>
+  <g fill="#E0F2FE">
+    <circle cx="82" cy="98" r="5"/><circle cx="290" cy="98" r="5"/><circle cx="350" cy="158" r="5"/>
+    <circle cx="1518" cy="92" r="5"/><circle cx="1328" cy="92" r="5"/><circle cx="1268" cy="152" r="5"/>
+    <circle cx="82" cy="382" r="5"/><circle cx="286" cy="382" r="5"/><circle cx="346" cy="322" r="5"/>
+    <circle cx="1518" cy="388" r="5"/><circle cx="1320" cy="388" r="5"/><circle cx="1260" cy="328" r="5"/>
+  </g>
+
+  <rect x="617" y="54" width="366" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.08" stroke="#FFFFFF" stroke-opacity="0.16"/>
+  <text x="800" y="77" text-anchor="middle" fill="#BAE6FD" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="15" font-weight="600" letter-spacing="2.4">BOOK COMPANION · OPEN SOURCE</text>
+
+  <text x="800" y="176" text-anchor="middle" fill="#FFFFFF" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="62" font-weight="750">Harness Engineering实战</text>
+  <text x="800" y="244" text-anchor="middle" fill="url(#accent)" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="45" font-weight="700">构建可靠的生产级AI Agent</text>
+  <text x="800" y="294" text-anchor="middle" fill="#CBD5E1" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="21">从能跑到可靠：用工程化 Harness 驾驭模型能力</text>
+
+  <g font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="17" font-weight="600" text-anchor="middle">
+    <g><rect x="332" y="347" width="140" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.08" stroke="#38BDF8" stroke-opacity="0.55"/><text x="402" y="377" fill="#E0F2FE">约束</text></g>
+    <g><rect x="491" y="347" width="140" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.08" stroke="#38BDF8" stroke-opacity="0.55"/><text x="561" y="377" fill="#E0F2FE">工具</text></g>
+    <g><rect x="650" y="347" width="140" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.08" stroke="#A78BFA" stroke-opacity="0.6"/><text x="720" y="377" fill="#EDE9FE">上下文</text></g>
+    <g><rect x="809" y="347" width="140" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.08" stroke="#A78BFA" stroke-opacity="0.6"/><text x="879" y="377" fill="#EDE9FE">记忆</text></g>
+    <g><rect x="968" y="347" width="140" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.08" stroke="#F472B6" stroke-opacity="0.55"/><text x="1038" y="377" fill="#FCE7F3">验证</text></g>
+    <g><rect x="1127" y="347" width="140" height="48" rx="24" fill="#FFFFFF" fill-opacity="0.08" stroke="#F472B6" stroke-opacity="0.55"/><text x="1197" y="377" fill="#FCE7F3">编排</text></g>
+  </g>
+
+  <text x="800" y="445" text-anchor="middle" fill="#94A3B8" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="15" letter-spacing="1.3">PYTHON · OPENAI-COMPATIBLE API · REPRODUCIBLE EXPERIMENTS · ENTERPRISE CASES</text>
+</svg>
