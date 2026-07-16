@@ -1,6 +1,6 @@
-# 《HarnessEngineering实战：构建可靠的生产级AIAgent》配套代码
+# 《Harness Engineering实战：构建可靠的生产级AI Agent》配套代码
 
-> **《HarnessEngineering实战：构建可靠的生产级AIAgent》** 配套代码仓库
+> **《Harness Engineering实战：构建可靠的生产级AI Agent》** 配套代码仓库
 >
 > 用国产大模型从零构建生产级Agent系统
 

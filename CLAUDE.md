@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-《HarnessEngineering实战：构建可靠的生产级AIAgent》配套代码仓库。
+《Harness Engineering实战：构建可靠的生产级AI Agent》配套代码仓库。
 教学层 `harness_py/`（Ch3-Ch7 构建），生产层 `harness_py_pro/`（Ch8-Ch11 使用），三套新版案例分别对应 Ch8-Ch10 的实战。
 
 ## 案例地图
