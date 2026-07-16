@@ -1,41 +1,33 @@
 """
-第 11 章 Token 消耗 + 成本分析
+第 12 章 Token 消耗 + 成本分析
 ==============================
 读取 Agent 运行产生的 session jsonl 文件，分析 Token 消耗分布并按模型定价
 换算成美元成本。纯文件解析，无需 API。
 
 用法:
-    python examples/ch11_observe.py                    # 使用内置示例数据 + deepseek 定价
-    python examples/ch11_observe.py session.jsonl      # 分析指定会话
-    python examples/ch11_observe.py session.jsonl --model claude-opus-4-6
+    python examples/ch12_observe.py                    # 使用内置示例数据 + deepseek 定价
+    python examples/ch12_observe.py session.jsonl      # 分析指定会话
+    python examples/ch12_observe.py session.jsonl --model claude-opus-4-6
+    python examples/ch12_observe.py --verify-pricing   # CI校验生产定价表导入
 
-定价来源: 与 harness_py_pro/token_budget.py::MODEL_PRICING 同步。
+定价来源: harness_py_pro/token_budget.py::MODEL_PRICING。
 生产场景的权威成本数据请以 harness_py_pro/token_budget.py::CostTracker 为准，
 本脚本仅用于本章节的离线教学演示。
 """
 
+import argparse
 import json
 import sys
 from collections import Counter
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
-# === 与 harness_py_pro/token_budget.py::MODEL_PRICING 同步 ===
-# (input_price, output_price) per 1M tokens, in USD
-MODEL_PRICING: dict[str, tuple[float, float]] = {
-    'deepseek-chat': (0.27, 1.10),
-    'deepseek-reasoner': (0.55, 2.19),
-    'gpt-4o': (2.50, 10.00),
-    'gpt-4o-mini': (0.15, 0.60),
-    'gpt-4.1': (2.00, 8.00),
-    'gpt-4.1-mini': (0.40, 1.60),
-    'claude-sonnet-4-6': (3.00, 15.00),
-    'claude-opus-4-6': (15.00, 75.00),
-    'claude-haiku-4-5': (0.80, 4.00),
-}
+from harness_py_pro.token_budget import MODEL_PRICING, estimate_message_tokens
 
 
-def analyze_session(events: list[dict]) -> dict:
+def analyze_session(events: list[dict], model: str = 'default') -> dict:
     """分析 session 事件列表。"""
     messages = [e for e in events if e.get('type') == 'message']
     tool_calls = [e for e in events if e.get('type') == 'tool_call']
@@ -45,20 +37,17 @@ def analyze_session(events: list[dict]) -> dict:
     ok_count = sum(1 for tc in tool_calls if tc.get('ok'))
     fail_count = len(tool_calls) - ok_count
 
-    # 粗粒度 token 估算：按字符数 / 3 近似（中英文混合）
-    # 生产场景应使用模型原生 tokenizer；这里的估算足够得出数量级
-    user_chars = sum(
-        len(str(m.get('content', '')))
+    # 离线估算只用于教学展示；生产对账以 API usage 字段为准。
+    input_tokens = sum(
+        estimate_message_tokens(m, model)
         for m in messages
         if m.get('role') in ('user', 'system')
     )
-    asst_chars = sum(
-        len(str(m.get('content', '')))
+    output_tokens = sum(
+        estimate_message_tokens(m, model)
         for m in messages
         if m.get('role') == 'assistant'
     )
-    input_tokens = user_chars // 3
-    output_tokens = asst_chars // 3
 
     return {
         'messages': len(messages),
@@ -199,33 +188,39 @@ def demo_with_sample() -> list[dict]:
 
 
 def main():
-    print('=== 第 11 章 Token 消耗 + 成本分析 ===\n')
+    print('=== 第 12 章 Token 消耗 + 成本分析 ===\n')
 
-    args = sys.argv[1:]
-    model = 'deepseek-chat'
-    session_path: Path | None = None
-    i = 0
-    while i < len(args):
-        if args[i] == '--model' and i + 1 < len(args):
-            model = args[i + 1]
-            i += 2
-        else:
-            session_path = Path(args[i])
-            i += 1
+    parser = argparse.ArgumentParser(description='Analyze Harness session JSONL cost.')
+    parser.add_argument('session_path', nargs='?', type=Path)
+    parser.add_argument('--model', default='deepseek-v4-flash')
+    parser.add_argument(
+        '--verify-pricing',
+        action='store_true',
+        help='Verify this script imports MODEL_PRICING from harness_py_pro.token_budget.',
+    )
+    args = parser.parse_args()
 
-    if session_path:
-        if not session_path.exists():
-            print(f'文件不存在: {session_path}')
-            sys.exit(1)
-        events = load_jsonl(session_path)
-        print(f'加载: {session_path} ({len(events)} 事件)')
+    if args.verify_pricing:
+        required = {'gpt-4o-mini', 'gpt-4.1-nano', 'deepseek-v4-flash'}
+        missing = sorted(required - set(MODEL_PRICING))
+        if missing:
+            raise SystemExit(f'[FAIL] production MODEL_PRICING missing keys: {missing}')
+        print('[PASS] using production MODEL_PRICING from harness_py_pro.token_budget')
+        return
+
+    model = args.model
+    if args.session_path:
+        if not args.session_path.exists():
+            raise SystemExit(f'文件不存在: {args.session_path}')
+        events = load_jsonl(args.session_path)
+        print(f'加载: {args.session_path} ({len(events)} 事件)')
     else:
         events = demo_with_sample()
         print(f'使用内置样本数据 ({len(events)} 事件)')
 
     print(f'定价模型: {model}\n')
 
-    stats = analyze_session(events)
+    stats = analyze_session(events, model)
     cost = estimate_cost(stats, model)
     monthly = (
         project_monthly_budget(cost['total_cost_usd'])

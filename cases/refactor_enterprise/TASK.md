@@ -2,9 +2,10 @@
 
 ## 任务背景
 
-`target_project/` 是一个参照真实临床路径管理系统脱敏改写的 Spring Boot 企业级 Java 项目，
-共 72 个 Java 文件、约 7,929 行代码。其中 `CpPlanService.java` 已经膨胀到 **1,266 行**，
-承担了从任务调度、异常检测、数据校验、结果导出到告警推送的全部职责，是典型的 **God Class**。
+`target_project/` 是一个参照真实临床路径管理系统脱敏改写的 Spring Boot 企业级 Java 项目。
+当前读者基线包含 92 个 Java 生产源文件、约 10,127 行生产代码，以及 7 个计划服务相关测试类。
+其中 `CpPlanService.java` 已经膨胀到 **1,266 行**，承担了从计划生命周期管理、路径依从率计算、
+变更审计、批量操作到缓存清理的多项职责，是典型的 **God Class**。
 
 Agent 的任务是把 `CpPlanService` 按业务职责拆解为独立的服务，**不破坏对外 REST 接口**，
 **不引入新功能**，并确保编译通过、对外行为不变。
@@ -16,12 +17,12 @@ Agent 的任务是把 `CpPlanService` 按业务职责拆解为独立的服务，
 ### 验收项 1：God Class 拆分
 
 - `CpPlanService.java` 的代码行数必须小于 **400 行**
-- 至少新增 **5 个** 职责单一的 `*Service.java` 文件，分别承担：
-  - 计划调度（PlanSchedulerService 或等价职责）
-  - 异常检测（CpAnomalyDetectionService 或等价职责）
-  - 数据校验（PlanValidationService 或等价职责）
-  - 结果导出（PlanExportService 或等价职责）
-  - 告警推送（与现有 CpAnomalyNotificationService 协作）
+- `service/plan/` 下必须形成至少 **5 个** 职责单一的专职 `*Service.java` 文件，分别承担：
+  - 计划 CRUD 生命周期管理
+  - 路径依从率计算
+  - 批量操作
+  - 变更审计
+  - 缓存管理或 DTO/BO 组装
 
 ### 验收项 2：对外契约不变
 
@@ -48,7 +49,7 @@ Controller 类级前缀 `@RequestMapping("/api/cp/plan")` 必须保持不变。
 
 ### 验收项 4：单元测试
 
-每个新拆出的 `*Service.java` 必须有对应的 `*ServiceTest.java`：
+每个承接核心职责的 `*Service.java` 必须有对应的 `*ServiceTest.java`：
 - 使用 JUnit 5
 - 每个测试类至少 3 个测试方法
 - 覆盖正常路径 + 至少 1 个异常路径
@@ -87,6 +88,6 @@ python cases/refactor_enterprise/verify.py  # 静态验收
 ## 完成后的产出
 
 1. `CpPlanService.java` 瘦身到 < 400 行
-2. `service/plan/` 目录下新增 5+ 个 Service 文件
-3. `src/test/java/com/example/cp/service/plan/` 下对应测试覆盖
+2. `service/plan/` 目录下形成 5+ 个职责清晰的专职 Service 文件
+3. `src/test/java/com/example/cp/service/plan/` 下对应测试覆盖保持通过
 4. `REFACTOR_REPORT.md`：改造前后的 LOC 对比、依赖关系图、关键决策

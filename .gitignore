@@ -35,6 +35,7 @@ Thumbs.db
 .pytest_cache/
 htmlcov/
 .coverage
+target/
 
 # === 运行时临时目录（pytest / Agent 产物） ===
 tmp_test/

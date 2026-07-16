@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .config import AgentConfig
+from .pathing import is_relative_to, resolve_agent_path
 
 
 # ============ BaseTool抽象 ============
@@ -119,6 +120,8 @@ class ToolRegistry:
         tool = self._tools.get(name)
         if not tool:
             return False, f'未知工具: {name}'
+        if not isinstance(args, dict):
+            return False, f'Invalid arguments for {name}: expected object, got {type(args).__name__}'
 
         # 工具过滤检查
         if config.tool_filter and name not in config.tool_filter:
@@ -130,6 +133,16 @@ class ToolRegistry:
         # 拒绝列表检查
         if config.denied_tools and name in config.denied_tools:
             return False, f'工具 {name} 已被禁用'
+
+        schema = tool.get_schema()
+        parameters = schema.parameters if isinstance(schema, ToolSchema) else schema.get('parameters', {})
+        missing = [
+            field
+            for field in parameters.get('required', [])
+            if field not in args or args.get(field) is None
+        ]
+        if missing:
+            return False, f'Invalid arguments for {name}: missing required field(s): {", ".join(missing)}'
 
         return tool.execute(args, config)
 
@@ -152,27 +165,29 @@ def _check_path_accessible(
     filesystem_roots: list[str] | None = None,
 ) -> tuple[bool, str]:
     """检查路径是否可访问（cwd 内或 filesystem_roots 内）。"""
-    resolved = (cwd / raw_path).resolve()
-    cwd_resolved = cwd.resolve()
-
-    # 检查是否在 cwd 内
-    try:
-        resolved.relative_to(cwd_resolved)
+    roots = [cwd.resolve()]
+    roots.extend((cwd / root).resolve() for root in (filesystem_roots or []))
+    resolved = resolve_agent_path(cwd, raw_path, allowed_roots=roots)
+    if any(is_relative_to(resolved, root) for root in roots):
         return True, ''
-    except ValueError:
-        pass
-
-    # 检查是否在 filesystem_roots 内
-    if filesystem_roots:
-        for root in filesystem_roots:
-            root_path = (cwd / root).resolve()
-            try:
-                resolved.relative_to(root_path)
-                return True, ''
-            except ValueError:
-                pass
-
     return False, f'Path not accessible: {raw_path}'
+
+
+def _resolve_tool_path(
+    cwd: Path,
+    raw_path: str,
+    filesystem_roots: list[str] | None = None,
+    *,
+    must_exist: bool = False,
+) -> Path:
+    roots = [cwd.resolve()]
+    roots.extend((cwd / root).resolve() for root in (filesystem_roots or []))
+    return resolve_agent_path(
+        cwd,
+        raw_path,
+        allowed_roots=roots,
+        must_exist=must_exist,
+    )
 
 
 def _check_glob_pattern_safe(pattern: str) -> tuple[bool, str]:
@@ -212,7 +227,30 @@ class ReadFileTool(BaseTool):
         )
         if not ok:
             return False, reason
-        path = config.cwd / args['path']
+        raw_path = args['path']
+        path = _resolve_tool_path(
+            config.cwd,
+            raw_path,
+            getattr(config, 'filesystem_roots', None),
+            must_exist=True,
+        )
+        if not path.exists():
+            normalized = str(raw_path).replace('\\', '/')
+            parts = list(Path(normalized).parts)
+            if config.cwd.name in parts:
+                idx = parts.index(config.cwd.name)
+                if idx < len(parts) - 1:
+                    rel_after_cwd = Path(*parts[idx + 1:])
+                    candidate = config.cwd / rel_after_cwd
+                    if candidate.exists():
+                        path = candidate
+                    else:
+                        return False, (
+                            f'文件不存在: {raw_path}. 当前工作目录已经是 {config.cwd.name}; '
+                            f'请改用相对路径 {rel_after_cwd}'
+                        )
+                else:
+                    return False, f'文件不存在: {raw_path}'
         if not path.exists():
             return False, f'文件不存在: {args["path"]}'
         try:
@@ -254,7 +292,11 @@ class WriteFileTool(BaseTool):
         )
         if not ok:
             return False, reason
-        path = config.cwd / args['path']
+        path = _resolve_tool_path(
+            config.cwd,
+            args['path'],
+            getattr(config, 'filesystem_roots', None),
+        )
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(args['content'], encoding='utf-8')
@@ -290,7 +332,12 @@ class EditFileTool(BaseTool):
         )
         if not ok:
             return False, reason
-        path = config.cwd / args['path']
+        path = _resolve_tool_path(
+            config.cwd,
+            args['path'],
+            getattr(config, 'filesystem_roots', None),
+            must_exist=True,
+        )
         if not path.exists():
             return False, f'文件不存在: {args["path"]}'
         try:
@@ -332,10 +379,12 @@ class GrepSearchTool(BaseTool):
         )
         if not ok:
             return False, reason
-        ok, reason = _check_glob_pattern_safe(args['pattern'])
-        if not ok:
-            return False, reason
-        search_dir = config.cwd / args.get('path', '.')
+        search_dir = _resolve_tool_path(
+            config.cwd,
+            args.get('path', '.'),
+            getattr(config, 'filesystem_roots', None),
+            must_exist=True,
+        )
         if not search_dir.exists():
             return False, f'目录不存在: {args.get("path", ".")}'
         try:
@@ -400,7 +449,12 @@ class GlobSearchTool(BaseTool):
         ok, reason = _check_glob_pattern_safe(args['pattern'])
         if not ok:
             return False, reason
-        search_dir = config.cwd / args.get('path', '.')
+        search_dir = _resolve_tool_path(
+            config.cwd,
+            args.get('path', '.'),
+            getattr(config, 'filesystem_roots', None),
+            must_exist=True,
+        )
         if not search_dir.exists():
             return False, f'目录不存在'
         matches = sorted(search_dir.glob(args['pattern']))[:100]
@@ -662,7 +716,10 @@ class BashTool(BaseTool):
         clean_env['PYTHONIOENCODING'] = 'utf-8'
         clean_env['PYTHONUTF8'] = '1'
 
-        bash_path = _find_best_bash()
+        # Use the native Windows shell when no sandbox runner is injected.
+        # Git Bash can resolve Windows tool shims such as Maven differently
+        # and produce false failures.
+        bash_path = None if sys.platform == 'win32' else _find_best_bash()
         try:
             if bash_path:
                 proc = subprocess.Popen(
@@ -693,6 +750,117 @@ class BashTool(BaseTool):
             return False, f'命令超时 ({timeout}s)'
         except Exception as e:
             return False, f'执行失败: {e}'
+
+
+class AcceptanceCheckTool(BaseTool):
+    name = 'acceptance_check'
+    read_only = True
+
+    def get_schema(self) -> dict:
+        return {
+            'name': self.name,
+            'description': (
+                'Run the configured acceptance gate for this task. '
+                'Use this instead of bash when checking whether the task is complete.'
+            ),
+            'parameters': {
+                'type': 'object',
+                'properties': {},
+                'required': [],
+            },
+        }
+
+    def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
+        if not config.acceptance_commands:
+            return False, 'No acceptance commands configured'
+        if not config.command_runner:
+            return False, 'Acceptance command runner is not configured'
+
+        chunks: list[str] = []
+        for command in config.acceptance_commands:
+            try:
+                ok, output = config.command_runner(command, config.acceptance_timeout)
+            except Exception as e:
+                ok, output = False, f'Acceptance execution failed: {e}'
+            status = 'PASS' if ok else 'FAIL'
+            body = output.strip() or '(no output)'
+            chunks.append(f'$ {command}\n[{status}]\n{body}')
+            if not ok:
+                return False, '\n\n'.join(chunks)[:12000]
+        return True, '\n\n'.join(chunks)[:12000]
+
+
+class BatchEditFileTool(BaseTool):
+    name = 'batch_edit_file'
+    read_only = False
+
+    def get_schema(self) -> dict:
+        return {
+            'name': self.name,
+            'description': (
+                'Apply multiple exact string replacements to one file in one call. '
+                'Prefer this over many edit_file calls when changing the same file.'
+            ),
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'path': {'type': 'string', 'description': 'File path relative to cwd'},
+                    'replacements': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'old_string': {'type': 'string'},
+                                'new_string': {'type': 'string'},
+                            },
+                            'required': ['old_string', 'new_string'],
+                        },
+                    },
+                },
+                'required': ['path', 'replacements'],
+            },
+        }
+
+    def execute(self, args: dict, config: AgentConfig) -> tuple[bool, str]:
+        if not config.allow_write:
+            return False, 'Write access disabled'
+        path_arg = args.get('path', '')
+        ok, reason = _check_path_accessible(
+            config.cwd, path_arg, getattr(config, 'filesystem_roots', None)
+        )
+        if not ok:
+            return False, reason
+        path = _resolve_tool_path(
+            config.cwd,
+            path_arg,
+            getattr(config, 'filesystem_roots', None),
+            must_exist=True,
+        )
+        if not path.exists():
+            return False, f'File not found: {path_arg}'
+        replacements = args.get('replacements')
+        if not isinstance(replacements, list) or not replacements:
+            return False, 'replacements must be a non-empty list'
+        try:
+            content = path.read_text(encoding='utf-8')
+            new_content = content
+            for idx, repl in enumerate(replacements, start=1):
+                if not isinstance(repl, dict):
+                    return False, f'replacement #{idx} must be an object'
+                old = repl.get('old_string')
+                new = repl.get('new_string')
+                if old is None or new is None:
+                    return False, f'replacement #{idx} missing old_string/new_string'
+                count = new_content.count(old)
+                if count == 0:
+                    return False, f'replacement #{idx}: old_string not found'
+                if count > 1:
+                    return False, f'replacement #{idx}: matched {count} places; old_string must be unique'
+                new_content = new_content.replace(old, new, 1)
+            path.write_text(new_content, encoding='utf-8')
+            return True, f'Batch edited {path_arg} ({len(replacements)} replacements)'
+        except Exception as e:
+            return False, f'Batch edit failed: {e}'
 
 
 # ============ 工具辅助函数 ============
@@ -746,15 +914,15 @@ def _threaded_communicate(proc: subprocess.Popen, timeout: int) -> tuple[bytes, 
         except Exception:
             q.put(b'')
 
-    t1 = threading.Thread(target=read_stream, args=(proc.stdout, stdout_q))
-    t2 = threading.Thread(target=read_stream, args=(proc.stderr, stderr_q))
+    t1 = threading.Thread(target=read_stream, args=(proc.stdout, stdout_q), daemon=True)
+    t2 = threading.Thread(target=read_stream, args=(proc.stderr, stderr_q), daemon=True)
     t1.start()
     t2.start()
     t1.join(timeout=timeout)
     t2.join(timeout=timeout)
 
     if t1.is_alive() or t2.is_alive():
-        proc.kill()
+        _kill_process_tree(proc)
         raise subprocess.TimeoutExpired(cmd='', timeout=timeout)
 
     proc.wait()
@@ -762,6 +930,24 @@ def _threaded_communicate(proc: subprocess.Popen, timeout: int) -> tuple[bytes, 
 
 
 # ============ 默认Registry ============
+
+def _kill_process_tree(proc: subprocess.Popen) -> None:
+    try:
+        if sys.platform == 'win32':
+            subprocess.run(
+                ['taskkill', '/PID', str(proc.pid), '/T', '/F'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            )
+            return
+    except Exception:
+        pass
+    try:
+        proc.kill()
+    except Exception:
+        pass
+
 
 def create_default_registry(
     agent_runner: Any | None = None,
@@ -781,6 +967,8 @@ def create_default_registry(
     registry.register(GrepSearchTool())
     registry.register(GlobSearchTool())
     registry.register(BashTool())
+    registry.register(AcceptanceCheckTool())
+    registry.register(BatchEditFileTool())
     registry.register(AgentSpawnTool(runner=agent_runner))
     registry.register(AgentResultTool(manager=subagent_manager))
     registry.register(AgentWaitTool(manager=subagent_manager))

@@ -7,8 +7,8 @@
 
 **关键区别**：本案例不自建业务代码。两个 Developer 角色的工作目录分别指向：
 
-- Java 端 → `cases/refactor_enterprise/target_project/`（第 8 章案例的 Spring Boot 项目）
-- Python 端 → `cases/data_compliance/target_service/`（第 9 章案例的 FastAPI 服务）
+- Java 端 → `cases/refactor_enterprise/target_project/`（第 9 章案例的 Spring Boot 项目）
+- Python 端 → `cases/data_compliance/target_service/`（第 10 章案例的 FastAPI 服务）
 
 这是"单 Agent 上下文装不下整套业务"时必须引入多 Agent 编排的真实动因。
 
@@ -17,7 +17,7 @@
 ### 1. Architect Agent
 - **工具权限：** 只读（read_file, grep_search, glob_search, write_file 仅用于产出 plan）
 - **工作目录：** 本案例目录（`cases/multiagent_enterprise/`），可读整个仓库，写仅限 `implementation_plan.md`
-- **禁止：** 不可创建或修改 Ch8/Ch9 目录下的任何业务代码
+- **禁止：** 不可创建或修改第9章/第10章目录下的任何业务代码
 
 ### 2. Java Developer Agent
 - **工具权限：** read_file, write_file, edit_file, bash(`mvn compile`, `mvn test`)
@@ -31,8 +31,8 @@
 
 ### 4. QA Engineer Agent
 - **工具权限：** read_file, write_file, edit_file, grep_search, bash(`mvn test`, `pytest`)
-- **工作目录：** 本案例目录；可读取 Ch8/Ch9 的测试目录，但只能写到编排目录下的 `test_report.md`
-- **禁止：** 不可修改 Ch8 与 Ch9 的业务代码
+- **工作目录：** 本案例目录；可读取第9章/第10章的测试目录，但只能写到编排目录下的 `test_report.md`
+- **禁止：** 不可修改第9章与第10章的业务代码
 
 ## 接口契约管控
 
@@ -51,7 +51,7 @@
   - Python 端：`python -m py_compile <file>`（语法检查）
 - Round 3（QA 阶段）必须运行完整测试：
   - Java 端：`mvn test`
-  - Python 端：`python -m pytest -q`（在 Ch9 target_service 目录下）
+  - Python 端：`python -m pytest -q`（在第10章 target_service 目录下）
 
 ## 文件结构
 

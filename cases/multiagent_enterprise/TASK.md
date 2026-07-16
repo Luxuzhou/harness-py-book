@@ -4,8 +4,8 @@
 
 通过四 Agent 协作，在两套真实业务代码（Java 端 + Python 端）之上完成"路径变异智能预警"模块的跨语言集成：
 
-- Java 端：扩展第 8 章的 Spring Boot 项目（`cases/refactor_enterprise/target_project/`），新增 REST 客户端调用 Python 端的异常分析服务
-- Python 端：扩展第 9 章的 FastAPI 服务（`cases/data_compliance/target_service/`），新增 REST 客户端回调 Java 端的异常规则同步接口
+- Java 端：扩展第 9 章的 Spring Boot 项目（`cases/refactor_enterprise/target_project/`），新增 REST 客户端调用 Python 端的异常分析服务
+- Python 端：扩展第 10 章的 FastAPI 服务（`cases/data_compliance/target_service/`），新增 REST 客户端回调 Java 端的异常规则同步接口
 - 契约：双方通过 `spec/api_contract.yaml` 对齐，任何一方都不得单边改契约
 - 测试：QA 端写跨契约一致性测试 + 两侧单元测试
 
@@ -23,8 +23,8 @@
 - `spec/requirement.md`
 - `spec/api_contract.yaml`
 - `spec/architecture.md`
-- `cases/refactor_enterprise/target_project/` — Ch8 Java 项目（只读）
-- `cases/data_compliance/target_service/` — Ch9 Python 服务（只读）
+- `cases/refactor_enterprise/target_project/` — 第9章 Java 项目（只读）
+- `cases/data_compliance/target_service/` — 第10章 Python 服务（只读）
 
 ### 期望行为
 1. 通读全部 spec 文档
@@ -37,8 +37,8 @@
 - `implementation_plan.md`（本案例目录下）
 
 ### 完成标准
-- plan 包含 Java 端实施清单（至少 3 个文件的改动要点，落在 Ch8 目录）
-- plan 包含 Python 端实施清单（至少 3 个文件的改动要点，落在 Ch9 目录）
+- plan 包含 Java 端实施清单（至少 3 个文件的改动要点，落在第9章目录）
+- plan 包含 Python 端实施清单（至少 3 个文件的改动要点，落在第10章目录）
 - plan 包含接口契约关键约束
 - plan 包含测试策略
 - plan 包含风险与缓解措施
@@ -105,8 +105,8 @@ Round 2 完成后（两个 Developer 都完成）。
 ### 输入文件
 - `implementation_plan.md`（测试策略章节）
 - `spec/api_contract.yaml`
-- Ch8 Java 项目完整代码（只读）
-- Ch9 Python 服务完整代码（只读）
+- 第9章 Java 项目完整代码（只读）
+- 第10章 Python 服务完整代码（只读）
 
 ### 期望行为
 1. 编写契约一致性测试（Python Pydantic 模型 vs OpenAPI schema；Java DTO vs OpenAPI schema）
@@ -116,9 +116,9 @@ Round 2 完成后（两个 Developer 都完成）。
 5. 输出测试报告
 
 ### 输出文件
-- Ch9 下 `tests/test_contract_consistency.py`
-- Ch9 下 `tests/test_java_api_client.py`
-- Ch8 下 `src/test/java/com/example/cp/client/PythonServiceClientTest.java`
+- 第10章服务下 `tests/test_contract_consistency.py`
+- 第10章服务下 `tests/test_java_api_client.py`
+- 第9章项目下 `src/test/java/com/example/cp/client/PythonServiceClientTest.java`
 - `test_report.md`（本案例目录下）
 
 ### 完成标准

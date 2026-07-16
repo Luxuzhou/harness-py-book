@@ -83,7 +83,7 @@ def sample_lab_records():
 @pytest.fixture
 def sample_instrument_records():
     from datetime import date, timedelta
-    today = date(2026, 4, 17)
+    today = date.today()
     return [
         {
             'department_id': f'INS-{i:03d}',

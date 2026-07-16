@@ -1,6 +1,7 @@
 package com.example.cp.queue;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,9 +30,10 @@ import java.util.concurrent.TimeUnit;
  * @author cp-team
  * @since 2024-02-15
  */
-@Slf4j
 @Component
 public class RedisQueueService1 {
+
+    private static final Logger log = LoggerFactory.getLogger(RedisQueueService1.class);
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;

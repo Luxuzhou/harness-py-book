@@ -26,12 +26,19 @@ class AgentRole:
     role_prompt: str
     tool_filter: list[str] = field(default_factory=list)
     max_iterations: int = 100
+    acceptance_commands: list[str] = field(default_factory=list)
+    acceptance_timeout: int = 300
     planning_turns: int = 0  # 0 = 禁用自动阶段切换
 
     # 角色特有配置
     allow_write: bool = True
     allow_shell: bool = True
     hooks: HookConfig = field(default_factory=HookConfig)
+    sandbox_mode: str = 'bypass'
+    network_isolated: bool = False
+    allowed_paths: list[str] = field(default_factory=list)
+    denied_paths: list[str] = field(default_factory=list)
+    read_only_paths: list[str] = field(default_factory=list)
 
     # 跨项目多Agent场景：覆盖 orchestrate() 的全局 cwd，
     # 让该角色在自己的代码库根目录下执行。
@@ -64,6 +71,7 @@ def orchestrate(
     completion_client: object | None = None,
     verbose: bool = True,
     parallel_groups: dict[int, list[str]] | None = None,
+    round_plan: dict[int, list[str]] | None = None,
 ) -> SwarmResult:
     """
     多Agent编排入口。
@@ -82,6 +90,11 @@ def orchestrate(
         但当轮组内角色互相隔离视角，等价于"多人同时动手"。
         例如 {2: ['JavaDeveloper', 'PythonDeveloper']} 表示第2轮
         Java 和 Python 开发者并行工作、互不等待。
+
+    round_plan: {round_number: [role_name, ...]}
+        限定每一轮实际运行的角色。未配置时保持旧行为：每轮运行所有角色。
+        多 Agent 工程流建议显式配置，例如：
+        {1: ['Architect'], 2: ['JavaDeveloper', 'PythonDeveloper'], 3: ['QAEngineer']}
     """
     from .config import ModelConfig as MC
 
@@ -113,7 +126,22 @@ def orchestrate(
         # 记录本轮各角色产出（用于下一个角色的 _build_agent_task 可见性判断）
         round_outputs: dict[str, str] = {}
 
-        for role in roles:
+        planned_names: set[str] | None = None
+        if round_plan is not None:
+            planned_names = set(round_plan.get(round_num, []))
+            if verbose:
+                print(f'[SWARM] 本轮角色计划: {sorted(planned_names)}')
+
+        roles_this_round = [
+            role for role in roles
+            if planned_names is None or role.name in planned_names
+        ]
+        if round_plan is not None and not roles_this_round:
+            if verbose:
+                print('[SWARM] 本轮无计划角色，跳过')
+            continue
+
+        for role in roles_this_round:
             if verbose:
                 print(f'\n--- Agent: {role.name} ---')
 
@@ -143,7 +171,14 @@ def orchestrate(
                 role=role.name,
                 role_prompt=role.role_prompt,
                 tool_filter=role.tool_filter,
+                acceptance_commands=role.acceptance_commands,
+                acceptance_timeout=role.acceptance_timeout,
                 hooks=role.hooks,
+                sandbox_mode=role.sandbox_mode,
+                network_isolated=role.network_isolated,
+                allowed_paths=role.allowed_paths,
+                denied_paths=role.denied_paths,
+                read_only_paths=role.read_only_paths,
                 filesystem_roots=role.filesystem_roots,
             )
 
@@ -211,6 +246,22 @@ def _build_agent_task(
     """为Agent构建任务描述。"""
     parts = [f'# 任务\n\n{original_task}']
 
+    path_lines = [
+        f'- 当前工作目录 cwd: `{work_dir}`',
+        '- 工具的 `path` 参数必须使用相对 cwd 的路径；不要使用绝对 Windows 路径。',
+    ]
+    if role.filesystem_roots:
+        roots = ', '.join(f'`{r}`' for r in role.filesystem_roots)
+        path_lines.append(f'- 额外可访问根目录（仍需用相对路径访问）: {roots}')
+    if role.allowed_paths:
+        allowed = ', '.join(f'`{p}`' for p in role.allowed_paths)
+        path_lines.append(f'- 允许访问路径: {allowed}')
+    if role.read_only_paths:
+        readonly = ', '.join(f'`{p}`' for p in role.read_only_paths)
+        path_lines.append(f'- 只读路径: {readonly}')
+    if role.filesystem_roots or role.allowed_paths or role.read_only_paths:
+        parts.append('\n## 工作目录与路径规则\n' + '\n'.join(path_lines))
+
     if round_num > 1:
         parts.append(f'\n## 当前轮次: 第{round_num}轮\n这不是第一轮执行。请先检查之前轮次的输出文件，了解已有成果和反馈意见。')
 
@@ -264,7 +315,14 @@ def run_pipeline(
             role=role.name,
             role_prompt=role.role_prompt,
             tool_filter=role.tool_filter,
+            acceptance_commands=role.acceptance_commands,
+            acceptance_timeout=role.acceptance_timeout,
             hooks=role.hooks,
+            sandbox_mode=role.sandbox_mode,
+            network_isolated=role.network_isolated,
+            allowed_paths=role.allowed_paths,
+            denied_paths=role.denied_paths,
+            read_only_paths=role.read_only_paths,
             filesystem_roots=role.filesystem_roots,
         )
 

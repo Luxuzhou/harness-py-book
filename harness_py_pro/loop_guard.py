@@ -55,6 +55,9 @@ class LoopGuard:
           action='proceed'  → 允许执行
           action='block'    → 阻止此次调用（不执行工具）
         """
+        if tool_name == 'acceptance_check':
+            return 'proceed', ''
+
         key = (tool_name, _canonical_json(tool_args))
         self._call_counts[key] += 1
         count = self._call_counts[key]

@@ -14,7 +14,7 @@ experiments/
 │       ├── README.md          本实验的目标、配置、指标、复现命令
 │       ├── run.py             主入口
 │       ├── fixtures/          实验依赖的测试夹具
-│       ├── results/           原始数据输出（通过 .gitignore 排除）
+│       ├── results/           原始数据输出；关键复现结果可入库，临时运行产物按 .gitignore 排除
 │       └── plot.py            （可选）图表生成，与 run.py 解耦
 └── _legacy/                   已被正式版本取代、但保留用于历史查阅的脚本
     └── README.md              说明每份文件的原始用途和被取代情况
@@ -24,7 +24,7 @@ experiments/
 
 - 目录一律用 `chXX` 开头（`ch04`、`ch10`、`ch12`），跨章实验归入主引用章节
 - 每个实验用 `exp<N>_<slug>/`，N 为 1 起始整数，slug 用下划线分词
-- 结果文件统一放 `results/` 子目录，通过 `.gitignore` 不入版本库
+- 结果文件统一放 `results/` 子目录；正文引用的关键结果可以提交，临时大文件、缓存和会话日志不入版本库
 - 图表输出位置：书配套图置于 `figures/`，实验过程图置于 `results/figures/`
 
 ## 当前索引
@@ -43,16 +43,19 @@ experiments/
 | Ch6 | `ch06/exp1_snr_decay/` | 6.1.1 节 长对话信噪比塌陷 | 代码完成，待跑 |
 | Ch6 | `ch06/exp2_compression_triggers/` | 6.2 节 四级压缩触发条件 | 代码完成，待跑（results/ 当前为空） |
 | Ch6 | `ch06/exp3_compact_instructions/` | 6.6.3 节 Compact Instructions 效果 | 待跑 |
-| Ch6 | `ch06/exp4_dream_consolidation/` | 6.4.3 节 离线 Memory 整理 | **已跑**（无 LLM API，纯本地脚本），数据未回填章节 |
+| Ch6 | `ch06/exp4_dream_consolidation/` | 6.4.3 节 离线 Memory 整理 | **已跑**（无 LLM API，纯本地脚本），数据已回填章节 |
 | Ch6 | `ch06/exp5_resume_awakening/` | 6.5 节 Session 持久化与断点续传 | 待跑 |
-| Ch7 | `ch07/exp1_open_vs_closed_loop/` | 7.2.1 开环 vs 闭环 | 骨架 + 10 任务 |
-| Ch7 | `ch07/exp2_loopguard_intervention/` | 7.4.5 LoopGuard 收敛 | 骨架 + 5 死循环场景 |
-| Ch7 | `ch07/exp3_planning_turns_effect/` | 7.6.2 planning_turns 效果 | 骨架 + 10 任务 |
-| Ch8 | `ch08/exp1_eval_framework_extended/` | 8.3 节 跨层 Eval 基础设施 | 框架骨架，待接入 |
+| Ch7 | `ch07/exp1_self_eval_blindspot/` | 7.1 Agent 自评盲区 | 已跑，数据已回填 |
+| Ch7 | `ch07/exp2_pytest_closure/` | 7.2 pytest 闭环验证 | 已跑，数据已回填 |
+| Ch7 | `ch07/exp3_judge_verbosity_bias/` | 7.3 Judge 偏置 | 已跑，数据已回填 |
+| Ch7 | `ch07/exp4_loopguard_layered/` | 7.4 LoopGuard 分层兜底 | 已跑，数据已回填 |
+| Ch7 | `ch07/exp5_planning_complexity/` | 7.5 Planning 复杂度 | 已跑，数据已回填 |
+| Ch8 | `ch08/exp1_eval_framework_extended/` | 8.3 节 跨层 Eval 基础设施 | 可运行，需要 API |
 | Ch8 | `ch08/exp2_failure_mining/` | 8.5 节 失败挖掘 | **可直接跑** |
-| Ch8 | `ch08/exp3_redteam_goldenset/` | 8.7.5 节 Red Team 对抗集 | 骨架 + 26 条任务 + 两套 prompt |
+| Ch8 | `ch08/exp3_redteam_goldenset/` | 8.7.5 节 Red Team 对抗集 | 可运行，需要 API |
+| Ch8 | `ch08/exp4_pareto/` | 8.6 / 8.8 节 Shadow 与 Pareto 前沿 | 可运行，部分模式需要 API |
 | Ch9 | `ch09/exp1_refactor_metrics/` | 9.5 节 重构前后量化对照 | 骨架（before/after metrics + compare） |
-| Ch10 | `ch10/hooks_defense/` | 10.3 节 Hook 三层防御 | 已完成 |
+| Ch10 | `ch10/exp1_hooks_defense/` | 10.3 节 Hook 三层防御 | 已完成 |
 | Ch11 | `ch11/exp1_solo_vs_multi/` | 11.6 节 何时该用多 Agent | 骨架（solo/dual/quad 三档对照） |
 | Ch12 | `ch12/run_all_cases.py` | 12.1.2 节 三案例消耗对比 | 已完成 |
 

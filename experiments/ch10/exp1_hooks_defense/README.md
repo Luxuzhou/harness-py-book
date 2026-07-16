@@ -16,7 +16,7 @@
 ## 实验一：企业框架三轮验证
 
 ```bash
-cd experiments/hooks_article
+cd experiments/ch10/exp1_hooks_defense
 python run_hooks_experiment.py
 ```
 
@@ -30,7 +30,7 @@ python run_hooks_experiment.py
 ## 实验二：Claude Code 原生 Hooks
 
 ```bash
-cd experiments/hooks_article/claude_hooks
+cd experiments/ch10/exp1_hooks_defense/claude_hooks
 claude
 ```
 
@@ -54,7 +54,7 @@ claude
 ## 文件结构
 
 ```
-hooks_article/
+exp1_hooks_defense/
 ├── run_hooks_experiment.py    ← 企业框架实验脚本
 ├── sample_data/
 │   ├── patients_demo.csv      ← 10条假患者数据（含PII）

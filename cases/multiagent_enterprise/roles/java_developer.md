@@ -19,12 +19,23 @@
 
 ## 输入
 
-1. `implementation_plan.md` — Architect 输出的实施计划（Java端章节）
-2. `spec/api_contract.yaml` — 接口契约（只读参考）
-3. `spec/requirement.md` — 需求文档（只读参考）
+1. `../../multiagent_enterprise/implementation_plan.md` — Architect 输出的实施计划（Java端章节）
+2. `../../multiagent_enterprise/spec/api_contract.yaml` — 接口契约（只读参考）
+3. `../../multiagent_enterprise/spec/requirement.md` — 需求文档（只读参考）
 4. `cases/refactor_enterprise/target_project/` — 现有 Java 代码骨架
 
+**路径规则：** 你的 cwd 已经是 Java 项目根目录。读取编排产物时必须使用上面的相对路径；不要使用绝对 Windows 路径，也不要把 `cases/...` 再拼到当前 cwd 后面。
+
 ## 任务
+
+### P0：跨端 HTTP 客户端
+
+本章的 Java 端主任务是补齐 Java→Python 的跨端调用能力。无论实施计划是否还列出其他改动，都必须优先完成：
+
+- 在 `src/main/java/com/example/cp/client/` 下创建或补全 `PythonAnalysisClient.java`（或同等命名的 Python 分析服务客户端）。
+- 客户端应使用项目已有依赖可支持的 HTTP 方案（如 `RestTemplate`/`RestClient`），调用 Python 端实时分析与历史分析接口。
+- 请求必须携带 `X-Service-Token` 和 `X-Trace-Id`，并设置合理超时；错误响应要转换为清晰异常或失败结果。
+- 不要只写测试类或只修改已有 Controller/Service 后就结束；如果 `src/main/java/com/example/cp/client/*.java` 不存在，Java 端任务未完成。
 
 ### 按照实施计划，完成以下开发工作：
 

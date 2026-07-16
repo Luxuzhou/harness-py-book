@@ -11,6 +11,7 @@ import fnmatch
 from pathlib import Path
 
 from .config import AgentConfig
+from .pathing import is_relative_to, resolve_agent_path
 
 
 # Claude Code内置的敏感路径（始终拒绝）
@@ -49,7 +50,12 @@ class PermissionChecker:
 
         返回 (allowed, reason)
         """
-        resolved = str((self.config.cwd / path).resolve())
+        resolved_path = resolve_agent_path(
+            self.config.cwd,
+            path,
+            allowed_roots=self.config.allowed_paths,
+        )
+        resolved = str(resolved_path)
 
         # Layer 1: 敏感路径
         for pattern in self._expanded_sensitive:
@@ -57,26 +63,31 @@ class PermissionChecker:
                 return False, f'敏感路径保护: {path}'
 
         # Layer 2: 配置级路径限制（读写都检查）
-        resolved_path = (self.config.cwd / path).resolve()
         if self.config.allowed_paths:
             allowed = False
             for ap in self.config.allowed_paths:
-                try:
-                    resolved_path.relative_to((self.config.cwd / ap).resolve())
+                ap_path = Path(ap)
+                allowed_root = (
+                    ap_path.resolve()
+                    if ap_path.is_absolute()
+                    else (self.config.cwd / ap_path).resolve()
+                )
+                if is_relative_to(resolved_path, allowed_root):
                     allowed = True
                     break
-                except ValueError:
-                    continue
             if not allowed:
                 return False, f'路径不在允许范围内: {path}'
 
         if self.config.denied_paths:
             for dp in self.config.denied_paths:
-                try:
-                    resolved_path.relative_to((self.config.cwd / dp).resolve())
+                dp_path = Path(dp)
+                denied_root = (
+                    dp_path.resolve()
+                    if dp_path.is_absolute()
+                    else (self.config.cwd / dp_path).resolve()
+                )
+                if is_relative_to(resolved_path, denied_root):
                     return False, f'路径已被禁止: {path}'
-                except ValueError:
-                    continue
 
         return True, ''
 

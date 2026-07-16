@@ -41,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -1253,8 +1253,8 @@ public class CpPlanService {
                 .eq("lab_code", labCode)
                 .eq("plan_status", 1)
                 .eq("is_deleted", 0)
-                .and(q -> q.isNull("last_calc_time")
-                        .or().le("last_calc_time", LocalDateTime.now().minusHours(1)));
+                .and(new com.mybatisflex.core.query.QueryColumn("last_calc_time").isNull(true)
+                        .or(new com.mybatisflex.core.query.QueryColumn("last_calc_time").le(LocalDateTime.now().minusHours(1))));
 
         return cpPathwayPlanMapper.selectListByQuery(query);
     }

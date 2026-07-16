@@ -19,7 +19,7 @@
 |------|------|----------|----------|
 | `ch03_safety_demo.py` | 3.2-3.5 | 否 | 路径白名单、命令黑名单、LoopGuard、Sandbox 五段防御层判定演示 |
 | `ch04_tools.py` | 4.2 | 否 | 六工具实现的最小调用演示（read / write / edit / grep / glob / bash） |
-| `ch04_mcp_server.py` | 4.4 | 否 | MCP Server 的最小实现（21 行），可被任何 MCP 客户端连接 |
+| `ch04_mcp_server.py` | 4.4 | 否 | MCP Server 的最小实现，可被任何 MCP 客户端连接 |
 | `ch05_context.py` | 5.2-5.4 | 否 | CLAUDE.md 三层发现 + Cache 边界 + 安全扫描的演示 |
 | `ch06_memory.py` | 6.2-6.5 | 否 | 四级压缩 + 五区 Token 预算 + Memory + Session 持久化的演示 |
 | `ch07_verify.py` | 7.4-7.6 | 否 | LoopGuard + 自验证 + 分阶段规划的演示 |
@@ -32,10 +32,10 @@
 |---------------|----------------------------------|
 | ch03_safety_demo | `experiments/ch03/exp1_three_round_safety/` |
 | ch04_tools | `experiments/ch04/exp1_tool_description_eval/` |
-| ch05_context | `experiments/ch05/exp1-3/` |
-| ch06_memory | `experiments/ch06/exp1-5/` |
-| ch07_verify | `experiments/ch07/exp1-3/` |
-| ch08_feedback | `experiments/ch08/exp1-3/` |
+| ch05_context | `experiments/ch05/exp1_agents_md_length/`、`exp2_cache_stability/`、`exp3_prohibition_wording/` |
+| ch06_memory | `experiments/ch06/exp1_snr_decay/` 到 `exp5_resume_awakening/` |
+| ch07_verify | `experiments/ch07/exp1_self_eval_blindspot/` 到 `exp5_planning_complexity/` |
+| ch08_feedback | `experiments/ch08/exp1_eval_framework_extended/` 到 `exp4_pareto/` |
 | ch12_observe | `experiments/ch12/run_all_cases.py` |
 
 ## 跑前准备

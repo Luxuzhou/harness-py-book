@@ -129,7 +129,7 @@ def main():
                                error=f'{type(e).__name__}: {e}')
                 fh.write(json.dumps(asdict(r), ensure_ascii=False) + '\n')
                 fh.flush()
-                flag = '✓' if r.task_resolved else '✗'
+                flag = 'PASS' if r.task_resolved else 'FAIL'
                 err = f' ERR={r.error[:40]}' if r.error else ''
                 print(f"  [{n:>2}/{total}] {cfg:5} seed={seed} {flag} cost=${r.total_cost_usd:.2f} turns={r.total_turns}{err}")
 

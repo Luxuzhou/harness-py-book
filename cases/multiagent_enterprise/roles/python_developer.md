@@ -19,10 +19,12 @@
 
 ## 输入
 
-1. `implementation_plan.md` — Architect 输出的实施计划（Python端章节）
-2. `spec/api_contract.yaml` — 接口契约（只读参考）
-3. `spec/requirement.md` — 需求文档（只读参考）
+1. `../../multiagent_enterprise/implementation_plan.md` — Architect 输出的实施计划（Python端章节）
+2. `../../multiagent_enterprise/spec/api_contract.yaml` — 接口契约（只读参考）
+3. `../../multiagent_enterprise/spec/requirement.md` — 需求文档（只读参考）
 4. `cases/data_compliance/target_service/` — 现有 Python 代码骨架
+
+**路径规则：** 你的 cwd 已经是 Python 服务根目录。读取编排产物时必须使用上面的相对路径；不要使用绝对 Windows 路径，也不要把 `cases/...` 再拼到当前 cwd 后面。
 
 ## 任务
 

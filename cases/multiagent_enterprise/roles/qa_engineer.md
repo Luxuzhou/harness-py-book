@@ -23,8 +23,10 @@
 1. `implementation_plan.md` — Architect 的测试策略章节
 2. `spec/api_contract.yaml` — 接口契约
 3. `spec/requirement.md` — 需求文档
-4. `cases/refactor_enterprise/target_project/` — Java 端实现代码
-5. `cases/data_compliance/target_service/` — Python 端实现代码
+4. `../refactor_enterprise/target_project/` — Java 端实现代码
+5. `../data_compliance/target_service/` — Python 端实现代码
+
+**路径规则：** 你的 cwd 是编排目录 `cases/multiagent_enterprise/`。跨项目读取或写测试时使用 `../refactor_enterprise/...` 和 `../data_compliance/...`，不要使用绝对 Windows 路径。
 
 ## 任务
 
@@ -170,3 +172,26 @@ def test_golden_boundary_n_minus_1():
 - QA 发现的 bug 记录到 test_report.md，由对应 Developer 在 Round 4 修复
 - 如果 bug 是契约不一致导致的，需要 Architect 介入裁定
 - QA 不应自行修改业务代码来让测试通过
+
+## 最终报告硬性格式
+
+`test_report.md` 末尾必须包含以下机器可读字段：
+
+```markdown
+FINAL_STATUS: PASS|FAIL
+Total: <总数>
+Passed: <通过数>
+Failed: <失败数>
+Known defects: <仍需 Developer 修复的代码缺陷数>
+```
+
+只有在以下条件同时满足时，才允许写 `FINAL_STATUS: PASS`：
+
+- Java 主代码中存在 `src/main/java/com/example/cp/client/*.java`，并能说明其调用 Python 分析服务；
+- Python 端相关 pytest 已实际执行并通过；
+- Java 端编译或相关测试已实际执行并通过；
+- 契约一致性测试已实际执行并通过；
+- `Failed: 0` 且 `Known defects: 0`。
+- 报告中不存在 P0/P1/P2 已知问题、建议修复、待补充实现或“虽然通过但仍需 Developer 处理”的描述。
+
+如果仍有任何失败、跳过的关键检查、手工推断的通过项或未修复代码缺陷，必须写 `FINAL_STATUS: FAIL`，并在失败详情中列明原因。

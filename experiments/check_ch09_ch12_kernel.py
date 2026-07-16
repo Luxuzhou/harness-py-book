@@ -40,7 +40,7 @@ def check_ch9() -> list[Check]:
     verify_text = read(ROOT / 'cases' / 'refactor_enterprise' / 'verify.py')
     ok, missing = has_all(run_text, [
         'planning_turns=5',
-        'max_iterations=60',
+        'max_iterations=120',
         "sandbox_mode='bypass'",
         'network_isolated=True',
         'allowed_paths=',
@@ -65,12 +65,12 @@ def check_ch10() -> list[Check]:
     run_text = read(ROOT / 'cases' / 'data_compliance' / 'run.py')
     verify_text = read(ROOT / 'cases' / 'data_compliance' / 'verify.py')
     ok, missing = has_all(run_text, [
-        'post_fail_closed=True',
-        "read_only_paths=['sample_data']",
-        "sandbox_mode='bypass'",
+        'read_only_paths=read_only_paths',
         'network_isolated=True',
-        'allowed_paths=',
+        'allowed_paths=allowed_paths',
+        'hooks=_build_hook_config()',
         'system_prompt_append=claude_md',
+        'acceptance_commands=["python -B verify.py"]',
     ])
     checks = [
         Check('Ch10 compliance controls', ok, missing or 'fail-closed hooks/read-only data/network isolation enabled'),

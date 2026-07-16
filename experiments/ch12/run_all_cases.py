@@ -1,52 +1,90 @@
 """
-三案例全量实验 — 自动运行 + 捕获结果
-======================================
-用法: python experiments/run_all_cases.py
-需要: .env 中的 OPENAI_API_KEY 或 HARNESS_API_KEY
+Chapter 12 full-case evaluation runner.
 
-新版三案例（对应书稿第 8-10 章）：
-- Case1  cases/refactor_enterprise   — Java 企业项目重构（Ch8）
-- Case2  cases/data_compliance       — Python 医疗合规服务（Ch9）
-- Case3  cases/multiagent_enterprise — 跨 Java/Python 多 Agent 编排（Ch10）
+This script intentionally imports each case's own run.py and verify.py. Chapter
+12 should measure the behavior of the chapter cases themselves, not a duplicate
+wrapper configuration that can drift from the book code.
 
-每个案例的运行日志、验证结果、运行指标自动保存到
-experiments/results/ 目录下，作为书稿写作素材。
-
-旧版三案例（refactor/medical/fullstack）已移到 cases/_archive/*_legacy/。
+Usage:
+    python experiments/ch12/run_all_cases.py
+    python experiments/ch12/run_all_cases.py --baseline experiments/ch12/baseline.json
 """
 
+from __future__ import annotations
+
+import argparse
+import importlib.util
 import io
 import json
 import os
 import sys
 import time
 import traceback
-from contextlib import redirect_stdout, redirect_stderr
 from datetime import datetime
 from pathlib import Path
 
-# 项目根目录
-ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT))
 
-# 加载 .env
-env_file = ROOT / '.env'
-if env_file.exists():
-    for line in env_file.read_text(encoding='utf-8').splitlines():
-        if line.strip() and not line.startswith('#') and '=' in line:
-            k, _, v = line.partition('=')
-            os.environ.setdefault(k.strip(), v.strip())
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 RESULTS_DIR = ROOT / 'experiments' / 'results'
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _load_env() -> None:
+    env_file = ROOT / '.env'
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding='utf-8').splitlines():
+        if line.strip() and not line.startswith('#') and '=' in line:
+            k, _, v = line.partition('=')
+            os.environ.setdefault(k.strip(), v.strip())
+
+
+def _load_main(module_name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f'cannot load module: {path}')
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = mod
+    spec.loader.exec_module(mod)
+    return mod.main
+
+
+class TeeWriter:
+    def __init__(self, original, buffer):
+        self.original = original
+        self.buffer = buffer
+
+    def write(self, s):
+        self.original.write(s)
+        self.buffer.write(s)
+
+    def flush(self):
+        self.original.flush()
+        self.buffer.flush()
+
+
+def _serialize_result(result) -> dict | str | None:
+    if result is None:
+        return None
+    if hasattr(result, '__dict__'):
+        data = {}
+        for k, v in result.__dict__.items():
+            try:
+                json.dumps(v)
+                data[k] = v
+            except (TypeError, ValueError):
+                data[k] = str(v)
+        return data
+    return str(result)
+
+
 def capture_run(name: str, run_fn, verify_fn=None) -> dict:
-    """运行一个案例，捕获全部输出和指标。"""
-    print(f'\n{"#"*60}')
+    print(f'\n{"#" * 60}')
     print(f'# {name}')
     print(f'# {datetime.now().isoformat()}')
-    print(f'{"#"*60}\n')
+    print(f'{"#" * 60}\n')
 
     record = {
         'name': name,
@@ -61,34 +99,19 @@ def capture_run(name: str, run_fn, verify_fn=None) -> dict:
         'exception': None,
     }
 
-    # 运行
     t0 = time.time()
     stdout_buf = io.StringIO()
     stderr_buf = io.StringIO()
+    old_stdout, old_stderr = sys.stdout, sys.stderr
 
     try:
-        # 同时打印到控制台和捕获
-        class TeeWriter:
-            def __init__(self, original, buffer):
-                self.original = original
-                self.buffer = buffer
-            def write(self, s):
-                self.original.write(s)
-                self.buffer.write(s)
-            def flush(self):
-                self.original.flush()
-                self.buffer.flush()
-
-        old_stdout, old_stderr = sys.stdout, sys.stderr
         sys.stdout = TeeWriter(old_stdout, stdout_buf)
         sys.stderr = TeeWriter(old_stderr, stderr_buf)
-
         result = run_fn()
         record['run_result'] = _serialize_result(result)
-
-    except Exception as e:
-        record['exception'] = f'{type(e).__name__}: {e}\n{traceback.format_exc()}'
-        print(f'[ERROR] {name} 运行异常: {e}')
+    except Exception as exc:
+        record['exception'] = f'{type(exc).__name__}: {exc}\n{traceback.format_exc()}'
+        print(f'[ERROR] {name} run failed: {exc}')
     finally:
         sys.stdout = old_stdout
         sys.stderr = old_stderr
@@ -98,173 +121,151 @@ def capture_run(name: str, run_fn, verify_fn=None) -> dict:
     record['duration_seconds'] = round(time.time() - t0, 1)
     record['end_time'] = datetime.now().isoformat()
 
-    # 验证
     if verify_fn:
         v_stdout = io.StringIO()
         v_stderr = io.StringIO()
         try:
             sys.stdout = TeeWriter(old_stdout, v_stdout)
             sys.stderr = TeeWriter(old_stderr, v_stderr)
-            verify_passed = verify_fn()
-            record['verify_passed'] = verify_passed
-        except Exception as e:
-            record['verify_error'] = f'{type(e).__name__}: {e}'
-            print(f'[ERROR] {name} 验证异常: {e}')
+            record['verify_passed'] = bool(verify_fn())
+        except Exception as exc:
+            record['verify_error'] = f'{type(exc).__name__}: {exc}\n{traceback.format_exc()}'
+            print(f'[ERROR] {name} verify failed: {exc}')
         finally:
             sys.stdout = old_stdout
             sys.stderr = old_stderr
         record['verify_output'] = v_stdout.getvalue()
+        record['verify_error'] += v_stderr.getvalue()
 
-    # 保存
     safe_name = name.replace(' ', '_').replace(':', '')
     ts = datetime.now().strftime('%Y%m%d_%H%M%S')
     out_path = RESULTS_DIR / f'{safe_name}_{ts}.json'
-    with open(out_path, 'w', encoding='utf-8') as f:
-        json.dump(record, f, ensure_ascii=False, indent=2, default=str)
+    out_path.write_text(json.dumps(record, ensure_ascii=False, indent=2, default=str), encoding='utf-8')
     print(f'\n[SAVED] {out_path}')
 
-    # 同时保存纯文本日志（方便引用到书稿）
     log_path = RESULTS_DIR / f'{safe_name}_{ts}.log'
-    with open(log_path, 'w', encoding='utf-8') as f:
-        f.write(f'=== {name} ===\n')
-        f.write(f'时间: {record["start_time"]} - {record.get("end_time", "")}\n')
-        f.write(f'耗时: {record["duration_seconds"]}s\n\n')
-        f.write('--- 运行输出 ---\n')
-        f.write(record['run_output'])
-        if record['run_error']:
-            f.write('\n--- 错误输出 ---\n')
-            f.write(record['run_error'])
-        if record['verify_output']:
-            f.write('\n--- 验证输出 ---\n')
-            f.write(record['verify_output'])
-        if record['exception']:
-            f.write('\n--- 异常 ---\n')
-            f.write(record['exception'])
+    log_path.write_text(
+        '\n'.join([
+            f'=== {name} ===',
+            f'time: {record["start_time"]} - {record.get("end_time", "")}',
+            f'duration: {record["duration_seconds"]}s',
+            '',
+            '--- run output ---',
+            record['run_output'],
+            '',
+            '--- run error ---',
+            record['run_error'],
+            '',
+            '--- verify output ---',
+            record['verify_output'],
+            '',
+            '--- verify error ---',
+            record['verify_error'],
+            '',
+            '--- exception ---',
+            record['exception'] or '',
+        ]),
+        encoding='utf-8',
+    )
     print(f'[SAVED] {log_path}')
-
     return record
 
 
-def _serialize_result(result) -> dict | None:
-    """将RunResult/SwarmResult序列化为dict。"""
-    if result is None:
-        return None
-    if hasattr(result, '__dict__'):
-        d = {}
-        for k, v in result.__dict__.items():
-            try:
-                json.dumps(v)
-                d[k] = v
-            except (TypeError, ValueError):
-                d[k] = str(v)
-        return d
-    return str(result)
-
-
-# ============ Case 1: Java 企业项目重构（Ch8） ============
-
 def run_case1():
-    from harness_py_pro import run, ModelConfig, AgentConfig
-    case_dir = ROOT / 'cases' / 'refactor_enterprise'
-    task = (case_dir / 'TASK.md').read_text(encoding='utf-8')
-    target_dir = case_dir / 'target_project'
-
-    return run(
-        task,
-        model_config=ModelConfig.from_env(),
-        agent_config=AgentConfig(
-            cwd=target_dir,
-            max_iterations=50,
-            planning_turns=3,
-            allow_write=True,
-            allow_shell=True,
-        ),
-    )
+    return _load_main(
+        'run_refactor',
+        ROOT / 'cases' / 'refactor_enterprise' / 'run.py',
+    )()
 
 
 def verify_case1():
-    import importlib.util
-    case_dir = ROOT / 'cases' / 'refactor_enterprise'
-    sys.path.insert(0, str(case_dir))
-    spec = importlib.util.spec_from_file_location('verify_refactor', case_dir / 'verify.py')
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.main()
+    return _load_main(
+        'verify_refactor',
+        ROOT / 'cases' / 'refactor_enterprise' / 'verify.py',
+    )()
 
-
-# ============ Case 2: Python 医疗合规服务（Ch9） ============
 
 def run_case2():
-    from harness_py_pro import run, ModelConfig, AgentConfig
-
-    case_dir = ROOT / 'cases' / 'data_compliance'
-    task = (case_dir / 'TASK.md').read_text(encoding='utf-8')
-    target_dir = case_dir / 'target_service'
-
-    return run(
-        task,
-        model_config=ModelConfig.from_env(),
-        agent_config=AgentConfig(
-            cwd=target_dir,
-            max_iterations=40,
-            planning_turns=2,
-            allow_write=True,
-            allow_shell=True,
-            network_isolated=True,
-            allowed_paths=['.'],
-        ),
-    )
+    return _load_main(
+        'run_compliance',
+        ROOT / 'cases' / 'data_compliance' / 'run.py',
+    )()
 
 
 def verify_case2():
-    import importlib.util
-    case_dir = ROOT / 'cases' / 'data_compliance'
-    sys.path.insert(0, str(case_dir))
-    spec = importlib.util.spec_from_file_location('verify_compliance', case_dir / 'verify.py')
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.main()
+    return _load_main(
+        'verify_compliance',
+        ROOT / 'cases' / 'data_compliance' / 'verify.py',
+    )()
 
-
-# ============ Case 3: 跨 Java/Python 多 Agent 编排（Ch10） ============
 
 def run_case3():
-    """通过 cases/multiagent_enterprise/run.py 运行多Agent编排。"""
-    import importlib.util
-    case_dir = ROOT / 'cases' / 'multiagent_enterprise'
-    sys.path.insert(0, str(case_dir))
-    spec = importlib.util.spec_from_file_location('run_multiagent', case_dir / 'run.py')
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.main()
+    return _load_main(
+        'run_multiagent',
+        ROOT / 'cases' / 'multiagent_enterprise' / 'run.py',
+    )()
 
 
 def verify_case3():
-    import importlib.util
-    case_dir = ROOT / 'cases' / 'multiagent_enterprise'
-    sys.path.insert(0, str(case_dir))
-    spec = importlib.util.spec_from_file_location('verify_multiagent', case_dir / 'verify.py')
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod.main()
+    return _load_main(
+        'verify_multiagent',
+        ROOT / 'cases' / 'multiagent_enterprise' / 'verify.py',
+    )()
 
 
-# ============ Main ============
+def _as_float(value) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
-def main():
-    print('='*60)
-    print('Harness-py Book — 三案例全量实验')
-    print(f'时间: {datetime.now().isoformat()}')
-    print(f'结果目录: {RESULTS_DIR}')
-    print('='*60)
 
-    # 检查API key
+def _load_baseline(path: Path | None) -> dict:
+    if path is None:
+        return {}
+    if not path.exists():
+        raise SystemExit(f'baseline file not found: {path}')
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+def _check_baseline(summary: list[dict], baseline: dict) -> list[str]:
+    if not baseline:
+        return []
+    failures: list[str] = []
+    for item in summary:
+        base = baseline.get(item['name'], {})
+        if not isinstance(base, dict):
+            continue
+        allowed = _as_float(base.get('cost_usd_110pct', base.get('cost_usd')))
+        actual = _as_float(item.get('cost'))
+        if allowed is not None and actual is not None:
+            limit = allowed if 'cost_usd_110pct' in base else allowed * 1.10
+            if actual > limit:
+                failures.append(f'{item["name"]}: cost ${actual:.4f} > baseline limit ${limit:.4f}')
+    return failures
+
+
+def main(argv: list[str] | None = None) -> bool:
+    parser = argparse.ArgumentParser(description='Run Chapter 12 full-case evaluation.')
+    parser.add_argument('--baseline', type=Path, help='Optional JSON cost baseline.')
+    args = parser.parse_args(argv)
+
+    _load_env()
+    baseline = _load_baseline(args.baseline)
+
+    print('=' * 60)
+    print('Harness-py Book - Chapter 12 full-case evaluation')
+    print(f'time: {datetime.now().isoformat()}')
+    print(f'repo root: {ROOT}')
+    print(f'results dir: {RESULTS_DIR}')
+    print('=' * 60)
+
     api_key = os.getenv('HARNESS_API_KEY', os.getenv('OPENAI_API_KEY', ''))
     if not api_key:
-        print('[FATAL] 未配置API key。请在 .env 中设置 OPENAI_API_KEY 或 HARNESS_API_KEY')
-        sys.exit(1)
+        print('[FATAL] missing OPENAI_API_KEY or HARNESS_API_KEY in environment/.env')
+        return False
     print(f'API Key: ...{api_key[-8:]}')
-    print(f'Model: {os.getenv("HARNESS_MODEL", os.getenv("MODEL", "deepseek-chat"))}')
+    print(f'Model: {os.getenv("HARNESS_MODEL", os.getenv("MODEL", "deepseek-v4-flash"))}')
     print()
 
     cases = [
@@ -276,35 +277,45 @@ def main():
     summary = []
     for name, run_fn, verify_fn in cases:
         record = capture_run(name, run_fn, verify_fn)
+        run_result = record.get('run_result') if isinstance(record.get('run_result'), dict) else {}
         summary.append({
             'name': name,
             'duration': record['duration_seconds'],
-            'turns': record.get('run_result', {}).get('turns', '?') if record.get('run_result') else '?',
-            'tool_calls': record.get('run_result', {}).get('tool_calls', '?') if record.get('run_result') else '?',
-            'tokens': record.get('run_result', {}).get('total_tokens', '?') if record.get('run_result') else '?',
-            'cost': record.get('run_result', {}).get('cost_usd', '?') if record.get('run_result') else '?',
+            'turns': run_result.get('turns', '?'),
+            'tool_calls': run_result.get('tool_calls', '?'),
+            'tokens': run_result.get('total_tokens', '?'),
+            'cost': run_result.get('cost_usd', '?'),
+            'cost_summary': run_result.get('cost_summary', {}),
+            'guard_stats': run_result.get('guard_stats', {}),
+            'hook_warnings': run_result.get('hook_warnings', []),
             'verify': record.get('verify_passed', '?'),
             'error': record.get('exception', '')[:100] if record.get('exception') else '',
         })
         print()
 
-    # 汇总
-    print('\n' + '='*60)
-    print('实验汇总')
-    print('='*60)
-    for s in summary:
-        status = 'PASS' if s['verify'] else ('FAIL' if s['verify'] is False else 'N/A')
-        error = f' [{s["error"]}]' if s['error'] else ''
-        print(f'  {s["name"]}: {s["duration"]}s, {s["turns"]} turns, '
-              f'{s["tool_calls"]} tools, {s["tokens"]} tokens, '
-              f'${s["cost"]}, verify={status}{error}')
+    print('\n' + '=' * 60)
+    print('Experiment summary')
+    print('=' * 60)
+    for item in summary:
+        status = 'PASS' if item['verify'] else ('FAIL' if item['verify'] is False else 'N/A')
+        error = f' [{item["error"]}]' if item['error'] else ''
+        print(
+            f'  {item["name"]}: {item["duration"]}s, {item["turns"]} turns, '
+            f'{item["tool_calls"]} tools, {item["tokens"]} tokens, '
+            f'${item["cost"]}, verify={status}{error}'
+        )
 
-    # 保存汇总
+    failures = _check_baseline(summary, baseline)
+    if failures:
+        print('\n[BASELINE FAIL]')
+        for failure in failures:
+            print(f'  - {failure}')
+
     summary_path = RESULTS_DIR / f'summary_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
-    with open(summary_path, 'w', encoding='utf-8') as f:
-        json.dump(summary, f, ensure_ascii=False, indent=2, default=str)
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2, default=str), encoding='utf-8')
     print(f'\n[SAVED] {summary_path}')
+    return not failures and all(item.get('verify') is not False for item in summary)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(0 if main() else 1)

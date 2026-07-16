@@ -19,9 +19,11 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from pathlib import Path
 from uuid import uuid4
 
 from .config import ModelConfig, AgentConfig, ensure_utf8_console
@@ -155,6 +157,111 @@ def _complete_with_client(
     return response, None
 
 
+def _merge_extra_context(*items: str) -> str:
+    return '\n\n'.join(item.strip() for item in items if item and item.strip())
+
+
+def _format_acceptance_output(command: str, ok: bool, output: str) -> str:
+    status = 'PASS' if ok else 'FAIL'
+    body = output.strip() or '(no output)'
+    return f'$ {command}\n[{status}]\n{body}'
+
+
+def _run_acceptance_commands(
+    ac: AgentConfig,
+    sandbox: Sandbox,
+    writer: SessionWriter,
+    logger: Logger,
+    verbose: bool,
+) -> tuple[bool, str]:
+    if not ac.acceptance_commands:
+        return True, ''
+
+    chunks: list[str] = []
+    for command in ac.acceptance_commands:
+        if verbose:
+            print(f'  [ACCEPTANCE] {command}')
+        ok, output = sandbox.execute_command(command, timeout=ac.acceptance_timeout)
+        chunks.append(_format_acceptance_output(command, ok, output))
+        writer.write_event({
+            'type': 'acceptance_check',
+            'command': command,
+            'ok': ok,
+            'output_preview': output[:1000],
+        })
+        logger.log('acceptance_check', {'command': command, 'ok': ok})
+        if not ok:
+            return False, '\n\n'.join(chunks)
+
+    return True, '\n\n'.join(chunks)
+
+
+def _resolve_failure_path(cwd: Path, raw_path: str) -> Path | None:
+    normalized = raw_path.replace('\\', '/')
+    path = Path(normalized)
+    candidates: list[Path] = []
+    if path.is_absolute():
+        candidates.append(path)
+    candidates.extend([
+        cwd / normalized,
+        cwd.parent / normalized,
+        cwd.parent.parent / normalized,
+    ])
+    if cwd.name in Path(normalized).parts:
+        parts = list(Path(normalized).parts)
+        idx = parts.index(cwd.name)
+        if idx < len(parts) - 1:
+            candidates.append(cwd / Path(*parts[idx + 1:]))
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            continue
+        if resolved.exists() and resolved.is_file():
+            return resolved
+    return None
+
+
+def _collect_acceptance_context(cwd: Path, output: str, radius: int) -> str:
+    matches = re.findall(r'([A-Za-z0-9_./\\-]+\.py):(\d+)', output)
+    if not matches:
+        return ''
+
+    snippets: list[str] = []
+    seen: set[tuple[Path, int]] = set()
+    for raw_path, raw_line in matches[:12]:
+        path = _resolve_failure_path(cwd, raw_path)
+        if not path:
+            continue
+        line_no = int(raw_line)
+        key = (path, line_no)
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            lines = path.read_text(encoding='utf-8').splitlines()
+        except (OSError, UnicodeDecodeError):
+            continue
+        start = max(1, line_no - radius)
+        end = min(len(lines), line_no + radius)
+        rel: Path = path
+        try:
+            rel = path.relative_to(cwd)
+        except ValueError:
+            try:
+                rel = path.relative_to(cwd.parent)
+            except ValueError:
+                pass
+        body = '\n'.join(
+            f'{idx}\t{lines[idx - 1]}'
+            for idx in range(start, end + 1)
+        )
+        snippets.append(f'## {rel}:{line_no}\n{body}')
+        if sum(len(s) for s in snippets) > 16000:
+            break
+    return '\n\n'.join(snippets)
+
+
 def run(
     task: str,
     *,
@@ -245,7 +352,11 @@ def run(
             sandbox_mode=ac.sandbox_mode,
             network_isolated=ac.network_isolated,
             filesystem_roots=ac.filesystem_roots,
+            allowed_paths=ac.allowed_paths,
+            denied_paths=ac.denied_paths,
+            read_only_paths=ac.read_only_paths,
             command_runner=ac.command_runner,
+            system_prompt_append=ac.system_prompt_append,
         )
 
         # 生成唯一 agent_id
@@ -288,6 +399,12 @@ def run(
 
     # 规划状态管理器（对齐 TUI 的 Plan + Checklist + Task 体系）
     plan_session_dir = ac.cwd / '.harness_sessions'
+    if ac.reset_plan_state:
+        for state_file in ('plan_state.json', 'checklist_state.json', 'tasks.json'):
+            try:
+                (plan_session_dir / state_file).unlink(missing_ok=True)
+            except OSError:
+                pass
     plan_manager = PlanStateManager(plan_session_dir)
     plan_tools = [
         UpdatePlanTool(plan_manager),
@@ -319,11 +436,13 @@ def run(
     fs_roots = [ac.cwd]
     if ac.filesystem_roots:
         fs_roots.extend(ac.cwd / r for r in ac.filesystem_roots)
+    read_only_paths = [ac.cwd / r for r in ac.read_only_paths]
     sandbox = create_sandbox(
         ac.cwd,
         mode=ac.sandbox_mode,
         network_isolated=ac.network_isolated,
         allowed_roots=fs_roots,
+        read_only_paths=read_only_paths,
     )
     ac.command_runner = lambda command, timeout: sandbox.execute_command(command, timeout=timeout)
 
@@ -341,7 +460,7 @@ def run(
     system_prompt = build_system_prompt(
         ac.cwd,
         role_prompt=ac.role_prompt,
-        extra_context=memory_bundle,
+        extra_context=_merge_extra_context(memory_bundle, ac.system_prompt_append),
         plan_context=plan_context,
     )
 
@@ -367,12 +486,51 @@ def run(
     })
 
     result = RunResult(session_id=session_id)
+    acceptance_failures = 0
 
     if verbose:
         role_tag = f' role={ac.role}' if ac.role else ''
         print(f'[harness-pro] session={session_id[:12]} model={mc.model}{role_tag}')
         current_est = estimate_tokens(messages, mc.model)
         print(f'[harness-pro] budget={format_budget(budget, current_est)}')
+
+    if ac.acceptance_commands and ac.inject_initial_acceptance and not initial_messages:
+        accepted, acceptance_output = _run_acceptance_commands(
+            ac, sandbox, writer, logger, verbose,
+        )
+        if not accepted:
+            context = _collect_acceptance_context(
+                ac.cwd, acceptance_output, ac.acceptance_context_lines,
+            )
+            reminder = (
+                '<system-reminder>[INITIAL ACCEPTANCE CHECK FAILED]\n'
+                'The acceptance gate has already been run before your first turn. '
+                'Use this failure output as the starting point; do not rediscover the task from scratch. '
+                'After edits, call the `acceptance_check` tool instead of manually invoking the same command with bash.\n\n'
+                f'{acceptance_output[:6000]}\n'
+            )
+            if context:
+                reminder += (
+                    '\nRelevant source snippets around failing lines:\n'
+                    f'{context[:16000]}\n'
+                )
+            reminder += '</system-reminder>'
+            messages.append({'role': 'user', 'content': reminder})
+            writer.write_event({
+                'type': 'initial_acceptance_failed',
+                'output_preview': acceptance_output[:1000],
+                'context_chars': len(context),
+            })
+        else:
+            messages.append({
+                'role': 'user',
+                'content': (
+                    '<system-reminder>[INITIAL ACCEPTANCE CHECK PASSED]\n'
+                    'The configured acceptance gate already passes. Make no unnecessary code changes.\n'
+                    f'{acceptance_output[:4000]}\n'
+                    '</system-reminder>'
+                ),
+            })
 
     for iteration in range(1, ac.max_iterations + 1):
         # === 预检压缩 ===
@@ -398,7 +556,7 @@ def run(
             new_system = build_system_prompt(
                 ac.cwd,
                 role_prompt=ac.role_prompt,
-                extra_context=memory_bundle,
+                extra_context=_merge_extra_context(memory_bundle, ac.system_prompt_append),
                 plan_context=plan_manager.format_for_prompt(),
             )
             if messages and messages[0].get('role') == 'system':
@@ -504,6 +662,39 @@ def run(
                 continue
 
             result.output = content or ''
+            if ac.acceptance_commands:
+                accepted, acceptance_output = _run_acceptance_commands(
+                    ac, sandbox, writer, logger, verbose,
+                )
+                if not accepted:
+                    acceptance_failures += 1
+                    messages.append({'role': 'assistant', 'content': content or ''})
+                    if content:
+                        writer.write_message('assistant', content)
+                    reminder = (
+                        '<system-reminder>[ACCEPTANCE CHECK FAILED]\n'
+                        'The task is not complete. Fix the failing acceptance checks, '
+                        'then try to finish again only after they pass.\n'
+                        'Do not edit acceptance scripts or weaken their criteria. '
+                        'If a checker expects a specific source-code shape, adapt the task code '
+                        'within the allowed scope to satisfy it.\n\n'
+                        f'{acceptance_output[:6000]}\n'
+                        '</system-reminder>'
+                    )
+                    messages.append({'role': 'user', 'content': reminder})
+                    writer.write_event({
+                        'type': 'acceptance_failed',
+                        'failure_count': acceptance_failures,
+                        'output_preview': acceptance_output[:1000],
+                    })
+                    if verbose:
+                        print(f'  [ACCEPTANCE] failed ({acceptance_failures}/{ac.max_acceptance_failures})')
+                    if acceptance_failures >= ac.max_acceptance_failures:
+                        result.stop_reason = 'acceptance_failed'
+                        result.output = acceptance_output
+                        break
+                    continue
+
             result.stop_reason = 'stop'
             messages.append({'role': 'assistant', 'content': content})
             writer.write_message('assistant', content)
@@ -552,7 +743,9 @@ def run(
 
         # === Phase 2: Execute remaining tools (并行或串行) ===
         halt_after_turn = False
+        acceptance_passed_by_tool = False
         if tool_calls_to_execute:
+            acceptance_failures = 0
             if _should_parallelize(tool_calls_to_execute):
                 tool_results = _execute_tools_parallel(
                     tool_calls_to_execute, registry, hook_executor, perm_checker, sandbox,
@@ -583,6 +776,14 @@ def run(
                                 print(f'  [HOOK] {w}')
 
                 result.tool_calls += 1
+                if (
+                    ac.stop_on_acceptance_pass
+                    and tool_name == 'acceptance_check'
+                    and ok
+                ):
+                    acceptance_passed_by_tool = True
+                    result.output = tool_content
+                    result.stop_reason = 'acceptance_passed'
 
                 # Phase 3: Post-execution LoopGuard (failure warn/halt)
                 action, guard_msg = guard.check_post(tool_name, ok)
@@ -612,6 +813,11 @@ def run(
                     ),
                 }
                 messages.append(tool_msg)
+
+        if acceptance_passed_by_tool:
+            if verbose:
+                print('  [ACCEPTANCE] passed; stopping run')
+            break
 
         if halt_after_turn:
             break
@@ -688,6 +894,13 @@ def run(
 
     else:
         result.stop_reason = f'max_iterations ({ac.max_iterations})'
+        if ac.acceptance_commands:
+            accepted, acceptance_output = _run_acceptance_commands(
+                ac, sandbox, writer, logger, verbose,
+            )
+            result.output = acceptance_output
+            if accepted:
+                result.stop_reason = 'acceptance_passed_after_max_iterations'
 
     # 完成
     metrics.end_time = time.time()
@@ -716,6 +929,13 @@ def run(
         if result.hook_warnings:
             print(f'[harness-pro] 合规警告: {len(result.hook_warnings)} 条')
         print(metrics.format_report())
+
+    subagent_mgr.shutdown()
+    if completion_client is None and hasattr(client, '_session'):
+        try:
+            client._session.close()
+        except Exception:
+            pass
 
     return result
 

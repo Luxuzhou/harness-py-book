@@ -100,38 +100,66 @@ def estimate_tools_tokens(tool_schemas: list[dict], model: str = 'default') -> i
 @dataclass
 class TokenBudget:
     """
-    Token预算五区分配。对标Claude Code的预算模型。
+    Token预算五区分配。
 
-    ┌─────────────────────────────┐
-    │ Zone 1: System Prompt (10%) │
-    │ Zone 2: Tools Schema  (5%) │
-    │ Zone 3: Context      (55%) │
-    │ Zone 4: Output       (15%) │
-    │ Zone 5: Safety Buffer(15%) │
-    └─────────────────────────────┘
+    Zone 1: System Prompt  (10%) 身份、工具说明、上下文说明
+    Zone 2: History        (50%) 对话历史
+    Zone 3: Current Task   (20%) 当前轮工具返回与任务上下文
+    Zone 4: Output Reserve (15%) 输出预留，永不侵占
+    Zone 5: Memory         (5%)  项目规则与长期记忆
     """
     total: int
-    system: int
-    tools: int
-    context: int
-    output: int
-    safety: int
+    system_prompt: int
+    history: int
+    current_task: int
+    output_reserve: int
+    memory: int
 
     @classmethod
     def allocate(cls, context_window: int) -> TokenBudget:
+        system_prompt = int(context_window * 0.10)
+        history = int(context_window * 0.50)
+        current_task = int(context_window * 0.20)
+        output_reserve = int(context_window * 0.15)
+        memory = context_window - system_prompt - history - current_task - output_reserve
         return cls(
             total=context_window,
-            system=int(context_window * 0.10),
-            tools=int(context_window * 0.05),
-            context=int(context_window * 0.55),
-            output=int(context_window * 0.15),
-            safety=int(context_window * 0.15),
+            system_prompt=system_prompt,
+            history=history,
+            current_task=current_task,
+            output_reserve=output_reserve,
+            memory=max(0, memory),
         )
 
     @property
     def available_for_messages(self) -> int:
-        """消息可用空间 = total - system - tools - output - safety。"""
-        return self.total - self.system - self.tools - self.output - self.safety
+        """可压缩消息空间 = 对话历史 + 当前任务区。"""
+        return self.history + self.current_task
+
+    @property
+    def system(self) -> int:
+        """兼容旧字段名。"""
+        return self.system_prompt
+
+    @property
+    def tools(self) -> int:
+        """兼容旧字段名；工具 schema 计入 system prompt，长期记忆单独占 5%。"""
+        return self.memory
+
+    @property
+    def context(self) -> int:
+        """兼容旧字段名。"""
+        return self.history + self.current_task
+
+    @property
+    def output(self) -> int:
+        """兼容旧字段名。"""
+        return self.output_reserve
+
+    @property
+    def safety(self) -> int:
+        """旧版安全缓冲已收敛到 Memory 和压缩阈值，不再单独占区。"""
+        return 0
 
     def should_compress(self, current_tokens: int, threshold_pct: float = 0.7) -> tuple[bool, str]:
         """判断是否需要压缩。"""
@@ -153,20 +181,33 @@ def format_budget(budget: TokenBudget, current_tokens: int) -> str:
 
 # ============ 成本追踪 ============
 
-# 主流模型定价 (USD per 1M tokens, 2026-04数据)
+# 主流模型定价 (USD per 1M tokens, 2026-05数据)。
+# 元组仅记录非缓存 input/output 单价；Prompt Cache 命中价格需从
+# provider usage 字段单独核算。
 MODEL_PRICING: dict[str, tuple[float, float]] = {
     # (input_price, output_price) per 1M tokens
-    'deepseek-chat': (0.27, 1.10),
-    'deepseek-reasoner': (0.55, 2.19),
+    'deepseek-v4-flash': (0.14, 0.28),
+    'deepseek-v4-pro': (0.435, 0.87),  # promotional price through 2026-06-15
+    'deepseek-chat': (0.14, 0.28),  # alias migrating to v4-flash
+    'deepseek-reasoner': (0.435, 0.87),  # alias migrating to v4-pro
+    'gpt-5.5': (5.00, 30.00),
+    'gpt-5.4-mini': (0.75, 4.50),
+    'gpt-5.4-nano': (0.20, 1.25),
+    'gpt-5.4': (2.50, 15.00),
+    'gpt-5-mini': (0.25, 2.00),
+    'gpt-5-nano': (0.05, 0.40),
+    'gpt-5': (1.25, 10.00),
     'gpt-4o': (2.50, 10.00),
     'gpt-4o-mini': (0.15, 0.60),
     'gpt-4.1': (2.00, 8.00),
     'gpt-4.1-mini': (0.40, 1.60),
     'gpt-4.1-nano': (0.10, 0.40),
-    'gpt-5': (5.00, 15.00),
     'claude-sonnet-4-6': (3.00, 15.00),
-    'claude-opus-4-6': (15.00, 75.00),
-    'claude-haiku-4-5': (0.80, 4.00),
+    'claude-opus-4-7': (5.00, 25.00),
+    'claude-opus-4-6': (5.00, 25.00),
+    'claude-haiku-4-5': (1.00, 5.00),
+    'kimi-k2.6': (0.95, 4.00),
+    'kimi-k2.5': (0.60, 3.00),
 }
 
 
@@ -184,6 +225,7 @@ class CostTracker:
     _records: list[dict] = field(default_factory=list)
     _total_input: int = 0
     _total_output: int = 0
+    _unknown_models: set[str] = field(default_factory=set)
 
     def record(self, model: str, input_tokens: int, output_tokens: int):
         """记录一次API调用。"""
@@ -191,6 +233,8 @@ class CostTracker:
         self._total_output += output_tokens
 
         cost = self._calculate_cost(model, input_tokens, output_tokens)
+        if self._find_pricing(model) is None:
+            self._unknown_models.add(model)
         self._records.append({
             'model': model,
             'input_tokens': input_tokens,
@@ -209,9 +253,9 @@ class CostTracker:
     def _find_pricing(self, model: str) -> tuple[float, float] | None:
         """查找模型定价。"""
         model_lower = model.lower()
-        for key, pricing in MODEL_PRICING.items():
+        for key in sorted(MODEL_PRICING, key=len, reverse=True):
             if key in model_lower:
-                return pricing
+                return MODEL_PRICING[key]
         return None
 
     @property
@@ -243,6 +287,7 @@ class CostTracker:
             'total_cost_usd': round(self.total_cost, 6),
             'budget_usd': self.budget_usd,
             'budget_remaining': round(self.budget_usd - self.total_cost, 6) if self.budget_usd > 0 else None,
+            'unknown_models': sorted(self._unknown_models),
             'by_model': by_model,
         }
 
@@ -258,6 +303,8 @@ class CostTracker:
         ]
         if s['budget_usd']:
             lines.append(f'  预算: ${s["budget_usd"]:.2f} (剩余: ${s["budget_remaining"]:.4f})')
+        if s['unknown_models']:
+            lines.append(f'  未知模型: {", ".join(s["unknown_models"])}')
 
         for model, data in s['by_model'].items():
             lines.append(f'  [{model}] {data["calls"]}次 '

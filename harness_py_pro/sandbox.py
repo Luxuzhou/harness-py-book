@@ -40,6 +40,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from .pathing import resolve_agent_path
+
 
 # ============ 权限模式 ============
 
@@ -166,6 +168,7 @@ NETWORK_ENV_VARS = frozenset({
 COMMAND_TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.-]*")
 PARENT_TRAVERSAL_RE = re.compile(r'(^|[\s\'"=])\.\.(?:[\\/]|$)')
 WINDOWS_ABS_PATH_RE = re.compile(r'(^|[\s\'"=])([A-Za-z]:[\\/][^\s\'"|&;<>]+)')
+COMMAND_PATH_TOKEN_RE = re.compile(r'(?:^|[\s\'"=])([^\s\'"|&;<>]*\.\.(?:[\\/][^\s\'"|&;<>]*)?)')
 
 
 @dataclass
@@ -376,10 +379,20 @@ class FilesystemPolicy:
                 return False, f'危险命令拦截: {command[:80]}'
 
         if PARENT_TRAVERSAL_RE.search(command):
-            # 如果配置了 allowed_roots，允许目录穿越
-            # （实际文件访问仍受 check_path 限制）
             if not self.allowed_roots:
                 return False, '文件系统隔离: command contains parent-directory traversal'
+            matched_parent_path = False
+            for raw_token in COMMAND_PATH_TOKEN_RE.findall(command):
+                matched_parent_path = True
+                token = raw_token.strip('\'"')
+                if '..' not in Path(token).parts and '..' not in token.replace('\\', '/').split('/'):
+                    continue
+                candidate = self.allowed_roots[0] / token
+                ok, _ = self.check_path(candidate, 'read')
+                if not ok:
+                    return False, f'文件系统隔离: parent traversal outside allowed roots: {token}'
+            if not matched_parent_path:
+                return False, '文件系统隔离: command contains unparseable parent-directory traversal'
 
         for match in WINDOWS_ABS_PATH_RE.finditer(command):
             candidate = Path(match.group(2))
@@ -445,7 +458,11 @@ class Sandbox:
         # 2. 文件系统检查
         path_arg = tool_args.get('path', '')
         if path_arg:
-            full_path = self.cwd / path_arg
+            full_path = resolve_agent_path(
+                self.cwd,
+                path_arg,
+                allowed_roots=self.filesystem.allowed_roots,
+            )
             ok, reason = self.filesystem.check_path(full_path, action)
             if not ok:
                 self._blocks += 1
@@ -507,7 +524,10 @@ class Sandbox:
         env['PYTHONUTF8'] = '1'
 
         # 执行
-        bash_path = _find_best_bash()
+        # On Windows, prefer the native shell. Git Bash/MSYS can pick up the
+        # Unix `mvn` shim and break Maven with missing classworlds jars even
+        # when the same command succeeds from PowerShell/cmd.
+        bash_path = None if sys.platform == 'win32' else _find_best_bash()
         try:
             if bash_path:
                 proc = subprocess.Popen(
@@ -686,19 +706,37 @@ def _threaded_communicate(proc: subprocess.Popen, timeout: int) -> tuple[bytes, 
         except Exception:
             q.put(b'')
 
-    t1 = threading.Thread(target=read_stream, args=(proc.stdout, stdout_q))
-    t2 = threading.Thread(target=read_stream, args=(proc.stderr, stderr_q))
+    t1 = threading.Thread(target=read_stream, args=(proc.stdout, stdout_q), daemon=True)
+    t2 = threading.Thread(target=read_stream, args=(proc.stderr, stderr_q), daemon=True)
     t1.start()
     t2.start()
     t1.join(timeout=timeout)
     t2.join(timeout=timeout)
 
     if t1.is_alive() or t2.is_alive():
-        proc.kill()
+        _kill_process_tree(proc)
         raise subprocess.TimeoutExpired(cmd='', timeout=timeout)
 
     proc.wait()
     return stdout_q.get_nowait(), stderr_q.get_nowait()
+
+
+def _kill_process_tree(proc: subprocess.Popen) -> None:
+    try:
+        if sys.platform == 'win32':
+            subprocess.run(
+                ['taskkill', '/PID', str(proc.pid), '/T', '/F'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            )
+            return
+    except Exception:
+        pass
+    try:
+        proc.kill()
+    except Exception:
+        pass
 
 
 def _smart_decode(raw: bytes) -> str:

@@ -6,6 +6,8 @@ import com.example.cp.dto.plan.CpPlanDto;
 import com.example.cp.dto.plan.CpPlanPageRequest;
 import com.example.cp.dto.plan.CpPlanUpdateRequest;
 import com.example.cp.model.CpPathwayVariation;
+import com.example.cp.service.plan.CpPlanBatchService;
+import com.example.cp.service.plan.CpPlanCrudService;
 import com.example.cp.service.plan.CpPlanService;
 
 import com.mybatisflex.core.paginate.Page;
@@ -41,6 +43,8 @@ import java.util.Map;
 @Tag(name = "临床路径方案管理", description = "临床路径方案的增删改查、算法应用、批量操作等")
 public class CpPlanController {
 
+    private final CpPlanCrudService cpPlanCrudService;
+    private final CpPlanBatchService cpPlanBatchService;
     private final CpPlanService cpPlanService;
 
     // ====================================================================
@@ -51,7 +55,7 @@ public class CpPlanController {
     @Operation(summary = "创建临床路径方案", description = "创建新的临床路径路径依从率计划")
     public ResponseEntity<Map<String, Object>> createPlan(@Valid @RequestBody CpPlanCreateRequest request) {
         log.info("创建临床路径方案请求, itemCode={}, instrumentCode={}", request.getItemCode(), request.getInstrumentCode());
-        CpPlanDto dto = cpPlanService.createPlan(request);
+        CpPlanDto dto = cpPlanCrudService.createPlan(request);
         return ResponseEntity.ok(Map.of("code", 200, "message", "创建成功", "data", dto));
     }
 
@@ -61,7 +65,7 @@ public class CpPlanController {
             @PathVariable @NotBlank(message = "计划ID不能为空") String planId,
             @Valid @RequestBody CpPlanUpdateRequest request) {
         log.info("更新临床路径方案请求, planId={}", planId);
-        CpPlanDto dto = cpPlanService.updatePlan(planId, request);
+        CpPlanDto dto = cpPlanCrudService.updatePlan(planId, request);
         return ResponseEntity.ok(Map.of("code", 200, "message", "更新成功", "data", dto));
     }
 
@@ -71,7 +75,7 @@ public class CpPlanController {
             @PathVariable @NotBlank(message = "计划ID不能为空") String planId,
             @RequestParam @NotBlank(message = "操作人不能为空") String operator) {
         log.info("删除临床路径方案请求, planId={}, operator={}", planId, operator);
-        cpPlanService.deletePlan(planId, operator);
+        cpPlanCrudService.deletePlan(planId, operator);
         return ResponseEntity.ok(Map.of("code", 200, "message", "删除成功"));
     }
 
@@ -79,7 +83,7 @@ public class CpPlanController {
     @Operation(summary = "查询计划详情", description = "根据ID查询临床路径方案详情")
     public ResponseEntity<Map<String, Object>> getPlanDetail(
             @PathVariable @NotBlank(message = "计划ID不能为空") String planId) {
-        CpPlanDto dto = cpPlanService.getPlanById(planId);
+        CpPlanDto dto = cpPlanCrudService.getPlanById(planId);
         return ResponseEntity.ok(Map.of("code", 200, "data", dto));
     }
 
@@ -113,7 +117,7 @@ public class CpPlanController {
         request.setPageNum(pageNum);
         request.setPageSize(pageSize);
 
-        Page<CpPlanDto> page = cpPlanService.queryPlanPage(request);
+        Page<CpPlanDto> page = cpPlanCrudService.queryPlanPage(request);
         return ResponseEntity.ok(Map.of("code", 200, "data", page));
     }
 
@@ -122,7 +126,7 @@ public class CpPlanController {
     public ResponseEntity<Map<String, Object>> queryPlanList(
             @RequestParam @NotBlank(message = "实验室编码不能为空") String labCode,
             @RequestParam @NotBlank(message = "科室编码不能为空") String instrumentCode) {
-        List<CpPlanDto> list = cpPlanService.queryPlansByLabAndInstrument(labCode, instrumentCode);
+        List<CpPlanDto> list = cpPlanCrudService.queryPlansByLabAndInstrument(labCode, instrumentCode);
         return ResponseEntity.ok(Map.of("code", 200, "data", list));
     }
 
@@ -180,7 +184,7 @@ public class CpPlanController {
     @Operation(summary = "批量更新计划状态", description = "批量启用或禁用临床路径方案")
     public ResponseEntity<Map<String, Object>> batchUpdateStatus(
             @Valid @RequestBody CpPlanBatchRequest request) {
-        int count = cpPlanService.batchUpdatePlanStatus(request);
+        int count = cpPlanBatchService.batchUpdatePlanStatus(request);
         return ResponseEntity.ok(Map.of("code", 200, "message", "批量更新成功", "count", count));
     }
 
@@ -188,7 +192,7 @@ public class CpPlanController {
     @Operation(summary = "批量执行计算", description = "批量执行临床路径路径依从率计算")
     public ResponseEntity<Map<String, Object>> batchExecuteCalc(
             @RequestBody List<String> planIds) {
-        List<Map<String, Object>> results = cpPlanService.batchExecutePlanCalc(planIds);
+        List<Map<String, Object>> results = cpPlanBatchService.batchExecutePlanCalc(planIds);
         return ResponseEntity.ok(Map.of("code", 200, "data", results));
     }
 
@@ -214,7 +218,7 @@ public class CpPlanController {
     @Operation(summary = "统计计划数量", description = "按状态统计各类计划数量")
     public ResponseEntity<Map<String, Object>> countByStatus(
             @RequestParam @NotBlank(message = "实验室编码不能为空") String labCode) {
-        Map<String, Long> counts = cpPlanService.countPlanByStatus(labCode);
+        Map<String, Long> counts = cpPlanCrudService.countPlanByStatus(labCode);
         return ResponseEntity.ok(Map.of("code", 200, "data", counts));
     }
 }

@@ -19,8 +19,8 @@ if env_file.exists():
 from harness_py_pro import ModelConfig
 from harness_py_pro.swarm import AgentRole, orchestrate
 
-ch8_root = REPO_ROOT / 'cases' / 'refactor_enterprise' / 'target_project'
-ch9_root = REPO_ROOT / 'cases' / 'data_compliance' / 'target_service'
+java_root = REPO_ROOT / 'cases' / 'refactor_enterprise' / 'target_project'
+python_root = REPO_ROOT / 'cases' / 'data_compliance' / 'target_service'
 
 # 读取 Architect 角色 prompt
 architect_prompt = (CASE_DIR / 'roles' / 'architect.md').read_text(encoding='utf-8')
@@ -28,8 +28,8 @@ architect_prompt = (CASE_DIR / 'roles' / 'architect.md').read_text(encoding='utf
 # 简化上下文
 context = f"""
 本任务在两个真实业务代码库上同时进行：
-- Java 端（Ch8）：{ch8_root}
-- Python 端（Ch9）：{ch9_root}
+- Java 端（第9章）：{java_root}
+- Python 端（第10章）：{python_root}
 
 你需要调查两边的代码结构，然后输出 implementation_plan.md。
 为了加快速度，你可以使用 agent_spawn 并行调查两边的代码结构。

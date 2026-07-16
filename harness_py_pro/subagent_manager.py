@@ -245,4 +245,7 @@ class SubAgentManager:
 
     def shutdown(self):
         """关闭线程池。"""
-        self._executor.shutdown(wait=False)
+        try:
+            self._executor.shutdown(wait=False, cancel_futures=True)
+        except TypeError:
+            self._executor.shutdown(wait=False)

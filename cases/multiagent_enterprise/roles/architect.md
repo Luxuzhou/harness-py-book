@@ -20,8 +20,10 @@
 1. `spec/requirement.md` — 完整需求规格
 2. `spec/api_contract.yaml` — OpenAPI 接口契约
 3. `spec/architecture.md` — 现有系统架构说明
-4. `cases/refactor_enterprise/target_project/` — Java 端现有代码骨架
-5. `cases/data_compliance/target_service/` — Python 端现有代码骨架
+4. `../refactor_enterprise/target_project/` — Java 端现有代码骨架
+5. `../data_compliance/target_service/` — Python 端现有代码骨架
+
+**路径规则：** 你的 cwd 是编排目录 `cases/multiagent_enterprise/`。读取两端代码时使用上面的相对路径；不要使用绝对 Windows 路径。
 
 ## 任务
 
@@ -93,3 +95,6 @@
 - plan 中每个文件的实现要点不少于 3 条
 - 必须包含完整的错误处理方案
 - 必须考虑并发安全和性能约束
+- 本实验的 Java 端 P0 交付物必须写入 plan：`src/main/java/com/example/cp/client/PythonAnalysisClient.java`
+  或同等命名的 Java→Python HTTP 客户端。若该客户端缺失，不能把 Java 端判定为完成。
+- plan 不应把已有 Controller/Service/DTO 的重复实现当作主任务；应先识别基线已有代码，再聚焦跨端集成缺口。

@@ -119,6 +119,7 @@ class AgentConfig:
     # 权限配置
     allowed_paths: list[str] = field(default_factory=list)
     denied_paths: list[str] = field(default_factory=list)
+    read_only_paths: list[str] = field(default_factory=list)
     allowed_tools: list[str] = field(default_factory=list)
     denied_tools: list[str] = field(default_factory=list)
 
@@ -134,7 +135,17 @@ class AgentConfig:
     # Agent角色（用于多Agent场景）
     role: str = ''
     role_prompt: str = ''
+    system_prompt_append: str = ''
     tool_filter: list[str] = field(default_factory=list)
+
+    # Acceptance gate: commands that must pass before the agent can stop.
+    acceptance_commands: list[str] = field(default_factory=list)
+    acceptance_timeout: int = 300
+    max_acceptance_failures: int = 5
+    inject_initial_acceptance: bool = True
+    acceptance_context_lines: int = 35
+    stop_on_acceptance_pass: bool = True
+    reset_plan_state: bool = False
 
     # 子代理配置
     is_subagent: bool = False        # 当前是否为子代理

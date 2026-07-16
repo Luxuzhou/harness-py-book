@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import harness_py_pro.engine as engine_module
@@ -110,6 +111,79 @@ def test_sandbox_blocks_nested_network_commands_and_parent_traversal(workspace_t
         assert not allowed
 
 
+def test_sandbox_allows_parent_traversal_only_into_allowed_roots(workspace_tmp_path: Path):
+    shared = workspace_tmp_path.parent / f'{workspace_tmp_path.name}_shared'
+    shared.mkdir()
+    try:
+        sandbox = create_sandbox(
+            workspace_tmp_path,
+            mode='bypass',
+            network_isolated=False,
+            allowed_roots=[workspace_tmp_path, shared],
+        )
+
+        rel_to_shared = f'..\\{shared.name}\\artifact.md'
+        allowed, reason = sandbox.check_tool_call('bash', {'command': f'type {rel_to_shared}'})
+        assert allowed, reason
+
+        blocked, _ = sandbox.check_tool_call('bash', {'command': 'type ..\\secret.txt'})
+        assert not blocked
+    finally:
+        shutil.rmtree(shared, ignore_errors=True)
+
+
+def test_permission_checker_accepts_redundant_cwd_prefixed_paths(workspace_tmp_path: Path):
+    root = workspace_tmp_path / 'cases' / 'refactor_enterprise' / 'target_project'
+    source = root / 'src' / 'main' / 'java' / 'Foo.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('class Foo {}', encoding='utf-8')
+
+    checker = PermissionChecker(AgentConfig(cwd=root, allowed_paths=['.']))
+    ok, reason = checker.check_path(
+        'cases/refactor_enterprise/target_project/src/main/java/Foo.java',
+    )
+
+    assert ok, reason
+
+
+def test_read_file_resolves_redundant_cwd_prefixed_paths(workspace_tmp_path: Path):
+    root = workspace_tmp_path / 'cases' / 'refactor_enterprise' / 'target_project'
+    source = root / 'src' / 'main' / 'java' / 'Foo.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('class Foo {}', encoding='utf-8')
+
+    registry = create_default_registry()
+    ok, output = registry.execute_tool(
+        'read_file',
+        {'path': 'cases/refactor_enterprise/target_project/src/main/java/Foo.java'},
+        AgentConfig(cwd=root, filesystem_roots=['.']),
+        turn=10,
+    )
+
+    assert ok, output
+    assert 'class Foo' in output
+
+
+def test_sandbox_resolves_redundant_cwd_prefixed_paths(workspace_tmp_path: Path):
+    root = workspace_tmp_path / 'cases' / 'refactor_enterprise' / 'target_project'
+    source = root / 'src' / 'main' / 'java' / 'Foo.java'
+    source.parent.mkdir(parents=True)
+    source.write_text('class Foo {}', encoding='utf-8')
+
+    sandbox = create_sandbox(
+        root,
+        mode='bypass',
+        network_isolated=False,
+        allowed_roots=[root],
+    )
+    allowed, reason = sandbox.check_tool_call(
+        'read_file',
+        {'path': 'cases/refactor_enterprise/target_project/src/main/java/Foo.java'},
+    )
+
+    assert allowed, reason
+
+
 def test_memory_bundle_is_fenced_and_truncated(workspace_tmp_path: Path):
     manager = MemoryManager(workspace_tmp_path)
     manager.save(
@@ -196,6 +270,7 @@ def test_engine_always_exposes_all_tools_no_phase_restriction(monkeypatch, works
     # 阶段限制已移除：所有工具始终暴露（仅受 allow_write/allow_shell / tool_filter 限制）
     all_tools = [
         'read_file', 'write_file', 'edit_file', 'grep_search', 'glob_search', 'bash',
+        'acceptance_check', 'batch_edit_file',
         'agent_spawn', 'agent_result', 'agent_wait', 'agent_cancel', 'agent_list',
         'update_plan', 'checklist_write', 'checklist_update', 'checklist_list',
         'task_create', 'task_list', 'task_update', 'task_cancel',

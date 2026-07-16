@@ -224,6 +224,19 @@ def test_agent_role_cwd_defaults_to_none():
     assert role.cwd is None
 
 
+def test_agent_role_acceptance_commands_are_available():
+    """多 Agent 角色可以声明验收命令，并向 AgentConfig 透传。"""
+    from harness_py_pro.swarm import AgentRole
+    role = AgentRole(
+        name='QA',
+        role_prompt='test',
+        acceptance_commands=['python -B verify.py'],
+        acceptance_timeout=120,
+    )
+    assert role.acceptance_commands == ['python -B verify.py']
+    assert role.acceptance_timeout == 120
+
+
 def test_orchestrate_signature_has_parallel_groups():
     """orchestrate() 签名支持 parallel_groups 参数。"""
     import inspect
@@ -231,6 +244,8 @@ def test_orchestrate_signature_has_parallel_groups():
     sig = inspect.signature(orchestrate)
     assert 'parallel_groups' in sig.parameters
     assert sig.parameters['parallel_groups'].default is None
+    assert 'round_plan' in sig.parameters
+    assert sig.parameters['round_plan'].default is None
 
 
 class _StopClient:
@@ -359,6 +374,39 @@ def test_orchestrate_non_parallel_shares_round_outputs():
         )
         assert '来自 A 的产出摘要' in all_text, \
             '非并行场景下 B 应当看到 A 的当轮产出'
+
+
+def test_orchestrate_round_plan_runs_only_planned_roles():
+    """round_plan 应限制每轮实际运行的角色。"""
+    from harness_py_pro.swarm import AgentRole, orchestrate
+    from harness_py_pro.config import ModelConfig
+
+    client = _StopClient()
+
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        roles = [
+            AgentRole(name='Architect', role_prompt='plan', max_iterations=1),
+            AgentRole(name='Developer', role_prompt='dev', max_iterations=1),
+            AgentRole(name='QA', role_prompt='qa', max_iterations=1),
+        ]
+
+        result = orchestrate(
+            'task',
+            roles,
+            model_config=ModelConfig(model='gpt-4o', api_key='test-key',
+                                     base_url='https://example.com'),
+            cwd=root,
+            max_rounds=3,
+            round_plan={1: ['Architect'], 2: ['Developer'], 3: ['QA']},
+            completion_client=client,
+            verbose=False,
+        )
+
+        assert client.calls == 3
+        assert [r['agent'] for r in result.agents_run] == [
+            'Architect', 'Developer', 'QA',
+        ]
 
 
 def test_agent_config_accepts_custom_cost_tracker():

@@ -118,6 +118,12 @@ def check_controller_depends_on_split_services() -> tuple[bool, list[str]]:
     autowired = re.findall(r'@(?:Autowired|Resource)\s+(?:private|protected|public)?\s*'
                            r'(\w+Service)\s+\w+', text)
     if not autowired:
+        # Lombok @RequiredArgsConstructor 常用 final 字段完成构造器注入。
+        autowired = re.findall(
+            r'(?:private|protected|public)\s+final\s+(\w+Service)\s+\w+\s*;',
+            text,
+        )
+    if not autowired:
         # 换一种方式：构造函数注入
         autowired = re.findall(r'(\w+Service)\s+\w+\s*[,)]', text)
     unique_services = set(autowired)

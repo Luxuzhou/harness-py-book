@@ -44,11 +44,28 @@ def _build_hook_config():
         'src/main/java/com/example/cp/enums/',
         'pom.xml',
     )
+    FROZEN_CASE_FILES = ('verify.py', 'TASK.md', 'CLAUDE.md')
+    BASH_WRITE_MARKERS = (
+        '>', '>>', 'sed -i', 'perl -pi', 'python -c', 'python - <<',
+        'set-content', 'add-content', 'out-file',
+        'cp ', 'copy ', 'mv ', 'move ', 'ren ', 'rename ', 'tee ',
+        'del ', 'erase ', 'remove-item', 'set-itemproperty',
+    )
 
     def pre_tool(tool_name: str, tool_args: dict, config: dict) -> tuple[bool, str]:
+        if tool_name == 'bash':
+            command = str(tool_args.get('command') or '')
+            norm_cmd = command.replace('\\', '/').lower()
+            touches_case_file = any(name.lower() in norm_cmd for name in FROZEN_CASE_FILES)
+            writes = any(marker in norm_cmd for marker in BASH_WRITE_MARKERS)
+            if touches_case_file and writes:
+                return False, 'Hook 拦截：验收脚本与任务说明只允许读取/执行，不允许通过 bash 改写'
+
         if tool_name in {'write_file', 'edit_file'}:
             path = tool_args.get('path') or tool_args.get('file_path') or ''
             norm = str(path).replace('\\', '/')
+            if any(norm.endswith(name) or f'/{name}' in norm for name in FROZEN_CASE_FILES):
+                return False, f'Hook 拦截："{path}" 是验收/任务文件，不允许改写'
             if any(norm.endswith(p) or f'/{p}' in norm for p in FROZEN_PREFIXES):
                 return False, f'Hook 拦截：路径 "{path}" 在冻结目录，重构不得改写对外契约'
             # 至少命中一个可写前缀
@@ -72,16 +89,20 @@ def main():
         model_config=ModelConfig.from_env(),
         agent_config=AgentConfig(
             cwd=target_dir,
-            max_iterations=60,
+            max_iterations=120,
             planning_turns=5,
             allow_write=True,
             allow_shell=True,
             sandbox_mode='bypass',
             network_isolated=True,
             allowed_paths=[str(target_dir)],
+            read_only_paths=[str(CASE_DIR / 'verify.py'), str(CASE_DIR / 'TASK.md'), str(CASE_DIR / 'CLAUDE.md')],
             filesystem_roots=['.', str(CASE_DIR), str(REPO_ROOT)],  # 允许访问项目根
             hooks=hooks,
             system_prompt_append=claude_md,
+            acceptance_commands=['python -B ../verify.py'],
+            acceptance_timeout=300,
+            reset_plan_state=True,
         ),
     )
 
