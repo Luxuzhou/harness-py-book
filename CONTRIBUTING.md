@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢你帮助改进《驾驭 AI：Harness Engineering 实战》的配套代码。
+感谢你帮助改进《HarnessEngineering实战：构建可靠的生产级AIAgent》的配套代码。
 
 ## 提交问题
 

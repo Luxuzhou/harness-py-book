@@ -3,9 +3,9 @@
 # PostToolUse Hook：PII 自动检测与警告
 # ============================================================
 # 对标 harness_py_pro 的 post_tool_hook 函数
-# 对标《驾驭AI》第9章 §9.3.2 医疗PII脱敏
+# 对标《HarnessEngineering实战：构建可靠的生产级AIAgent》第9章 §9.3.2 医疗PII脱敏
 #
-# 设计原则（来自《驾驭AI》第3章）：
+# 设计原则（来自《HarnessEngineering实战：构建可靠的生产级AIAgent》第3章）：
 #   post_tool 异常 → 放行（操作已执行，返回原始结果比报错更合理）
 #
 # Claude Code PostToolUse 实际传入的 JSON 结构：

@@ -1,6 +1,6 @@
-# 《驾驭 AI：Harness Engineering 实战》配套代码
+# 《HarnessEngineering实战：构建可靠的生产级AIAgent》配套代码
 
-> **《驾驭AI：Harness Engineering实战》** 配套代码仓库
+> **《HarnessEngineering实战：构建可靠的生产级AIAgent》** 配套代码仓库
 >
 > 用国产大模型从零构建生产级Agent系统
 

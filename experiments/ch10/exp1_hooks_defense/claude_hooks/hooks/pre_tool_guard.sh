@@ -4,7 +4,7 @@
 # ============================================================
 # 对标 harness_py_pro 的 pre_tool_hook 函数
 #
-# 设计原则（来自《驾驭AI》第3章）：
+# 设计原则（来自《HarnessEngineering实战：构建可靠的生产级AIAgent》第3章）：
 #   pre_tool 异常 → 拒绝（宁可误杀，不可漏过）
 #
 # 退出码：
@@ -40,7 +40,7 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ] || [ "$TOOL_NAME" = "
         esac
 
         # ---- PII文件检测（核心功能）----
-        # 对标《驾驭AI》第9章：读取前先扫描文件内容
+        # 对标《HarnessEngineering实战：构建可靠的生产级AIAgent》第9章：读取前先扫描文件内容
         if [ "$TOOL_NAME" = "Read" ] && [ -f "$FILE_PATH" ]; then
             # 检测身份证号
             ID_COUNT=$(grep -cE '[1-9][0-9]{5}(19|20)[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])[0-9]{3}[0-9Xx]' "$FILE_PATH" 2>/dev/null || echo "0")
